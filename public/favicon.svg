@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
+  <defs>
+    <style>
+      .brand { stroke: #22a7d0; fill: none; stroke-width: 2; }
+    </style>
+  </defs>
+  <!-- Centro -->
+  <circle class="brand" cx="20" cy="20" r="5"/>
+  <!-- Aros (segmentados para sugerir el movimiento del logo del header) -->
+  <circle class="brand" cx="20" cy="20" r="9" stroke-dasharray="25 10" />
+  <circle class="brand" cx="20" cy="20" r="13" stroke-dasharray="15 20" />
+  <circle class="brand" cx="20" cy="20" r="17" stroke-dasharray="20 15" />
+</svg>
+

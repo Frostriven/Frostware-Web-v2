@@ -1,0 +1,227 @@
+:root {
+    --primary-color: #22a7d0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+.hero-bg {
+    background-color: #f8f9fa;
+    background-image:
+        radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0),
+        radial-gradient(circle at 10px 10px, rgba(0,0,0,0.05) 1px, transparent 0);
+    background-size: 20px 20px;
+}
+
+.cta-button {
+    transition: all 0.3s ease;
+}
+
+.cta-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(34, 167, 208, 0.3);
+}
+
+.section-title {
+    font-weight: 900;
+    color: #1a202c;
+}
+
+/* Animación del Logo */
+.logo-icon {
+    width: 40px;
+    height: 40px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-icon::before {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border: 2px solid var(--primary-color);
+    border-radius: 50%;
+    background: transparent;
+    z-index: 4;
+}
+
+.logo-icon::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--primary-color);
+    border-radius: 50%;
+    border-top-color: transparent;
+    border-right-color: transparent;
+    animation: spin-inner 2s linear infinite;
+    z-index: 3;
+}
+
+.logo-icon .arc-1 {
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    border: 2px solid var(--primary-color);
+    border-radius: 50%;
+    border-top-color: transparent;
+    border-right-color: transparent;
+    border-bottom-color: transparent;
+    animation: spin-middle 3s linear infinite reverse;
+    z-index: 2;
+}
+
+.logo-icon .arc-2 {
+    position: absolute;
+    width: 34px;
+    height: 34px;
+    border: 2px solid var(--primary-color);
+    border-radius: 50%;
+    border-top-color: transparent;
+    border-left-color: transparent;
+    animation: spin-outer 4s linear infinite;
+    z-index: 1;
+}
+
+@keyframes spin-inner {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes spin-middle {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes spin-outer {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Estilo de Selección del Header */
+.nav-link {
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateY(0);
+    border-radius: 6px;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    top: 0;
+    right: 0;
+    background-color: var(--primary-color);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 6px;
+    opacity: 0;
+    z-index: -1;
+}
+
+.nav-link:hover::after, .nav-link.active::after {
+    opacity: 1;
+}
+
+.nav-link:hover {
+    color: #1f2937 !important;
+    transform: translateY(-1px);
+}
+
+.nav-link.active {
+    color: #1f2937 !important;
+    font-weight: 600;
+}
+
+.star-rating svg {
+    color: #f59e0b;
+}
+
+/* Smooth Page Loading */
+main {
+    opacity: 0;
+    transform: scale(0.95);
+    animation: zoomIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes zoomIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Enhanced Header Backdrop */
+.dark-header {
+    transition: all 0.3s ease;
+}
+
+/* Language Dropdown Smooth Animation */
+#language-menu {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: top right;
+}
+
+#language-menu:not(.hidden) {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+/* Smooth Button Interactions */
+button, .cta-button {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:hover, .cta-button:hover {
+    transform: translateY(-2px);
+}
+
+button:active, .cta-button:active {
+    transform: translateY(0);
+    transition-duration: 0.1s;
+}
+
+/* Form Styles */
+input[type="text"], input[type="email"], input[type="password"] {
+    transition: all 0.3s ease;
+}
+
+input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus {
+    box-shadow: 0 0 0 3px rgba(34, 167, 208, 0.1);
+}
+
+input[type="checkbox"] {
+    accent-color: var(--primary-color);
+}
+
+/* Registration Form Animation */
+#registerForm {
+    animation: slideInUp 0.6s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+

@@ -1,0 +1,64 @@
+:root { --primary-color: #22a7d0; }
+
+/* Animated logo used in header */
+.logo-icon {
+  width: 40px; height: 40px; position: relative; display: flex; align-items: center; justify-content: center;
+}
+.logo-icon::before {
+  content: ""; position: absolute; width: 10px; height: 10px; border: 2px solid var(--primary-color);
+  border-radius: 50%; background: transparent; z-index: 4;
+}
+.logo-icon::after {
+  content: ""; position: absolute; width: 18px; height: 18px; border: 2px solid var(--primary-color);
+  border-radius: 50%; border-top-color: transparent; border-right-color: transparent;
+  animation: spin-inner 2s linear infinite; z-index: 3;
+}
+.logo-icon .arc-1 {
+  position: absolute; width: 26px; height: 26px; border: 2px solid var(--primary-color);
+  border-radius: 50%; border-top-color: transparent; border-right-color: transparent; border-bottom-color: transparent;
+  animation: spin-middle 3s linear infinite reverse; z-index: 2;
+}
+.logo-icon .arc-2 {
+  position: absolute; width: 34px; height: 34px; border: 2px solid var(--primary-color);
+  border-radius: 50%; border-top-color: transparent; border-left-color: transparent;
+  animation: spin-outer 4s linear infinite; z-index: 1;
+}
+@keyframes spin-inner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes spin-middle { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes spin-outer { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* Tech bubbles background for auth/register */
+.tech-bubbles-wrap { position: relative; }
+.tech-bubbles { position: absolute; inset: -20px; z-index: 0; overflow: hidden; pointer-events: none; }
+.tech-bubbles span {
+  position: absolute; display: block; width: 12px; height: 12px; border-radius: 9999px;
+  background: radial-gradient(circle at 30% 30%, rgba(34,167,208,0.35), rgba(34,167,208,0.1));
+  filter: blur(0.5px);
+  animation: floatUp var(--dur, 9s) linear infinite;
+  opacity: 0.8;
+}
+@keyframes floatUp {
+  0% { transform: translateY(40px) translateX(0) scale(0.8); opacity: 0; }
+  10% { opacity: 0.7; }
+  100% { transform: translateY(-320px) translateX(var(--drift, 40px)) scale(1.4); opacity: 0; }
+}
+/* Ensure cards/forms are above bubbles */
+.tech-card { position: relative; z-index: 1; backdrop-filter: saturate(1.05); }
+/* CTA glow like index */
+.cta-button { transition: all 0.3s ease; }
+.cta-button:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(34,167,208,0.35); }
+
+/* Global bubbles across the whole site */
+.global-bubbles { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.global-bubbles .bubble {
+  position: absolute; display: block; border-radius: 9999px;
+  background: radial-gradient(circle at 30% 30%, rgba(34,167,208,0.30), rgba(34,167,208,0.08));
+  filter: blur(0.8px);
+  animation: floatUp var(--dur, 12s) linear infinite;
+  opacity: 0.85;
+}
+
+/* Tiny rotating logo bubbles */
+.logo-bubble { position: absolute; width: var(--size, 28px); height: var(--size, 28px);
+  display: grid; place-items: center; animation: floatUp var(--dur, 14s) linear infinite; opacity: 0.9; }
+.logo-bubble .logo-icon { transform: scale(0.6); }
