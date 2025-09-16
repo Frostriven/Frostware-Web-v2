@@ -15,6 +15,10 @@ import { watchAuthState, logout } from './auth.js';
 import { initializeProductsInFirebase, isUserAdmin, isAdminEmail } from './userProfile.js';
 import { isDevelopment, AUTO_DEMO_LOGIN } from './config.js';
 import './cart.js';
+// i18n system
+import { i18n, t } from '../i18n/index.js';
+import { getFlagSVG } from '../i18n/flags.js';
+import { updateHomepageTranslations } from './homepage-i18n.js';
 
 // Función principal de inicialización
 const initializeApp = () => {
@@ -42,11 +46,35 @@ const initializeApp = () => {
           <a class="text-white text-xl font-bold" href="#/">Frostware</a>
         </div>
         <div class="hidden md:flex items-center space-x-1">
-          <a class="py-2 px-3 text-gray-300 hover:text-white nav-link ${currentHash === '#/' ? 'active' : ''}" href="#/">Inicio</a>
-          <a class="py-2 px-3 text-gray-300 hover:text-white nav-link ${currentHash === '#/products' ? 'active' : ''}" href="#/products">Productos</a>
-          <a class="py-2 px-3 text-gray-300 hover:text-white nav-link" href="#pricing">Precios</a>
+          <a class="py-2 px-3 text-gray-300 hover:text-white nav-link ${currentHash === '#/' ? 'active' : ''}" href="#/">${t('navigation.home')}</a>
+          <a class="py-2 px-3 text-gray-300 hover:text-white nav-link ${currentHash === '#/products' ? 'active' : ''}" href="#/products">${t('navigation.products')}</a>
+          <a class="py-2 px-3 text-gray-300 hover:text-white nav-link" href="#pricing">${t('navigation.pricing')}</a>
         </div>
         <div class="flex items-center space-x-4">
+          <!-- Language Selector -->
+          <div class="relative">
+            <button id="language-selector" class="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors text-gray-300 hover:text-white">
+              <div class="w-5 h-5">${getFlagSVG(i18n.getCurrentLanguage())}</div>
+              <span class="text-sm font-medium">${i18n.getCurrentLanguage().toUpperCase()}</span>
+              <svg class="w-4 h-4 transition-transform duration-200" id="language-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+
+            <div id="language-dropdown" class="hidden absolute right-0 mt-2 w-44 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden">
+              <button onclick="changeLanguage('es')" class="flex items-center w-full px-4 py-3 hover:bg-gray-50 transition-colors text-gray-700 hover:text-gray-900 ${i18n.getCurrentLanguage() === 'es' ? 'bg-blue-50 text-blue-700' : ''}">
+                <div class="w-5 h-5 mr-3">${getFlagSVG('es')}</div>
+                <span class="font-medium">Español</span>
+                ${i18n.getCurrentLanguage() === 'es' ? '<svg class="w-4 h-4 ml-auto text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>' : ''}
+              </button>
+              <button onclick="changeLanguage('en')" class="flex items-center w-full px-4 py-3 hover:bg-gray-50 transition-colors text-gray-700 hover:text-gray-900 ${i18n.getCurrentLanguage() === 'en' ? 'bg-blue-50 text-blue-700' : ''}">
+                <div class="w-5 h-5 mr-3">${getFlagSVG('en')}</div>
+                <span class="font-medium">English</span>
+                ${i18n.getCurrentLanguage() === 'en' ? '<svg class="w-4 h-4 ml-auto text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>' : ''}
+              </button>
+            </div>
+          </div>
+
           <!-- Carrito de compras (solo para usuarios loggeados) -->
           ${user ? `
             <div class="relative">
@@ -61,11 +89,11 @@ const initializeApp = () => {
           ${loading ? `
             <div class="animate-pulse bg-gray-600 h-8 w-20 rounded"></div>
           ` : user ? `
-            <a class="text-gray-300 hover:text-white ${currentHash === '#/account' ? 'active' : ''}" href="#/account">Mi cuenta</a>
-            ${isAdmin ? `<a class="text-gray-300 hover:text-white ${currentHash === '#/admin' ? 'active' : ''}" href="#/admin">Admin</a>` : ''}
-            <button id="btn-header-logout" class="cta-button bg-red-600 text-white font-bold py-2 px-4 rounded-lg">Salir</button>
+            <a class="text-gray-300 hover:text-white ${currentHash === '#/account' ? 'active' : ''}" href="#/account">${t('navigation.myAccount')}</a>
+            ${isAdmin ? `<a class="text-gray-300 hover:text-white ${currentHash === '#/admin' ? 'active' : ''}" href="#/admin">${t('navigation.admin')}</a>` : ''}
+            <button id="btn-header-logout" class="cta-button bg-red-600 text-white font-bold py-2 px-4 rounded-lg">${t('navigation.logout')}</button>
           ` : `
-            <a class="cta-button bg-[#22a7d0] text-white font-bold py-2 px-4 rounded-lg" href="#/auth">Iniciar sesión</a>
+            <a class="cta-button bg-[#22a7d0] text-white font-bold py-2 px-4 rounded-lg" href="#/auth">${t('navigation.login')}</a>
           `}
         </div>
       </nav>
@@ -75,6 +103,29 @@ const initializeApp = () => {
       btnLogout.addEventListener('click', async () => {
         await logout();
         window.location.hash = '#/auth/login';
+      });
+    }
+
+    // Add language selector event listeners
+    const languageSelector = header.querySelector('#language-selector');
+    const languageDropdown = header.querySelector('#language-dropdown');
+    const languageChevron = header.querySelector('#language-chevron');
+
+    if (languageSelector && languageDropdown) {
+      languageSelector.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        languageDropdown.classList.toggle('hidden');
+        languageChevron.style.transform = languageDropdown.classList.contains('hidden')
+          ? 'rotate(0deg)' : 'rotate(180deg)';
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!languageSelector.contains(e.target)) {
+          languageDropdown.classList.add('hidden');
+          languageChevron.style.transform = 'rotate(0deg)';
+        }
       });
     }
 
@@ -117,7 +168,7 @@ const initializeApp = () => {
         <div id="cart-modal" class="fixed inset-0 z-[110] hidden items-center justify-center bg-black bg-opacity-50">
             <div class="bg-white rounded-lg shadow-2xl max-w-2xl w-full m-4 max-h-[80vh] overflow-hidden">
                 <div class="p-6 border-b flex justify-between items-center">
-                    <h2 class="text-2xl font-bold">Carrito de Compras</h2>
+                    <h2 class="text-2xl font-bold">${t('cart.title')}</h2>
                     <button id="cart-close-button" class="text-gray-400 hover:text-gray-600 text-3xl">&times;</button>
                 </div>
                 <div id="cart-content" class="p-6 max-h-[50vh] overflow-y-auto">
@@ -125,20 +176,20 @@ const initializeApp = () => {
                         <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m-2.4 8L5 21h14a2 2 0 002-2V9H5m0 4v6a2 2 0 002 2h10a2 2 0 002-2v-6M9 21v-2m6 2v-2"></path>
                         </svg>
-                        <p class="text-lg">Tu carrito está vacío</p>
+                        <p class="text-lg">${t('cart.empty')}</p>
                     </div>
                     <div id="cart-items" class="space-y-4"></div>
                 </div>
                 <div id="cart-footer" class="p-6 border-t bg-gray-50">
                     <div class="flex justify-between items-center mb-4">
-                        <span class="text-xl font-bold">Total: $<span id="cart-total">0.00</span></span>
+                        <span class="text-xl font-bold">${t('cart.total')}: $<span id="cart-total">0.00</span></span>
                     </div>
                     <div class="flex space-x-4">
                         <button id="clear-cart" class="flex-1 bg-gray-500 text-white py-3 px-6 rounded-lg hover:bg-gray-600 transition-colors">
-                            Limpiar Carrito
+                            ${t('cart.clear')}
                         </button>
                         <button id="process-payment" class="flex-1 bg-[#22a7d0] text-white py-3 px-6 rounded-lg hover:bg-[#1e96bc] transition-colors">
-                            Procesar Pago
+                            ${t('cart.processPayment')}
                         </button>
                     </div>
                 </div>
@@ -201,6 +252,8 @@ const initializeApp = () => {
     const spa = document.getElementById('spa-root');
     if (spa) spa.innerHTML = '';
     setMainVisible(true);
+    // Update homepage translations when showing homepage
+    setTimeout(updateHomepageTranslations, 100);
   });
   // Alias genérico /auth que apunta a Login
   registerRoute('#/auth', () => {
@@ -259,6 +312,14 @@ const initializeApp = () => {
   });
 
   initRouter();
+
+  // Update homepage translations if starting on homepage
+  setTimeout(() => {
+    const currentHash = window.location.hash || '#/';
+    if (currentHash === '#/' || currentHash === '') {
+      updateHomepageTranslations();
+    }
+  }, 300);
 };
 
 // Verificar si el DOM ya está cargado o esperar
