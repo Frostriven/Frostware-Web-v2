@@ -285,6 +285,7 @@ export async function makeUserAdmin(userId) {
 const ADMIN_EMAILS = [
   'admin@frostware.com',
   'daniel@frostware.com',
+  'dan@dan.com',
   // Agrega más emails de administradores aquí
 ];
 
