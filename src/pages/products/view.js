@@ -49,6 +49,24 @@ export async function renderProductsView() {
     // Initialize product buttons
     initializeProductButtons();
 
+    // Add click listeners for product cards to navigate to detail view
+    setTimeout(() => {
+      const productCards = document.querySelectorAll('.product-card');
+      productCards.forEach(card => {
+        card.addEventListener('click', (e) => {
+          // Don't navigate if clicking on the action button
+          if (e.target.classList.contains('product-action-button')) {
+            return;
+          }
+
+          const productId = card.getAttribute('data-product-id');
+          if (productId) {
+            window.location.hash = `#/product/${productId}`;
+          }
+        });
+      });
+    }, 100);
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
   } catch (error) {
@@ -77,7 +95,7 @@ function generateProductsHTML(products) {
     const reviewsCount = product.reviews || Math.floor(Math.random() * 400) + 50; // Random reviews if not specified
 
     return `
-      <div class="product-card bg-white shadow-lg border border-gray-200 flex flex-col hover:shadow-xl transition-shadow duration-300 cursor-pointer" data-category="${product.category}" style="border-radius: 14px; overflow: hidden;">
+      <div class="product-card bg-white shadow-lg border border-gray-200 flex flex-col hover:shadow-xl transition-shadow duration-300 cursor-pointer" data-category="${product.category}" data-product-id="${product.id}" style="border-radius: 14px; overflow: hidden;">
         <img src="${product.image || 'https://placehold.co/600x400/1a202c/FFFFFF?text=' + encodeURIComponent(product.name) + '&font=inter'}"
              class="w-full h-auto"
              style="border-radius: 14px 14px 0 0; margin: 0; padding: 0; display: block;"

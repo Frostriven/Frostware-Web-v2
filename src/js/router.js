@@ -10,6 +10,17 @@ export function initRouter() {
   const run = () => {
     const hash = window.location.hash || '#/';
     const path = hash.split('?')[0];
+
+    // Check for dynamic routes (e.g., #/product/123)
+    if (path.startsWith('#/product/')) {
+      const productHandler = routes.get('#/product');
+      if (productHandler) {
+        productHandler();
+        return;
+      }
+    }
+
+    // Normal route handling
     const handler = routes.get(path) || routes.get('#/');
     if (typeof handler === 'function') handler();
   };

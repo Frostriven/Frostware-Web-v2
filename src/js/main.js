@@ -9,6 +9,7 @@ import { renderResetView } from '../pages/auth/reset/view.js';
 import { renderAccountView } from '../pages/auth/account/view.js';
 import { renderProductsView } from '../pages/products/view.js';
 import { renderAdminView } from '../pages/admin/view.js';
+import { renderProductDetailView } from '../pages/product-detail/view.js';
 import { watchAuthState, logout } from './auth.js';
 import { initializeProductsInFirebase, isUserAdmin, isAdminEmail } from './userProfile.js';
 import { isDevelopment, AUTO_DEMO_LOGIN } from './config.js';
@@ -181,9 +182,14 @@ const initializeApp = () => {
   // Router SPA: mostrar/ocultar contenido principal
   const setMainVisible = (visible) => {
     const main = document.getElementById('main-content');
+    const footer = document.querySelector('footer');
     const spa = document.getElementById('spa-root');
+
     if (main) {
       main.style.display = visible ? '' : 'none';
+    }
+    if (footer) {
+      footer.style.display = visible ? '' : 'none';
     }
   };
 
@@ -225,6 +231,18 @@ const initializeApp = () => {
     setMainVisible(false);
     renderAdminView();
   });
+
+  // Register a generic product route handler
+  registerRoute('#/product', () => {
+    const hash = window.location.hash;
+    const productDetailMatch = hash.match(/^#\/product\/(.+)$/);
+    if (productDetailMatch) {
+      const productId = productDetailMatch[1];
+      setMainVisible(false);
+      renderProductDetailView(productId);
+    }
+  });
+
   initRouter();
 };
 

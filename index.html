@@ -230,8 +230,13 @@
 
     
     <script>
-        // Cargar últimos productos dinámicamente
+        // Cargar últimos productos dinámicamente SOLO en la página de inicio
         document.addEventListener('DOMContentLoaded', function() {
+            // Only run on homepage
+            const hash = window.location.hash || '#/';
+            if (hash !== '#/' && hash !== '') {
+                return; // Exit if not on homepage
+            }
             const latestProducts = [
                 {
                     title: "NOPAC North Operational Pacific Procedures",
