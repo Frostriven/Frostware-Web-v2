@@ -11,6 +11,7 @@ import { renderProductsView } from '../pages/products/view.js';
 import { renderAdminView } from '../pages/admin/view.js';
 import { watchAuthState, logout } from './auth.js';
 import { initializeProductsInFirebase, isUserAdmin, isAdminEmail } from './userProfile.js';
+import { isDevelopment, AUTO_DEMO_LOGIN } from './config.js';
 import './cart.js';
 
 // Función principal de inicialización
@@ -89,6 +90,18 @@ const initializeApp = () => {
     currentUser = user;
     authInitialized = true;
     await renderHeader(user, false); // Remove loading state
+
+    // Auto-login demo user in development if enabled and no user is logged in
+    if (!user && isDevelopment() && AUTO_DEMO_LOGIN) {
+      try {
+        console.log('🚀 Auto-login demo habilitado - iniciando sesión...');
+        const { quickDemoLogin } = await import('./userProfile.js');
+        await quickDemoLogin();
+        return; // Exit early, watchAuthState will trigger again with the user
+      } catch (error) {
+        console.error('Error en auto-login demo:', error);
+      }
+    }
 
     // Initialize products in Firebase when auth is ready
     initializeProductsInFirebase();

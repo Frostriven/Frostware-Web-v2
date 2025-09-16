@@ -162,10 +162,10 @@ export const products = [
   {
     id: 'north-atlantic-ops',
     name: 'North Atlantic Operational Procedures',
-    description: 'Guía completa para procedimientos operacionales del Atlántico Norte con banco de preguntas interactivo',
-    longDescription: 'Banco de preguntas completo para pilotos transoceánicos que operan en el espacio aéreo del Atlántico Norte. Basado en documentos oficiales de ICAO con referencias y justificaciones.',
-    price: 0,
-    originalPrice: 0,
+    description: 'A comprehensive question bank for transoceanic pilots operating in North Atlantic airspace. Based on official ICAO documents with references and justifications.',
+    longDescription: 'The most comprehensive question bank for transoceanic pilots. Study official ICAO procedures, practice with real scenarios, and pass your NAT operations certification with confidence.',
+    price: 99,
+    originalPrice: 150,
     image: 'https://placehold.co/600x400/1a202c/FFFFFF?text=NAT+OPS&font=inter',
     category: 'aviation',
     colors: ['#1e293b', '#0f172a', '#334155'],
@@ -177,127 +177,59 @@ export const products = [
     tags: ['aviation', 'NAT', 'oceanic', 'procedures'],
     appUrl: '/apps/north-atlantic-procedures/guide.html'
   },
-  {
-    id: 'flight-performance-calc',
-    name: 'Flight Performance Calculator',
-    description: 'Calculadora avanzada de performance de vuelo para despegue, aterrizaje y planificación de combustible',
-    longDescription: 'Cálculos avanzados de performance de vuelo para despegue, aterrizaje, planificación de combustible y peso & balance. Conforme a ICAO con múltiples tipos de aeronaves.',
-    price: 49.99,
-    originalPrice: 49.99,
-    image: 'https://placehold.co/600x400/4c1d95/FFFFFF?text=Flight+Calculator&font=inter',
-    category: 'aviation',
-    colors: ['#4c1d95', '#6d28d9', '#8b5cf6'],
-    badge: 'Professional',
-    badgeColor: 'purple',
-    rating: 4.0,
-    reviews: 150,
-    features: ['Cálculos de despegue/aterrizaje', 'Planificación de combustible', 'Peso & balance', 'Múltiples aeronaves'],
-    tags: ['aviation', 'performance', 'calculator', 'flight'],
-    appUrl: '/apps/flight-performance-calculator/guide.html'
-  },
-  {
-    id: 'smartwatch-pro',
-    name: 'SmartWatch Pro',
-    description: 'Reloj inteligente con funciones avanzadas de salud y fitness',
-    longDescription: 'Reloj inteligente de última generación con monitoreo continuo de salud, GPS integrado, resistencia al agua y batería de larga duración. Perfecto para deportistas y profesionales.',
-    price: 299,
-    originalPrice: 374,
-    image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-    category: 'technology',
-    colors: ['#1e293b', '#0f172a', '#334155'],
-    badge: 'Bestseller',
-    badgeColor: 'blue',
-    rating: 4.8,
-    reviews: 124,
-    features: ['Monitor de frecuencia cardíaca', 'GPS integrado', 'Resistente al agua', 'Batería 7 días'],
-    tags: ['smartwatch', 'fitness', 'health', 'technology']
-  },
-  {
-    id: 'design-toolkit',
-    name: 'Design Toolkit',
-    description: 'Kit completo de herramientas para diseñadores creativos',
-    longDescription: 'Suite completa de herramientas de diseño que incluye editores vectoriales, gestión de colores, tipografías premium y plantillas profesionales.',
-    price: 149,
-    originalPrice: 149,
-    image: 'https://images.unsplash.com/photo-1558655146-9f40138c2ac8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-    category: 'design',
-    colors: ['#d97706', '#ea580c', '#f59e0b'],
-    badge: 'Creative',
-    badgeColor: 'orange',
-    rating: 4.6,
-    reviews: 89,
-    features: ['Editor vectorial', 'Paletas de colores', 'Tipografías premium', 'Plantillas profesionales'],
-    tags: ['design', 'graphics', 'creative', 'toolkit']
-  },
-  {
-    id: 'business-suite',
-    name: 'Business Suite',
-    description: 'Suite completa de herramientas para gestión empresarial',
-    longDescription: 'Plataforma integral de gestión empresarial con CRM, contabilidad, gestión de proyectos y análisis de datos en una sola solución.',
-    price: 199,
-    originalPrice: 234,
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-    category: 'business',
-    colors: ['#4c1d95', '#6d28d9', '#8b5cf6'],
-    badge: 'Professional',
-    badgeColor: 'purple',
-    rating: 4.9,
-    reviews: 156,
-    features: ['CRM integrado', 'Contabilidad automatizada', 'Gestión de proyectos', 'Análisis de datos'],
-    tags: ['business', 'crm', 'accounting', 'management']
-  },
-  {
-    id: 'learning-platform',
-    name: 'Learning Platform',
-    description: 'Plataforma de aprendizaje en línea con cursos interactivos',
-    longDescription: 'Plataforma educativa completa con cursos interactivos, evaluaciones automáticas, seguimiento de progreso y certificaciones oficiales.',
-    price: 99,
-    originalPrice: 99,
-    image: 'https://images.unsplash.com/photo-1501504905252-473c47e087f8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-    category: 'education',
-    colors: ['#16a34a', '#15803d', '#22c55e'],
-    badge: 'Popular',
-    badgeColor: 'green',
-    rating: 4.7,
-    reviews: 203,
-    features: ['Cursos interactivos', 'Evaluaciones automáticas', 'Seguimiento de progreso', 'Certificaciones'],
-    tags: ['education', 'learning', 'courses', 'certification']
-  },
-  {
-    id: 'wireless-earbuds',
-    name: 'Wireless Earbuds',
-    description: 'Auriculares inalámbricos con cancelación de ruido',
-    longDescription: 'Auriculares inalámbricos premium con cancelación activa de ruido, sonido de alta fidelidad y diseño ergonómico para uso prolongado.',
-    price: 179,
-    originalPrice: 179,
-    image: 'https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-    category: 'technology',
-    colors: ['#dc2626', '#ef4444', '#f87171'],
-    badge: 'Audio',
-    badgeColor: 'red',
-    rating: 4.5,
-    reviews: 78,
-    features: ['Cancelación de ruido', 'Sonido Hi-Fi', 'Diseño ergonómico', 'Batería 8 horas'],
-    tags: ['audio', 'wireless', 'earbuds', 'noise-canceling']
-  },
-  {
-    id: 'creative-studio',
-    name: 'Creative Studio',
-    description: 'Suite profesional para creativos y diseñadores',
-    longDescription: 'Estudio creativo completo con herramientas avanzadas de diseño, edición de video, animación y efectos especiales para profesionales.',
-    price: 399,
-    originalPrice: 399,
-    image: 'https://images.unsplash.com/photo-1517292987719-0369a794ec0f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-    category: 'design',
-    colors: ['#0891b2', '#0e7490', '#06b6d4'],
-    badge: 'Premium',
-    badgeColor: 'cyan',
-    rating: 4.9,
-    reviews: 267,
-    features: ['Edición de video 4K', 'Animación profesional', 'Efectos especiales', 'Exportación múltiple'],
-    tags: ['creative', 'video', 'animation', 'professional']
-  }
+  
 ];
+
+// Crear usuario demo para desarrollo
+export async function createDemoUser() {
+  const { createUserWithEmailAndPassword, signInWithEmailAndPassword } = await import('firebase/auth');
+  const { auth } = await import('./firebase.js');
+
+  const demoEmail = "demo@frostware.com";
+  const demoPassword = "demo123456";
+
+  try {
+    // Intentar hacer login primero (el usuario ya puede existir)
+    const userCredential = await signInWithEmailAndPassword(auth, demoEmail, demoPassword);
+    console.log('Usuario demo ya existe, sesión iniciada:', userCredential.user.email);
+    return userCredential.user;
+  } catch (error) {
+    if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+      try {
+        // Crear nuevo usuario demo
+        const userCredential = await createUserWithEmailAndPassword(auth, demoEmail, demoPassword);
+        console.log('Usuario demo creado:', userCredential.user.email);
+
+        // Hacer al usuario demo administrador
+        await makeUserAdmin(userCredential.user.uid);
+        console.log('Usuario demo configurado como administrador');
+
+        return userCredential.user;
+      } catch (createError) {
+        console.error('Error creando usuario demo:', createError);
+        throw createError;
+      }
+    } else {
+      console.error('Error inesperado:', error);
+      throw error;
+    }
+  }
+}
+
+// Login rápido para desarrollo
+export async function quickDemoLogin() {
+  const { signInWithEmailAndPassword } = await import('firebase/auth');
+  const { auth } = await import('./firebase.js');
+
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, "demo@frostware.com", "demo123456");
+    console.log('Login demo exitoso:', userCredential.user.email);
+    return userCredential.user;
+  } catch (error) {
+    console.log('Usuario demo no existe, creándolo...');
+    return await createDemoUser();
+  }
+}
 
 // Cargar productos desde Firebase (única fuente de verdad)
 export async function getProductsFromFirebase() {
@@ -392,9 +324,7 @@ export async function makeUserAdmin(userId) {
 
 // Lista de emails de administradores predefinidos (fallback)
 const ADMIN_EMAILS = [
-  'admin@frostware.com',
-  'daniel@frostware.com',
-  'dan@dan.com',
+  'demo@frostware.com'
   // Agrega más emails de administradores aquí
 ];
 

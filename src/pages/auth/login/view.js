@@ -43,6 +43,7 @@ export async function renderLoginView() {
     const rememberCheckbox = root.querySelector('#remember-me');
     const loginButton = root.querySelector('#btn-login');
     const googleButton = root.querySelector('#btn-google-login');
+    const demoButton = root.querySelector('#btn-demo-login');
 
     // Initialize remember me functionality
     initializeRememberMe(emailInput, rememberCheckbox);
@@ -107,6 +108,33 @@ export async function renderLoginView() {
                 loadingToast.error(errorMessage);
             } finally {
                 googleButton.disabled = false;
+            }
+        });
+    }
+
+    // Demo login button handler
+    if (demoButton) {
+        demoButton.addEventListener('click', async (e) => {
+            e.preventDefault();
+
+            const loadingToast = showLoadingToast('Iniciando sesión demo...');
+
+            try {
+                demoButton.disabled = true;
+
+                // Import the demo login function
+                const { quickDemoLogin } = await import('../../../js/userProfile.js');
+                const user = await quickDemoLogin();
+
+                loadingToast.success('¡Sesión demo iniciada exitosamente!');
+                setTimeout(() => {
+                    window.location.hash = '#/products';
+                }, 1500);
+            } catch (e) {
+                console.error('Error en demo login:', e);
+                loadingToast.error('Error al crear/acceder usuario demo. Revisa la consola.');
+            } finally {
+                demoButton.disabled = false;
             }
         });
     }
