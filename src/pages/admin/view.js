@@ -268,13 +268,13 @@ function initializeAdminPage() {
     try {
       // Check if user is authenticated and admin
       if (!auth?.currentUser) {
-        alert('Debes iniciar sesión para realizar esta acción');
+        showAdminToast('Debes iniciar sesión para realizar esta acción', 'error');
         return;
       }
 
       const userIsAdmin = await isUserAdmin(auth.currentUser.uid) || isAdminEmail(auth.currentUser.email);
       if (!userIsAdmin) {
-        alert('No tienes permisos para agregar productos. Solo los administradores pueden realizar esta acción.');
+        showAdminToast('No tienes permisos para agregar productos. Solo los administradores pueden realizar esta acción.', 'error');
         return;
       }
 
@@ -289,15 +289,15 @@ function initializeAdminPage() {
         ...productData
       });
 
-      // Reset form
-      addProductForm.reset();
+      // Show success message
+      showAdminToast('Producto agregado exitosamente', 'success');
 
-      // Reload page to show new product
-      window.location.reload();
+      // Reload admin view instead of full page reload
+      await renderAdminView();
 
     } catch (error) {
       console.error('Error agregando producto:', error);
-      alert('Error al agregar producto: ' + error.message);
+      showAdminToast('Error al agregar producto: ' + error.message, 'error');
 
       // Re-enable submit button
       const submitBtn = addProductForm.querySelector('button[type="submit"]');
@@ -312,14 +312,14 @@ window.deleteProduct = async function(productId) {
   try {
     // Check if user is authenticated and admin
     if (!auth?.currentUser) {
-      alert('Debes iniciar sesión para realizar esta acción');
+      showAdminToast('Debes iniciar sesión para realizar esta acción', 'error');
       window.location.hash = '#/auth';
       return;
     }
 
     const userIsAdmin = await isUserAdmin(auth.currentUser.uid) || isAdminEmail(auth.currentUser.email);
     if (!userIsAdmin) {
-      alert('No tienes permisos para eliminar productos. Solo los administradores pueden realizar esta acción.');
+      showAdminToast('No tienes permisos para eliminar productos. Solo los administradores pueden realizar esta acción.', 'error');
       return;
     }
 
@@ -328,11 +328,55 @@ window.deleteProduct = async function(productId) {
 
     await deleteDoc(doc(db, 'products', productId));
 
-    // Reload page
-    window.location.reload();
+    // Show success message
+    showAdminToast('Producto eliminado exitosamente', 'success');
+
+    // Reload admin view instead of full page reload
+    await renderAdminView();
 
   } catch (error) {
     console.error('Error eliminando producto:', error);
-    alert('Error al eliminar producto: ' + error.message);
+    showAdminToast('Error al eliminar producto: ' + error.message, 'error');
   }
 };
+
+// Toast notification function for admin panel
+function showAdminToast(message, type = 'success') {
+  const toast = document.createElement('div');
+  toast.className = 'fixed top-4 right-4 z-50 transform transition-all duration-300 translate-x-full';
+
+  const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+  const icon = type === 'success' ? `
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+    </svg>
+  ` : `
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+    </svg>
+  `;
+
+  toast.innerHTML = `
+    <div class="${bgColor} text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2">
+      ${icon}
+      <span class="font-medium">${message}</span>
+    </div>
+  `;
+
+  document.body.appendChild(toast);
+
+  // Animate in
+  setTimeout(() => {
+    toast.classList.remove('translate-x-full');
+  }, 100);
+
+  // Animate out and remove
+  setTimeout(() => {
+    toast.classList.add('translate-x-full');
+    setTimeout(() => {
+      if (document.body.contains(toast)) {
+        document.body.removeChild(toast);
+      }
+    }, 300);
+  }, 3000);
+}
