@@ -10,6 +10,7 @@ import { renderAccountView } from '../pages/auth/account/view.js';
 import { renderProductsView } from '../pages/products/view.js';
 import { renderAdminView } from '../pages/admin/view.js';
 import { renderProductDetailView } from '../pages/product-detail/view.js';
+import { renderDashboardView } from '../pages/dashboard/view.js';
 import { watchAuthState, logout } from './auth.js';
 import { initializeProductsInFirebase, isUserAdmin, isAdminEmail } from './userProfile.js';
 import { isDevelopment, AUTO_DEMO_LOGIN } from './config.js';
@@ -243,6 +244,17 @@ const initializeApp = () => {
       const productId = productDetailMatch[1];
       setMainVisible(false);
       renderProductDetailView(productId);
+    }
+  });
+
+  // Register dashboard route handler
+  registerRoute('#/dashboard', () => {
+    const hash = window.location.hash;
+    const dashboardMatch = hash.match(/^#\/dashboard\/(.+)$/);
+    if (dashboardMatch) {
+      const productId = dashboardMatch[1];
+      setMainVisible(false);
+      renderDashboardView(productId);
     }
   });
 

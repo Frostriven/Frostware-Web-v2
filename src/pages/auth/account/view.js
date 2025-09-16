@@ -197,7 +197,7 @@ function initializeAccountPage(initialTab = 'profile') {
                   </div>
                 </div>
                 <p class="text-gray-600 text-sm mb-3 line-clamp-2">${product.description}</p>
-                <div class="flex justify-between items-center">
+                <div class="flex justify-between items-center mb-3">
                   <div class="text-sm text-gray-500">
                     <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
@@ -213,6 +213,20 @@ function initializeAccountPage(initialTab = 'profile') {
                       Activo
                     </span>
                   </div>
+                </div>
+                <div class="flex justify-between items-center">
+                  <a href="#/dashboard/${product.id}" class="inline-flex items-center px-4 py-2 bg-[#22a7d0] text-white font-medium rounded-lg hover:bg-[#1e96bc] transition-colors text-sm">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    Dashboard
+                  </a>
+                  <a href="#/product/${product.id}" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors text-sm">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Ver Detalles
+                  </a>
                 </div>
               </div>
             </div>

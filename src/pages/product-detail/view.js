@@ -87,8 +87,8 @@ export async function renderProductDetailView(productId) {
                   </div>
 
                   <div class="flex flex-col sm:flex-row gap-4">
-                    ${hasPurchased && product.appUrl ? `
-                      <a href="${product.appUrl}" class="inline-flex items-center justify-center px-8 py-4 bg-[#22a7d0] text-white font-bold rounded-lg text-lg hover:bg-[#1e96c8] transition-colors shadow-lg">
+                    ${hasPurchased ? `
+                      <a href="#/dashboard/${product.id}" class="inline-flex items-center justify-center px-8 py-4 bg-[#22a7d0] text-white font-bold rounded-lg text-lg hover:bg-[#1e96c8] transition-colors shadow-lg">
                         Acceder Ahora
                         <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
@@ -242,8 +242,8 @@ export async function renderProductDetailView(productId) {
                 ${product.longDescription || product.description}
               </p>
 
-              ${hasPurchased && product.appUrl ? `
-                <a href="${product.appUrl}" class="inline-flex items-center px-10 py-4 bg-white text-[#22a7d0] font-bold rounded-lg text-xl hover:bg-blue-50 transition-colors shadow-lg">
+              ${hasPurchased ? `
+                <a href="#/dashboard/${product.id}" class="inline-flex items-center px-10 py-4 bg-white text-[#22a7d0] font-bold rounded-lg text-xl hover:bg-blue-50 transition-colors shadow-lg">
                   Acceder Ahora
                   <svg class="w-6 h-6 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
