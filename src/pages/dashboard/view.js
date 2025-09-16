@@ -159,31 +159,47 @@ export async function renderDashboardView(productId) {
                               ? 'border-[#22a7d0] bg-blue-50'
                               : 'border-green-200 bg-green-50'
                             : 'border-gray-300 bg-gray-100 opacity-75'
-                        }">
-                          <div class="flex items-center space-x-3">
+                        } transition-all duration-200 hover:shadow-md ${isPurchased ? 'cursor-pointer' : ''}">
+                          <div class="flex items-center space-x-3 flex-1">
                             <div class="relative">
                               <input type="checkbox" id="product-${prod.id}" ${isPurchased ? 'checked' : ''} ${!isPurchased ? 'disabled' : ''}
-                                     class="w-5 h-5 text-[#22a7d0] bg-gray-100 border-gray-300 rounded focus:ring-[#22a7d0] focus:ring-2 ${!isPurchased ? 'cursor-not-allowed' : ''}"
+                                     class="w-5 h-5 text-[#22a7d0] bg-white border-2 border-gray-300 rounded focus:ring-2 focus:ring-[#22a7d0] focus:ring-opacity-50 transition-all duration-200 ${!isPurchased ? 'cursor-not-allowed opacity-50' : 'hover:border-[#22a7d0] cursor-pointer'}"
                                      onchange="toggleProductDatabase('${prod.id}', this.checked)">
                               ${isPurchased ? `
-                                <svg class="absolute top-0 left-0 w-5 h-5 text-green-500 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                  <svg class="w-3 h-3 text-white transform transition-all duration-300 ${document.getElementById('product-' + prod.id)?.checked ? 'scale-100 opacity-100' : 'scale-0 opacity-0'}" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                  </svg>
+                                </div>
                               ` : ''}
                             </div>
-                            <img src="${prod.image}" alt="${prod.name}" class="w-8 h-8 rounded object-cover ${!isPurchased ? 'grayscale' : ''}">
-                            <div>
-                              <h3 class="font-semibold ${isPurchased ? 'text-gray-900' : 'text-gray-500'}">${prod.name}</h3>
+                            <img src="${prod.image}" alt="${prod.name}" class="w-10 h-10 rounded-lg object-cover shadow-sm transition-all duration-200 ${!isPurchased ? 'grayscale' : ''}">
+                            <div class="flex-1">
+                              <h3 class="font-semibold ${isPurchased ? 'text-gray-900' : 'text-gray-500'} transition-colors">${prod.name}</h3>
                               <p class="text-sm ${isPurchased ? 'text-gray-600' : 'text-gray-400'}">${prod.category}</p>
                               ${!isPurchased ? `<p class="text-xs text-gray-500 mt-1">Este producto no ha sido comprado</p>` : ''}
                             </div>
+                            ${isPurchased ? `
+                              <div class="flex items-center">
+                                <svg id="chevron-${prod.id}" class="w-5 h-5 text-gray-400 transition-transform duration-200 ${document.getElementById('product-' + prod.id)?.checked ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                              </div>
+                            ` : ''}
                           </div>
-                          <div class="text-right">
+                          <div class="text-right ml-4">
                             ${isPurchased
-                              ? `<span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">✓ Activo</span>`
-                              : `<div class="text-right">
+                              ? `<div class="flex items-center space-x-2">
+                                   <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full border border-green-200">
+                                     <span class="w-2 h-2 bg-green-500 rounded-full inline-block mr-1 animate-pulse"></span>
+                                     Activo
+                                   </span>
+                                 </div>`
+                              : `<div class="text-right space-y-2">
                                    <div class="text-lg font-bold text-gray-500">$${prod.price}</div>
-                                   <span class="px-2 py-1 bg-gray-200 text-gray-500 text-xs font-medium rounded-full">No comprado</span>
+                                   <button onclick="addToCartFromDashboard('${prod.id}')" class="px-3 py-1 bg-[#22a7d0] text-white text-xs font-medium rounded-lg hover:bg-[#1e96bc] transition-colors shadow-sm transform hover:scale-105 duration-200">
+                                     Agregar al Carrito
+                                   </button>
                                  </div>`
                             }
                           </div>
@@ -498,16 +514,41 @@ export async function renderDashboardView(productId) {
 
     // Show/hide topics section
     const topicsSection = document.getElementById(`topics-${productId}`);
+    const chevron = document.getElementById(`chevron-${productId}`);
+
     if (topicsSection) {
       if (isSelected) {
         topicsSection.classList.remove('hidden');
+        if (chevron) chevron.classList.add('rotate-180');
       } else {
         topicsSection.classList.add('hidden');
+        if (chevron) chevron.classList.remove('rotate-180');
       }
     }
 
     updateAllCounts();
     updateSessionSummary();
+  };
+
+  window.addToCartFromDashboard = function(productId) {
+    // Find the product and add to cart
+    const productToAdd = allProducts.find(p => p.id === productId);
+    if (productToAdd && window.cart) {
+      window.cart.addToCart(productToAdd);
+
+      // Show success message
+      const button = event.target;
+      const originalText = button.textContent;
+      button.textContent = '¡Agregado!';
+      button.classList.remove('bg-[#22a7d0]', 'hover:bg-[#1e96bc]');
+      button.classList.add('bg-green-500', 'hover:bg-green-600');
+
+      setTimeout(() => {
+        button.textContent = originalText;
+        button.classList.remove('bg-green-500', 'hover:bg-green-600');
+        button.classList.add('bg-[#22a7d0]', 'hover:bg-[#1e96bc]');
+      }, 2000);
+    }
   };
 
   window.updateTopicSelection = function(productId, topicId, isSelected) {
@@ -550,7 +591,8 @@ export async function renderDashboardView(productId) {
         topicCheckboxes.forEach(checkbox => {
           const questionElement = checkbox.closest('label').querySelector('.text-xs');
           if (questionElement) {
-            const questions = parseInt(questionElement.textContent.match(/\\d+/)[0]) || 0;
+            const match = questionElement.textContent.match(/(\d+)/);
+            const questions = match ? parseInt(match[0]) : 0;
             totalQuestions += questions;
           }
         });
@@ -582,11 +624,15 @@ export async function renderDashboardView(productId) {
       questionsElement.textContent = totalQuestions;
     }
 
-    // Update estimated time
+    // Update estimated time based on actual selected topics
     const timeElement = document.getElementById('estimated-time');
     if (timeElement) {
-      const estimatedMinutes = Math.ceil(totalQuestions * 1.2); // 1.2 minutes per question
-      timeElement.textContent = `~${estimatedMinutes}min`;
+      if (totalQuestions > 0) {
+        const estimatedMinutes = Math.ceil(totalQuestions * 1.2); // 1.2 minutes per question
+        timeElement.textContent = `~${estimatedMinutes}min`;
+      } else {
+        timeElement.textContent = '~0min';
+      }
     }
   }
 
@@ -629,15 +675,55 @@ export async function renderDashboardView(productId) {
       productsElement.textContent = selectedProducts.length;
     }
 
-    // Update topics list
+    // Update topics list with specific selected topics
     const topicsListElement = document.getElementById('session-topics-list');
     if (topicsListElement) {
       if (totalTopics > 0) {
-        topicsListElement.innerHTML = `<span class="text-sm text-gray-700">${totalTopics} temas seleccionados de ${selectedProducts.length} productos</span>`;
+        const selectedTopicDetails = getSelectedTopicsDetails();
+        const topicsHtml = selectedTopicDetails.map(item =>
+          `<span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">${item.productName}: ${item.topics.join(', ')}</span>`
+        ).join('');
+
+        topicsListElement.innerHTML = `
+          <div class="space-y-1">
+            <div class="text-sm text-gray-700 font-medium">${totalTopics} temas seleccionados:</div>
+            <div class="flex flex-wrap">${topicsHtml}</div>
+          </div>
+        `;
       } else {
         topicsListElement.innerHTML = `<span class="text-sm text-gray-500">Selecciona productos para ver temas disponibles</span>`;
       }
     }
+  }
+
+  function getSelectedTopicsDetails() {
+    const selectedProducts = getSelectedProducts();
+    const topicsDetails = [];
+
+    selectedProducts.forEach(productId => {
+      const product = allProducts.find(p => p.id === productId);
+      const topicsSection = document.getElementById(`topics-${productId}`);
+
+      if (topicsSection && product) {
+        const selectedTopicNames = [];
+        const topicCheckboxes = topicsSection.querySelectorAll('input[type="checkbox"]:checked');
+
+        topicCheckboxes.forEach(checkbox => {
+          const label = checkbox.closest('label');
+          const topicName = label.querySelector('.text-sm.font-medium').textContent;
+          selectedTopicNames.push(topicName);
+        });
+
+        if (selectedTopicNames.length > 0) {
+          topicsDetails.push({
+            productName: product.name,
+            topics: selectedTopicNames
+          });
+        }
+      }
+    });
+
+    return topicsDetails;
   }
 
   // Initialize counts and summary
