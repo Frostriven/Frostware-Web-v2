@@ -73,6 +73,8 @@ export async function addUserProduct(userId, productData) {
     productDescription: productData.description,
     productPrice: productData.price,
     productImage: productData.image,
+    appUrl: productData.appUrl || null, // URL to the interactive app/guide
+    accessToken: generateAccessToken(), // Unique token for secure access
     purchaseDate: new Date(),
     status: 'active'
   };
@@ -82,6 +84,64 @@ export async function addUserProduct(userId, productData) {
     id: docRef.id,
     ...productDoc
   };
+}
+
+// Generate a unique access token for secure app access
+function generateAccessToken() {
+  return 'frostware_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+// Verificar acceso del usuario a una app específica
+export async function verifyUserAppAccess(userId, productId) {
+  if (!db) throw new Error('Firestore no inicializado');
+
+  const userProductsQuery = query(
+    collection(db, 'userProducts'),
+    where('userId', '==', userId),
+    where('productId', '==', productId),
+    where('status', '==', 'active')
+  );
+
+  const querySnapshot = await getDocs(userProductsQuery);
+
+  if (!querySnapshot.empty) {
+    const userProduct = querySnapshot.docs[0].data();
+    return {
+      hasAccess: true,
+      accessToken: userProduct.accessToken,
+      appUrl: userProduct.appUrl,
+      purchaseDate: userProduct.purchaseDate,
+      productName: userProduct.productName
+    };
+  }
+
+  return {
+    hasAccess: false,
+    message: 'No tienes acceso a esta aplicación. Adquiere el producto primero.'
+  };
+}
+
+// Obtener todas las apps/guías a las que el usuario tiene acceso
+export async function getUserApps(userId) {
+  if (!db) throw new Error('Firestore no inicializado');
+
+  const userProducts = await getUserProducts(userId);
+
+  // Filter only products that have an associated app
+  const userApps = userProducts
+    .filter(product => product.appUrl)
+    .map(product => ({
+      id: product.id,
+      productId: product.productId,
+      name: product.productName,
+      description: product.productDescription,
+      appUrl: product.appUrl,
+      accessToken: product.accessToken,
+      purchaseDate: product.purchaseDate,
+      image: product.productImage
+    }));
+
+  return userApps;
 }
 
 // Eliminar producto del usuario
@@ -96,6 +156,42 @@ export async function removeUserProduct(productId) {
 
 // Productos disponibles en la tienda
 export const products = [
+  {
+    id: 'north-atlantic-ops',
+    name: 'North Atlantic Operational Procedures',
+    description: 'Guía completa para procedimientos operacionales del Atlántico Norte con banco de preguntas interactivo',
+    longDescription: 'Banco de preguntas completo para pilotos transoceánicos que operan en el espacio aéreo del Atlántico Norte. Basado en documentos oficiales de ICAO con referencias y justificaciones.',
+    price: 0,
+    originalPrice: 0,
+    image: 'https://placehold.co/600x400/1a202c/FFFFFF?text=NAT+OPS&font=inter',
+    category: 'aviation',
+    colors: ['#1e293b', '#0f172a', '#334155'],
+    badge: 'Disponible',
+    badgeColor: 'blue',
+    rating: 5.0,
+    reviews: 342,
+    features: ['Banco de preguntas interactivo', 'Documentos ICAO oficiales', 'Referencias y justificaciones', 'Acceso completo'],
+    tags: ['aviation', 'NAT', 'oceanic', 'procedures'],
+    appUrl: '/apps/north-atlantic-procedures/guide.html'
+  },
+  {
+    id: 'flight-performance-calc',
+    name: 'Flight Performance Calculator',
+    description: 'Calculadora avanzada de performance de vuelo para despegue, aterrizaje y planificación de combustible',
+    longDescription: 'Cálculos avanzados de performance de vuelo para despegue, aterrizaje, planificación de combustible y peso & balance. Conforme a ICAO con múltiples tipos de aeronaves.',
+    price: 49.99,
+    originalPrice: 49.99,
+    image: 'https://placehold.co/600x400/4c1d95/FFFFFF?text=Flight+Calculator&font=inter',
+    category: 'aviation',
+    colors: ['#4c1d95', '#6d28d9', '#8b5cf6'],
+    badge: 'Professional',
+    badgeColor: 'purple',
+    rating: 4.0,
+    reviews: 150,
+    features: ['Cálculos de despegue/aterrizaje', 'Planificación de combustible', 'Peso & balance', 'Múltiples aeronaves'],
+    tags: ['aviation', 'performance', 'calculator', 'flight'],
+    appUrl: '/apps/flight-performance-calculator/guide.html'
+  },
   {
     id: 'smartwatch-pro',
     name: 'SmartWatch Pro',

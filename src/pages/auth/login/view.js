@@ -1,5 +1,22 @@
 import { loginWithEmail, loginWithGoogle } from '../../../js/auth.js';
 import { initializeRememberMe, saveCredentials } from '../../../js/rememberMe.js';
+import { toast, showLoadingToast } from '../../../js/utils/toast.js';
+
+function getLoginErrorMessage(errorCode) {
+  const errorMessages = {
+    'auth/user-not-found': 'No existe una cuenta con este email',
+    'auth/wrong-password': 'Contraseña incorrecta',
+    'auth/invalid-email': 'El formato del email no es válido',
+    'auth/user-disabled': 'Esta cuenta ha sido deshabilitada',
+    'auth/too-many-requests': 'Demasiados intentos fallidos. Intenta más tarde',
+    'auth/network-request-failed': 'Error de conexión. Verifica tu internet',
+    'auth/invalid-credential': 'Credenciales inválidas. Verifica tu email y contraseña',
+    'auth/missing-password': 'Debes ingresar una contraseña',
+    'auth/weak-password': 'La contraseña debe tener al menos 6 caracteres'
+  };
+
+  return errorMessages[errorCode] || 'Error al iniciar sesión. Intenta nuevamente';
+}
 
 export async function renderLoginView() {
   const root = document.getElementById('spa-root');
@@ -30,36 +47,35 @@ export async function renderLoginView() {
     // Initialize remember me functionality
     initializeRememberMe(emailInput, rememberCheckbox);
 
-    const statusDiv = document.createElement('div');
-    statusDiv.className = 'mt-4 text-sm text-center';
-    if(loginButton) {
-        loginButton.parentElement.appendChild(statusDiv);
-    }
-
     if (loginButton) {
       loginButton.addEventListener('click', async (e) => {
         e.preventDefault();
         const email = emailInput?.value.trim() || '';
         const password = passwordInput?.value || '';
 
+        // Validation
+        if (!email || !password) {
+          toast.error('Por favor, completa todos los campos');
+          return;
+        }
+
+        const loadingToast = showLoadingToast('Iniciando sesión...');
+
         try {
           loginButton.disabled = true;
-          statusDiv.textContent = 'Iniciando sesión...';
-          statusDiv.style.color = 'black';
           const user = await loginWithEmail(email, password);
 
           // Save credentials if remember me is checked
           saveCredentials(email, rememberCheckbox?.checked || false);
 
-          statusDiv.textContent = 'Sesión iniciada exitosamente!';
-          statusDiv.style.color = 'green';
+          loadingToast.success('¡Sesión iniciada exitosamente!');
           setTimeout(() => {
             window.location.hash = '#/account';
-          }, 1000);
+          }, 1500);
         } catch (e) {
           console.error('Error en login:', e);
-          statusDiv.textContent = `Error: ${e.message}`;
-          statusDiv.style.color = 'red';
+          const errorMessage = getLoginErrorMessage(e.code || e.message);
+          loadingToast.error(errorMessage);
         } finally {
           loginButton.disabled = false;
         }
@@ -69,10 +85,11 @@ export async function renderLoginView() {
     if (googleButton) {
         googleButton.addEventListener('click', async (e) => {
             e.preventDefault();
+
+            const loadingToast = showLoadingToast('Iniciando sesión con Google...');
+
             try {
                 googleButton.disabled = true;
-                statusDiv.textContent = 'Iniciando sesión con Google...';
-                statusDiv.style.color = 'black';
                 const user = await loginWithGoogle();
 
                 // Save Google user email if remember me is checked
@@ -80,15 +97,14 @@ export async function renderLoginView() {
                   saveCredentials(user.email, true);
                 }
 
-                statusDiv.textContent = 'Sesión iniciada con Google!';
-                statusDiv.style.color = 'green';
+                loadingToast.success('¡Sesión iniciada con Google exitosamente!');
                 setTimeout(() => {
                     window.location.hash = '#/account';
-                }, 1000);
+                }, 1500);
             } catch (e) {
                 console.error('Error con Google:', e);
-                statusDiv.textContent = `Error: ${e.message}`;
-                statusDiv.style.color = 'red';
+                const errorMessage = getLoginErrorMessage(e.code || e.message);
+                loadingToast.error(errorMessage);
             } finally {
                 googleButton.disabled = false;
             }

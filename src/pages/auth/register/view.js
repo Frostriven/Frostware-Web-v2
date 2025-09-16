@@ -1,4 +1,20 @@
 import { registerWithEmail, loginWithGoogle } from '../../../js/auth.js';
+import { toast, showLoadingToast } from '../../../js/utils/toast.js';
+
+function getRegisterErrorMessage(errorCode) {
+  const errorMessages = {
+    'auth/email-already-in-use': 'Ya existe una cuenta con este email',
+    'auth/invalid-email': 'El formato del email no es válido',
+    'auth/operation-not-allowed': 'Registro con email/contraseña no permitido',
+    'auth/weak-password': 'La contraseña debe tener al menos 6 caracteres',
+    'auth/missing-email': 'Debes ingresar un email',
+    'auth/missing-password': 'Debes ingresar una contraseña',
+    'auth/network-request-failed': 'Error de conexión. Verifica tu internet',
+    'auth/too-many-requests': 'Demasiados intentos. Intenta más tarde'
+  };
+
+  return errorMessages[errorCode] || 'Error al crear la cuenta. Intenta nuevamente';
+}
 
 export async function renderRegisterView() {
   const root = document.getElementById('spa-root');
@@ -27,40 +43,39 @@ export async function renderRegisterView() {
     const passwordInput = root.querySelector('#register-password');
     const passwordConfirmInput = root.querySelector('#register-password-confirm');
 
-    const statusDiv = document.createElement('div');
-    statusDiv.className = 'mt-4 text-sm text-center';
-    if(registerButton) {
-        registerButton.parentElement.appendChild(statusDiv);
-    }
-
     if (registerButton) {
       registerButton.addEventListener('click', async (e) => {
         e.preventDefault();
-        const name = nameInput?.value || '';
-        const email = emailInput?.value || '';
+        const name = nameInput?.value.trim() || '';
+        const email = emailInput?.value.trim() || '';
         const password = passwordInput?.value || '';
         const passwordConfirm = passwordConfirmInput?.value || '';
 
-        if (password !== passwordConfirm) {
-          statusDiv.textContent = "Las contraseñas no coinciden.";
-          statusDiv.style.color = 'red';
+        // Validation
+        if (!name || !email || !password || !passwordConfirm) {
+          toast.error('Por favor, completa todos los campos');
           return;
         }
 
+        if (password !== passwordConfirm) {
+          toast.error('Las contraseñas no coinciden');
+          return;
+        }
+
+        const loadingToast = showLoadingToast('Creando cuenta...');
+
         try {
           registerButton.disabled = true;
-          statusDiv.textContent = 'Creando cuenta...';
-          statusDiv.style.color = 'black';
           const user = await registerWithEmail(name, email, password);
-          statusDiv.textContent = 'Cuenta creada exitosamente!';
-          statusDiv.style.color = 'green';
+
+          loadingToast.success('¡Cuenta creada exitosamente!');
           setTimeout(() => {
             window.location.hash = '#/';
           }, 1500);
         } catch (error) {
           console.error("Error en el registro:", error);
-          statusDiv.textContent = `Error: ${error.message}`;
-          statusDiv.style.color = 'red';
+          const errorMessage = getRegisterErrorMessage(error.code || error.message);
+          loadingToast.error(errorMessage);
         } finally {
           registerButton.disabled = false;
         }
@@ -70,20 +85,21 @@ export async function renderRegisterView() {
     if (googleButton) {
         googleButton.addEventListener('click', async (e) => {
             e.preventDefault();
+
+            const loadingToast = showLoadingToast('Iniciando sesión con Google...');
+
             try {
                 googleButton.disabled = true;
-                statusDiv.textContent = 'Iniciando sesión con Google...';
-                statusDiv.style.color = 'black';
                 const user = await loginWithGoogle();
-                statusDiv.textContent = 'Sesión iniciada con Google!';
-                statusDiv.style.color = 'green';
+
+                loadingToast.success('¡Cuenta creada con Google exitosamente!');
                 setTimeout(() => {
                     window.location.hash = '#/';
-                }, 1000);
+                }, 1500);
             } catch (e) {
                 console.error('Error con Google:', e);
-                statusDiv.textContent = `Error: ${e.message}`;
-                statusDiv.style.color = 'red';
+                const errorMessage = getRegisterErrorMessage(e.code || e.message);
+                loadingToast.error(errorMessage);
             } finally {
                 googleButton.disabled = false;
             }

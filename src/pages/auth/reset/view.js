@@ -1,4 +1,17 @@
 import { resetPassword } from '../../../js/auth.js';
+import { toast, showLoadingToast } from '../../../js/utils/toast.js';
+
+function getResetErrorMessage(errorCode) {
+  const errorMessages = {
+    'auth/invalid-email': 'El formato del email no es válido',
+    'auth/user-not-found': 'No existe una cuenta con este email',
+    'auth/too-many-requests': 'Demasiados intentos. Intenta más tarde',
+    'auth/network-request-failed': 'Error de conexión. Verifica tu internet',
+    'auth/missing-email': 'Debes ingresar un email'
+  };
+
+  return errorMessages[errorCode] || 'Error al enviar el enlace. Intenta nuevamente';
+}
 
 export function renderResetView() {
   const root = document.getElementById('spa-root');
@@ -14,7 +27,6 @@ export function renderResetView() {
           <div class="mt-4 text-sm text-center">
             <a href="#/auth/login" class="text-[#22a7d0]">Volver a iniciar sesión</a>
           </div>
-          <div id="status" class="mt-4 text-sm text-gray-600"></div>
         </div>
       </div>
     </section>
@@ -22,15 +34,26 @@ export function renderResetView() {
 
   const email = root.querySelector('#email');
   const btn = root.querySelector('#btn-reset');
-  const status = root.querySelector('#status');
 
   btn.addEventListener('click', async () => {
+    const emailValue = email.value.trim();
+
+    // Validation
+    if (!emailValue) {
+      toast.error('Por favor, ingresa tu email');
+      return;
+    }
+
+    const loadingToast = showLoadingToast('Enviando enlace de recuperación...');
+
     try {
       btn.disabled = true;
-      await resetPassword(email.value.trim());
-      status.textContent = 'Hemos enviado un enlace de recuperación si el email existe.';
+      await resetPassword(emailValue);
+      loadingToast.success('¡Enlace enviado! Revisa tu email (incluyendo spam)');
     } catch (e) {
-      status.textContent = `Error: ${e.message}`;
+      console.error('Error en reset password:', e);
+      const errorMessage = getResetErrorMessage(e.code || e.message);
+      loadingToast.error(errorMessage);
     } finally {
       btn.disabled = false;
     }

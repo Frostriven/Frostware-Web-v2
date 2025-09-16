@@ -76,15 +76,19 @@ function generateProductsHTML(products) {
     const reviewsCount = product.reviews || Math.floor(Math.random() * 400) + 50; // Random reviews if not specified
 
     return `
-      <div class="product-card bg-white rounded-lg shadow-lg border border-gray-200 flex flex-col hover:shadow-xl transition-shadow duration-300 cursor-pointer" data-category="${product.category}">
-        <img src="${product.image || 'https://placehold.co/600x400/1a202c/FFFFFF?text=' + encodeURIComponent(product.name) + '&font=inter'}" class="rounded-t-lg" alt="${product.name}">
+      <div class="product-card bg-white rounded-lg shadow-lg border border-gray-200 flex flex-col hover:shadow-xl transition-shadow duration-300 cursor-pointer h-full" data-category="${product.category}">
+        <div class="relative h-48 overflow-hidden rounded-t-lg">
+          <img src="${product.image || 'https://placehold.co/600x400/1a202c/FFFFFF?text=' + encodeURIComponent(product.name) + '&font=inter'}"
+               class="w-full h-full object-cover rounded-t-lg"
+               alt="${product.name}">
+        </div>
         <div class="p-6 flex flex-col flex-grow">
-          <h3 class="text-xl font-bold mb-2">${product.name}</h3>
+          <h3 class="text-xl font-bold mb-2 line-clamp-2 min-h-[3.5rem]">${product.name}</h3>
           <div class="flex items-center mb-3 star-rating">
             ${starsHTML}
             <span class="text-xs text-gray-500 ml-2">(${reviewsCount})</span>
           </div>
-          <p class="text-gray-600 mb-4 flex-grow">${product.description}</p>
+          <p class="text-gray-600 mb-4 flex-grow line-clamp-3 min-h-[4.5rem]">${product.description}</p>
           <div class="flex justify-between items-center mb-3">
             ${product.price === 0 || product.price === "Gratis" ? `
               <span class="text-2xl font-bold text-gray-900">Gratis</span>
@@ -119,7 +123,7 @@ function generateProductsHTML(products) {
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
           ${productsHTML}
         </div>
       </div>
@@ -236,14 +240,20 @@ function initializePurchaseAnimations() {
       this.classList.add('opacity-75');
 
       try {
+        // Get product info from the current product data (find matching product)
+        const productCategory = productCard.getAttribute('data-category');
+        const products = await getProductsFromFirebase();
+        const currentProduct = products.find(p => p.name === productName);
+
         // Add to Firebase
         const productData = {
-          id: productName.toLowerCase().replace(/\s+/g, '-'),
+          id: currentProduct?.id || productName.toLowerCase().replace(/\s+/g, '-'),
           name: productName,
           description: productDescription,
-          price: 99, // Default price for aviation products
+          price: currentProduct?.price || 99,
           image: productCard.querySelector('img')?.src || '',
-          category: 'aviation'
+          category: productCategory || 'general',
+          appUrl: currentProduct?.appUrl || null // Include app URL if available
         };
 
         await addUserProduct(auth.currentUser.uid, productData);
@@ -254,8 +264,12 @@ function initializePurchaseAnimations() {
           this.classList.remove('bg-[#22a7d0]', 'opacity-75');
           this.classList.add('bg-green-500');
 
-          // Show toast notification
-          showPurchaseToast();
+          // Show toast notification with app access info
+          if (productData.appUrl) {
+            showPurchaseToastWithApp(productData.appUrl);
+          } else {
+            showPurchaseToast();
+          }
 
           // Reset button after animation
           setTimeout(() => {
@@ -326,7 +340,60 @@ function showPurchaseToast() {
   showToast('¡Producto agregado exitosamente!', 'success');
 }
 
-// Add the fadeIn animation to the document
+function showPurchaseToastWithApp(appUrl) {
+  // Create interactive toast with app access button
+  const toast = document.createElement('div');
+  toast.className = 'fixed top-4 right-4 z-50 transform transition-all duration-500 translate-x-full';
+
+  toast.innerHTML = `
+    <div class="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg min-w-80">
+      <div class="flex items-start space-x-3">
+        <svg class="w-6 h-6 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        <div class="flex-1">
+          <p class="font-medium mb-2">¡Producto agregado exitosamente!</p>
+          <p class="text-sm mb-3">Ahora tienes acceso a la guía interactiva.</p>
+          <div class="flex space-x-2">
+            <button onclick="window.open('${appUrl}', '_blank')"
+                    class="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded text-sm font-medium transition-colors">
+              Abrir Guía
+            </button>
+            <button onclick="window.location.hash = '#/account'"
+                    class="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded text-sm font-medium transition-colors">
+              Ver Mis Apps
+            </button>
+          </div>
+        </div>
+        <button class="text-white hover:text-gray-200 transition-colors" onclick="this.parentElement.parentElement.parentElement.remove()">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(toast);
+
+  // Animate in
+  setTimeout(() => {
+    toast.classList.remove('translate-x-full');
+    toast.classList.add('translate-x-0');
+  }, 10);
+
+  // Auto remove after longer duration for interactive toast
+  setTimeout(() => {
+    toast.classList.add('translate-x-full');
+    setTimeout(() => {
+      if (document.body.contains(toast)) {
+        document.body.removeChild(toast);
+      }
+    }, 500);
+  }, 8000);
+}
+
+// Add the fadeIn animation and utilities to the document
 if (!document.querySelector('#products-animation-style')) {
   const style = document.createElement('style');
   style.id = 'products-animation-style';
@@ -344,6 +411,7 @@ if (!document.querySelector('#products-animation-style')) {
 
     .product-card {
       transition: all 0.3s ease;
+      height: 100%;
     }
 
     .product-card:hover {
@@ -366,6 +434,26 @@ if (!document.querySelector('#products-animation-style')) {
 
     .filter-btn:hover {
       transform: translateY(-1px);
+    }
+
+    /* Line clamp utilities for consistent text heights */
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .line-clamp-3 {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Ensure grid items stretch to same height */
+    .grid.items-stretch > .product-card {
+      align-self: stretch;
     }
   `;
   document.head.appendChild(style);
