@@ -1,0 +1,68 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Reglas para perfiles de usuario
+    match /users/{userId} {
+      // Solo el usuario autenticado puede leer/escribir su propio perfil
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Subcolección de productos comprados
+      match /purchasedProducts/{productId} {
+        // Solo el usuario autenticado puede leer/escribir sus propios productos
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Reglas para productos disponibles (catálogo)
+    match /products/{productId} {
+      // Todos los usuarios autenticados pueden leer productos
+      allow read: if request.auth != null;
+
+      // Solo administradores pueden escribir productos
+      allow write: if request.auth != null &&
+                     request.auth.uid in ['admin-uid-1', 'admin-uid-2'] ||
+                     request.auth.token.email in ['admin@frostware.com', 'developer@frostware.com'];
+    }
+
+    // Reglas para colección de administradores
+    match /admins/{adminId} {
+      // Solo administradores pueden leer/escribir en esta colección
+      allow read, write: if request.auth != null &&
+                           request.auth.uid in ['admin-uid-1', 'admin-uid-2'] ||
+                           request.auth.token.email in ['admin@frostware.com', 'developer@frostware.com'];
+    }
+
+    // Denegar todo lo demás
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+// Comentarios sobre las reglas:
+//
+// 1. **Seguridad por defecto**: La última regla deniega todo acceso no especificado
+//
+// 2. **Productos comprados**:
+//    - Ruta: /users/{userId}/purchasedProducts/{productId}
+//    - Solo el usuario propietario puede acceder a sus productos
+//    - No necesita verificar campos userId porque está implícito en la ruta
+//
+// 3. **Catálogo de productos**:
+//    - Todos los usuarios autenticados pueden leer
+//    - Solo administradores pueden modificar
+//
+// 4. **Perfiles de usuario**:
+//    - Cada usuario solo puede acceder a su propio perfil
+//    - Autenticación requerida
+//
+// 5. **Administración**:
+//    - Verificación por UID o email de administrador
+//    - Cambiar los UIDs/emails por los reales de tus administradores
+//
+// Beneficios del nuevo modelo:
+// - Reglas más simples y eficientes
+// - Mejor rendimiento (menos consultas)
+// - Seguridad mejorada por la estructura jerárquica
+// - Escalabilidad automática

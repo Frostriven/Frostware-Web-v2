@@ -215,6 +215,9 @@ async function initializeProductButtons() {
     return;
   }
 
+  // Force reload user purchased products to ensure latest state
+  await window.cart.loadUserPurchasedProducts();
+
   const productButtons = document.querySelectorAll('.product-action-button');
 
   for (const button of productButtons) {

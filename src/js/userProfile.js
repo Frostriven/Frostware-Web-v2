@@ -1,5 +1,5 @@
 import { db } from './firebase.js';
-import { doc, getDoc, setDoc, updateDoc, collection, addDoc, query, where, getDocs, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, serverTimestamp, query } from 'firebase/firestore';
 
 // Obtener perfil del usuario
 export async function getUserProfile(userId) {
@@ -18,8 +18,8 @@ export async function getUserProfile(userId) {
       country: '',
       company: '',
       bio: '',
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
     };
     await setDoc(userDoc, initialProfile);
     return initialProfile;
@@ -33,7 +33,7 @@ export async function updateUserProfile(userId, profileData) {
   const userDoc = doc(db, 'users', userId);
   const updateData = {
     ...profileData,
-    updatedAt: new Date()
+    updatedAt: serverTimestamp()
   };
 
   await updateDoc(userDoc, updateData);
@@ -44,17 +44,14 @@ export async function updateUserProfile(userId, profileData) {
 export async function getUserProducts(userId) {
   if (!db) throw new Error('Firestore no inicializado');
 
-  const productsQuery = query(
-    collection(db, 'userProducts'),
-    where('userId', '==', userId)
-  );
-
-  const querySnapshot = await getDocs(productsQuery);
+  // Usar subcolección: users/{userId}/purchasedProducts
+  const purchasedProductsRef = collection(db, 'users', userId, 'purchasedProducts');
+  const querySnapshot = await getDocs(purchasedProductsRef);
   const products = [];
 
   querySnapshot.forEach((doc) => {
     products.push({
-      id: doc.id,
+      id: doc.id, // Este es el productId
       ...doc.data()
     });
   });
@@ -66,17 +63,13 @@ export async function getUserProducts(userId) {
 export async function addUserProduct(userId, productData) {
   if (!db) throw new Error('Firestore no inicializado');
 
-  // Check if product already exists for this user
-  const existingProductQuery = query(
-    collection(db, 'userProducts'),
-    where('userId', '==', userId),
-    where('productId', '==', productData.id)
-  );
+  // Usar subcolección con el productId como ID del documento
+  const productDocRef = doc(db, 'users', userId, 'purchasedProducts', productData.id);
 
-  const existingSnapshot = await getDocs(existingProductQuery);
-  if (!existingSnapshot.empty) {
+  // Check if product already exists for this user
+  const existingDoc = await getDoc(productDocRef);
+  if (existingDoc.exists()) {
     // Product already exists, return the existing one
-    const existingDoc = existingSnapshot.docs[0];
     return {
       id: existingDoc.id,
       ...existingDoc.data()
@@ -84,52 +77,46 @@ export async function addUserProduct(userId, productData) {
   }
 
   const productDoc = {
-    userId: userId,
-    productId: productData.id,
-    productName: productData.name,
-    productDescription: productData.description,
-    productPrice: productData.price,
-    productImage: productData.image,
-    appUrl: productData.appUrl || null, // URL to the interactive app/guide
-    accessToken: generateAccessToken(), // Unique token for secure access
-    purchaseDate: new Date(),
+    // Ya no necesitamos userId ni productId porque están implícitos en la ruta
+    name: productData.name,
+    description: productData.description,
+    price: productData.price,
+    image: productData.image,
+    category: productData.category || 'general',
+    appUrl: productData.appUrl || null,
+    // Eliminar accessToken redundante - la existencia del doc es suficiente
+    purchaseDate: serverTimestamp(), // Usar timestamp del servidor
     status: 'active'
   };
 
-  const docRef = await addDoc(collection(db, 'userProducts'), productDoc);
+  await setDoc(productDocRef, productDoc);
   return {
-    id: docRef.id,
+    id: productData.id, // El productId es el ID del documento
     ...productDoc
   };
 }
 
-// Generate a unique access token for secure app access
-function generateAccessToken() {
-  return 'frostware_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-}
+// Nota: El accessToken fue eliminado - la existencia del documento es suficiente para verificar acceso
 
 // Verificar acceso del usuario a una app específica
 export async function verifyUserAppAccess(userId, productId) {
   if (!db) throw new Error('Firestore no inicializado');
 
-  const userProductsQuery = query(
-    collection(db, 'userProducts'),
-    where('userId', '==', userId),
-    where('productId', '==', productId),
-    where('status', '==', 'active')
-  );
+  // Verificar directamente si existe el documento en la subcolección
+  const productDocRef = doc(db, 'users', userId, 'purchasedProducts', productId);
+  const productDoc = await getDoc(productDocRef);
 
-  const querySnapshot = await getDocs(userProductsQuery);
-
-  if (!querySnapshot.empty) {
-    const userProduct = querySnapshot.docs[0].data();
-    return {
-      hasAccess: true,
-      accessToken: userProduct.accessToken,
-      appUrl: userProduct.appUrl,
-      purchaseDate: userProduct.purchaseDate,
-      productName: userProduct.productName
-    };
+  if (productDoc.exists()) {
+    const productData = productDoc.data();
+    // Solo verificar si el producto está activo
+    if (productData.status === 'active') {
+      return {
+        hasAccess: true,
+        appUrl: productData.appUrl,
+        purchaseDate: productData.purchaseDate,
+        productName: productData.name
+      };
+    }
   }
 
   return {
@@ -148,24 +135,23 @@ export async function getUserApps(userId) {
   const userApps = userProducts
     .filter(product => product.appUrl)
     .map(product => ({
-      id: product.id,
-      productId: product.productId,
-      name: product.productName,
-      description: product.productDescription,
+      id: product.id, // El productId
+      name: product.name,
+      description: product.description,
       appUrl: product.appUrl,
-      accessToken: product.accessToken,
       purchaseDate: product.purchaseDate,
-      image: product.productImage
+      image: product.image
     }));
 
   return userApps;
 }
 
 // Eliminar producto del usuario
-export async function removeUserProduct(productId) {
+export async function removeUserProduct(userId, productId) {
   if (!db) throw new Error('Firestore no inicializado');
 
-  const productDocRef = doc(db, 'userProducts', productId);
+  // Eliminar de la subcolección del usuario
+  const productDocRef = doc(db, 'users', userId, 'purchasedProducts', productId);
   await deleteDoc(productDocRef);
 
   return { success: true };
@@ -313,11 +299,10 @@ export const products = [
   }
 ];
 
-// Cargar productos desde Firebase
+// Cargar productos desde Firebase (única fuente de verdad)
 export async function getProductsFromFirebase() {
   if (!db) {
-    console.warn('Firestore no inicializado, usando productos estáticos');
-    return products;
+    throw new Error('Firestore no inicializado - Firebase es requerido para la aplicación');
   }
 
   try {
@@ -328,15 +313,21 @@ export async function getProductsFromFirebase() {
     querySnapshot.forEach((doc) => {
       firebaseProducts.push({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
+        // Asegurar que los timestamps son objetos Date para compatibilidad
+        createdAt: doc.data().createdAt?.toDate?.() || doc.data().createdAt,
+        updatedAt: doc.data().updatedAt?.toDate?.() || doc.data().updatedAt
       });
     });
 
-    // Si no hay productos en Firebase, usar los productos estáticos
-    return firebaseProducts.length > 0 ? firebaseProducts : products;
+    if (firebaseProducts.length === 0) {
+      console.warn('No se encontraron productos en Firebase. Ejecute initializeProductsInFirebase() primero.');
+    }
+
+    return firebaseProducts;
   } catch (error) {
     console.error('Error cargando productos desde Firebase:', error);
-    return products; // Fallback a productos estáticos
+    throw error; // No usar fallback - fallar explícitamente para detectar problemas
   }
 }
 
@@ -350,11 +341,16 @@ export async function initializeProductsInFirebase() {
     const querySnapshot = await getDocs(productsQuery);
 
     if (querySnapshot.empty) {
-      // No hay productos, agregar los productos estáticos
+      // No hay productos, agregar los productos estáticos con timestamps del servidor
       for (const product of products) {
-        await setDoc(doc(db, 'products', product.id), product);
+        const productWithTimestamps = {
+          ...product,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        };
+        await setDoc(doc(db, 'products', product.id), productWithTimestamps);
       }
-      console.log('Productos inicializados en Firebase');
+      console.log('Productos inicializados en Firebase con timestamps del servidor');
     }
   } catch (error) {
     console.error('Error inicializando productos en Firebase:', error);

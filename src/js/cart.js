@@ -19,7 +19,7 @@ class ShoppingCart {
         if (auth?.currentUser) {
             try {
                 const userProducts = await getUserProducts(auth.currentUser.uid);
-                this.userPurchasedProducts = new Set(userProducts.map(product => product.productId));
+                this.userPurchasedProducts = new Set(userProducts.map(product => product.id));
             } catch (error) {
                 console.error('Error loading user products:', error);
             }
@@ -284,13 +284,11 @@ class ShoppingCart {
             // Actualizar todos los botones de productos
             this.updateAllProductButtons();
 
-            // Mostrar mensaje de éxito
-            this.showSuccessModal();
-
-            // Redirect to account products tab after 2 seconds
-            setTimeout(() => {
+            // Mostrar mensaje de éxito y redirigir automáticamente
+            this.showSuccessModal(() => {
+                // Callback para cerrar modal y redirigir
                 window.location.hash = '#/account/products';
-            }, 2000);
+            });
 
         } catch (error) {
             console.error('Error processing payment:', error);
@@ -370,7 +368,7 @@ class ShoppingCart {
         }
     }
 
-    showSuccessModal() {
+    showSuccessModal(onRedirectCallback = null) {
         const successModal = document.createElement('div');
         successModal.className = 'fixed inset-0 z-[120] flex items-center justify-center bg-black bg-opacity-50';
         successModal.innerHTML = `
@@ -399,12 +397,21 @@ class ShoppingCart {
         // Play Apple Pay-like success sound
         this.playApplePaySound();
 
-        // Auto-remove after 10 seconds
-        setTimeout(() => {
-            if (document.body.contains(successModal)) {
-                successModal.remove();
-            }
-        }, 10000);
+        // Auto-redirect after 2 seconds if callback provided, otherwise auto-remove after 10 seconds
+        if (onRedirectCallback) {
+            setTimeout(() => {
+                if (document.body.contains(successModal)) {
+                    successModal.remove();
+                }
+                onRedirectCallback();
+            }, 2000);
+        } else {
+            setTimeout(() => {
+                if (document.body.contains(successModal)) {
+                    successModal.remove();
+                }
+            }, 10000);
+        }
     }
 
     isProductPurchased(productId) {

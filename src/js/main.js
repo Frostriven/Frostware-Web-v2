@@ -144,10 +144,12 @@ const initializeApp = () => {
   // Update header when hash changes
   window.addEventListener('hashchange', async () => {
     await renderHeader(currentUser);
-    // Re-bind cart events after header update
-    setTimeout(() => {
+    // Re-bind cart events and reload purchased products after header update
+    setTimeout(async () => {
       if (window.cart) {
         window.cart.bindEvents();
+        // Reload purchased products to ensure up-to-date state
+        await window.cart.loadUserPurchasedProducts();
       }
     }, 100);
   });

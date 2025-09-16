@@ -184,10 +184,10 @@ function initializeAccountPage(initialTab = 'profile') {
         productsList.innerHTML = products.map(product => `
           <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
             <div class="flex items-start gap-4">
-              <img src="${product.productImage || 'https://placehold.co/80x80/1a202c/FFFFFF?text=' + encodeURIComponent(product.productName.charAt(0))}" alt="${product.productName}" class="w-20 h-20 rounded-lg object-cover shadow-md">
+              <img src="${product.image || 'https://placehold.co/80x80/1a202c/FFFFFF?text=' + encodeURIComponent(product.name.charAt(0))}" alt="${product.name}" class="w-20 h-20 rounded-lg object-cover shadow-md">
               <div class="flex-1">
                 <div class="flex justify-between items-start mb-2">
-                  <h3 class="font-bold text-gray-900 text-lg">${product.productName}</h3>
+                  <h3 class="font-bold text-gray-900 text-lg">${product.name}</h3>
                   <div class="flex items-center gap-2">
                     <button class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-full transition-colors" onclick="removeUserProduct('${product.id}', '${user.uid}')" title="Eliminar producto">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -196,16 +196,18 @@ function initializeAccountPage(initialTab = 'profile') {
                     </button>
                   </div>
                 </div>
-                <p class="text-gray-600 text-sm mb-3 line-clamp-2">${product.productDescription}</p>
+                <p class="text-gray-600 text-sm mb-3 line-clamp-2">${product.description}</p>
                 <div class="flex justify-between items-center">
                   <div class="text-sm text-gray-500">
                     <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                     </svg>
-                    Adquirido: ${product.purchaseDate.toDate().toLocaleDateString('es-ES')}
+                    Adquirido: ${product.purchaseDate?.toDate ? product.purchaseDate.toDate().toLocaleDateString('es-ES') :
+                               product.purchaseDate instanceof Date ? product.purchaseDate.toLocaleDateString('es-ES') :
+                               'Fecha no disponible'}
                   </div>
                   <div class="flex items-center gap-3">
-                    <span class="text-xl font-bold text-[#22a7d0]">$${product.productPrice}</span>
+                    <span class="text-xl font-bold text-[#22a7d0]">${product.price === 0 ? 'Gratis' : `$${product.price}`}</span>
                     <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full border border-green-200">
                       <span class="w-2 h-2 bg-green-500 rounded-full inline-block mr-1"></span>
                       Activo
@@ -426,7 +428,7 @@ window.removeUserProduct = async function(productId, userId) {
     const confirmed = confirm('¿Estás seguro de que deseas eliminar este producto?');
     if (!confirmed) return;
 
-    await removeUserProduct(productId);
+    await removeUserProduct(userId, productId);
 
     // Recargar la lista de productos
     const user = { uid: userId };
