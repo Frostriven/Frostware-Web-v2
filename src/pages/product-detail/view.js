@@ -31,12 +31,14 @@ export async function renderProductDetailView(productId) {
       const { getUserProducts } = await import('../../js/userProfile.js');
       const userProducts = await getUserProducts(auth.currentUser.uid);
       hasPurchased = userProducts.some(p => p.id === productId);
-    }
 
-    // Check if product is in cart
-    if (window.cart) {
-      isInCart = window.cart.isProductInCart(productId);
+      // Only check cart if user is logged in
+      if (window.cart) {
+        isInCart = window.cart.isProductInCart(productId);
+      }
     }
+    // If no user is logged in, cart status should always be false
+    // The cart should only be relevant for logged-in users
 
     // Create dynamic gradient from product colors
     const colors = product.colors || ['#1e293b', '#0f172a', '#334155'];
@@ -140,26 +142,53 @@ export async function renderProductDetailView(productId) {
                 </p>
               </div>
 
-              ${product.features && product.features.length > 0 ? `
+              ${product.detailedFeatures && product.detailedFeatures.length > 0 ? `
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-                  ${product.features.map((feature, index) => {
+                  ${product.detailedFeatures.map((feature, index) => {
                     const colors = ['blue', 'green', 'orange', 'red', 'purple', 'indigo'];
-                    const icons = [
-                      '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path>',
-                      '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>',
-                      '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path>',
-                      '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>',
-                      '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>',
-                      '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>'
-                    ];
                     const color = colors[index % colors.length];
-                    const icon = icons[index % icons.length];
+
+                    // Map icon names to SVG paths
+                    const iconPaths = {
+                      'radio': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path>',
+                      'map': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>',
+                      'cloud': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path>',
+                      'warning': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>',
+                      'certificate': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>',
+                      'lightning': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>',
+                      'code': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>',
+                      'database': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>',
+                      'shield': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016zM12 9v2m0 4h.01"></path>',
+                      'default': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
+                    };
+
+                    const iconPath = iconPaths[feature.icon] || iconPaths['default'];
 
                     return `
                       <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
                         <div class="w-12 h-12 bg-${color}-100 rounded-lg flex items-center justify-center mb-6">
                           <svg class="w-6 h-6 text-${color}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            ${icon}
+                            ${iconPath}
+                          </svg>
+                        </div>
+                        <h4 class="text-xl font-bold text-gray-900 mb-3">${feature.title}</h4>
+                        <p class="text-gray-600">${feature.description}</p>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              ` : product.features && product.features.length > 0 ? `
+                <!-- Fallback to simple features if detailedFeatures not available -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+                  ${product.features.map((feature, index) => {
+                    const colors = ['blue', 'green', 'orange', 'red', 'purple', 'indigo'];
+                    const color = colors[index % colors.length];
+
+                    return `
+                      <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
+                        <div class="w-12 h-12 bg-${color}-100 rounded-lg flex items-center justify-center mb-6">
+                          <svg class="w-6 h-6 text-${color}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                           </svg>
                         </div>
                         <h4 class="text-xl font-bold text-gray-900 mb-3">${feature}</h4>
@@ -308,41 +337,57 @@ function setupProductDetailEventListeners(product) {
       if (isInCart) {
         // Remove from cart
         window.cart.removeFromCart(product.id);
-
-        // Update button appearance
-        button.innerHTML = `
-          Agregar al Carrito
-          <svg class="w-5 h-5 ml-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l-1 12a2 2 0 01-2 2H8a2 2 0 01-2-2L5 9z"></path>
-          </svg>
-        `;
-
-        // Update button classes based on which button it is
-        if (button.id === 'add-to-cart-btn') {
-          button.className = 'inline-flex items-center justify-center px-8 py-4 bg-[#22a7d0] hover:bg-[#1e96c8] text-white font-bold rounded-lg text-lg transition-colors shadow-lg';
-        } else {
-          button.className = 'inline-flex items-center px-10 py-4 bg-white text-[#22a7d0] hover:bg-blue-50 font-bold rounded-lg text-xl transition-colors shadow-lg';
+        updateBothButtons(false);
+        // Force update cart count in header
+        if (window.cart.updateCartCount) {
+          window.cart.updateCartCount();
         }
       } else {
         // Add to cart
         const success = window.cart.addToCart(product);
         if (success) {
-          // Update button text and appearance
-          button.innerHTML = `
-            En el Carrito
-            <svg class="w-5 h-5 ml-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-          `;
-
-          // Update button classes
-          if (button.id === 'add-to-cart-btn') {
-            button.className = 'inline-flex items-center justify-center px-8 py-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg text-lg transition-colors shadow-lg';
-          } else {
-            button.className = 'inline-flex items-center px-10 py-4 bg-green-500 text-white hover:bg-green-600 font-bold rounded-lg text-xl transition-colors shadow-lg';
+          updateBothButtons(true);
+          // Force update cart count in header
+          if (window.cart.updateCartCount) {
+            window.cart.updateCartCount();
           }
         }
       }
+    }
+  };
+
+  // Function to update both buttons simultaneously
+  const updateBothButtons = (inCart) => {
+    const topButton = document.getElementById('add-to-cart-btn');
+    const bottomButton = document.getElementById('add-to-cart-btn-cta');
+
+    const buttonText = inCart ? 'En el Carrito' : 'Agregar al Carrito';
+    const iconPath = inCart
+      ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>'
+      : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l-1 12a2 2 0 01-2 2H8a2 2 0 01-2-2L5 9z"></path>';
+
+    if (topButton) {
+      topButton.innerHTML = `
+        ${buttonText}
+        <svg class="w-5 h-5 ml-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          ${iconPath}
+        </svg>
+      `;
+      topButton.className = inCart
+        ? 'inline-flex items-center justify-center px-8 py-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg text-lg transition-colors shadow-lg'
+        : 'inline-flex items-center justify-center px-8 py-4 bg-[#22a7d0] hover:bg-[#1e96c8] text-white font-bold rounded-lg text-lg transition-colors shadow-lg';
+    }
+
+    if (bottomButton) {
+      bottomButton.innerHTML = `
+        ${buttonText}
+        <svg class="w-6 h-6 ml-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          ${iconPath}
+        </svg>
+      `;
+      bottomButton.className = inCart
+        ? 'inline-flex items-center px-10 py-4 bg-green-500 text-white hover:bg-green-600 font-bold rounded-lg text-xl transition-colors shadow-lg'
+        : 'inline-flex items-center px-10 py-4 bg-white text-[#22a7d0] hover:bg-blue-50 font-bold rounded-lg text-xl transition-colors shadow-lg';
     }
   };
 

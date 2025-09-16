@@ -66,6 +66,15 @@ export async function updateUserDisplayName(newName) {
 
 export async function logout() {
   if (!auth) throw new Error('Firebase no inicializado');
+
+  // Clear cart when logging out
+  if (window.cart && window.cart.clearCart) {
+    window.cart.clearCart();
+  }
+
+  // Also clear localStorage cart
+  localStorage.removeItem('cart');
+
   await signOut(auth);
 }
 

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actualizar Productos en Firebase</title>
+</head>
+<body>
+    <h1>Actualizando productos en Firebase...</h1>
+    <div id="status"></div>
+
+    <script type="module">
+        import { initializeProductsInFirebase } from './src/js/userProfile.js';
+
+        const statusDiv = document.getElementById('status');
+
+        async function updateProducts() {
+            try {
+                statusDiv.innerHTML = 'Actualizando productos con detailedFeatures...';
+                await initializeProductsInFirebase();
+                statusDiv.innerHTML = '✅ Productos actualizados correctamente. Revisa la consola para más detalles.';
+            } catch (error) {
+                statusDiv.innerHTML = '❌ Error actualizando productos: ' + error.message;
+                console.error(error);
+            }
+        }
+
+        // Ejecutar actualización
+        updateProducts();
+    </script>
+</body>
+</html>

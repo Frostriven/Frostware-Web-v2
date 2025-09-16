@@ -168,16 +168,100 @@ export const products = [
     originalPrice: 150,
     image: 'https://placehold.co/600x400/1a202c/FFFFFF?text=NAT+OPS&font=inter',
     category: 'aviation',
-    colors: ['#1e293b', '#0f172a', '#334155'],
+    colors: ['#d4d8dfff', '#39c815ff', '#51023cff'],
     badge: 'Disponible',
     badgeColor: 'blue',
     rating: 5.0,
     reviews: 342,
     features: ['Banco de preguntas interactivo', 'Documentos ICAO oficiales', 'Referencias y justificaciones', 'Acceso completo'],
+    detailedFeatures: [
+      {
+        icon: 'radio',
+        title: 'Communications Procedures',
+        description: 'Master HF radio protocols, SELCAL operations, and position reporting requirements for oceanic flight.'
+      },
+      {
+        icon: 'map',
+        title: 'Navigation & Track Systems',
+        description: 'Learn NAT track systems, waypoint procedures, and RNAV requirements for safe oceanic navigation.'
+      },
+      {
+        icon: 'cloud',
+        title: 'Weather & Environmental',
+        description: 'Understand SIGWX charts, turbulence reporting, and how weather affects NAT operations.'
+      },
+      {
+        icon: 'warning',
+        title: 'Emergency Procedures',
+        description: 'Practice contingency procedures, diversions, and ETOPS requirements for safe operations.'
+      },
+      {
+        icon: 'certificate',
+        title: 'Certification Ready',
+        description: 'Questions designed to match real certification exams with detailed explanations and references.'
+      },
+      {
+        icon: 'lightning',
+        title: 'Interactive Learning',
+        description: 'Hints, detailed explanations, and progress tracking to optimize your study sessions.'
+      }
+    ],
     tags: ['aviation', 'NAT', 'oceanic', 'procedures'],
     appUrl: '/apps/north-atlantic-procedures/guide.html'
   },
-  
+
+  {
+    id: 'p2',
+    name: 'P2',
+    description: 'A comprehensive question bank for transoceanic pilots operating in North Atlantic airspace. Based on official ICAO documents with references and justifications.',
+    longDescription: 'The most comprehensive question bank for transoceanic pilots. Study official ICAO procedures, practice with real scenarios, and pass your NAT operations certification with confidence.',
+    price: 99,
+    originalPrice: 150,
+    image: 'https://static.vecteezy.com/system/resources/previews/001/194/635/non_2x/snowflake-png.png',
+    category: 'aviation',
+    colors: ['#d4d8dfff', '#39c815ff', '#51023cff'],
+    badge: 'Disponible',
+    badgeColor: 'blue',
+    rating: 5.0,
+    reviews: 342,
+    features: ['Banco de preguntas interactivo', 'Documentos ICAO oficiales', 'Referencias y justificaciones', 'Acceso completo'],
+    detailedFeatures: [
+      {
+        icon: 'radio',
+        title: 'Communications Procedures',
+        description: 'Master HF radio protocols, SELCAL operations, and position reporting requirements for oceanic flight.'
+      },
+      {
+        icon: 'map',
+        title: 'Navigation & Track Systems',
+        description: 'Learn NAT track systems, waypoint procedures, and RNAV requirements for safe oceanic navigation.'
+      },
+      {
+        icon: 'cloud',
+        title: 'Weather & Environmental',
+        description: 'Understand SIGWX charts, turbulence reporting, and how weather affects NAT operations.'
+      },
+      {
+        icon: 'warning',
+        title: 'Emergency Procedures',
+        description: 'Practice contingency procedures, diversions, and ETOPS requirements for safe operations.'
+      },
+      {
+        icon: 'certificate',
+        title: 'Certification Ready',
+        description: 'Questions designed to match real certification exams with detailed explanations and references.'
+      },
+      {
+        icon: 'lightning',
+        title: 'Interactive Learning',
+        description: 'Hints, detailed explanations, and progress tracking to optimize your study sessions.'
+      }
+    ],
+    tags: ['aviation', 'NAT', 'oceanic', 'procedures'],
+    appUrl: '/apps/north-atlantic-procedures/guide.html'
+  },
+
+
 ];
 
 // Crear usuario demo para desarrollo
@@ -268,21 +352,31 @@ export async function initializeProductsInFirebase() {
   if (!db) return;
 
   try {
-    // Verificar si ya existen productos
-    const productsQuery = query(collection(db, 'products'));
-    const querySnapshot = await getDocs(productsQuery);
+    // Actualizar productos existentes con nuevos campos
+    for (const product of products) {
+      const productRef = doc(db, 'products', product.id);
+      const productDoc = await getDoc(productRef);
 
-    if (querySnapshot.empty) {
-      // No hay productos, agregar los productos estáticos con timestamps del servidor
-      for (const product of products) {
+      if (productDoc.exists()) {
+        // Si existe, actualizar con los nuevos campos (detailedFeatures)
+        const existingData = productDoc.data();
+        if (!existingData.detailedFeatures || existingData.detailedFeatures.length !== product.detailedFeatures?.length) {
+          await updateDoc(productRef, {
+            detailedFeatures: product.detailedFeatures || [],
+            updatedAt: serverTimestamp()
+          });
+          console.log(`Producto ${product.id} actualizado con detailedFeatures`);
+        }
+      } else {
+        // Si no existe, crear nuevo
         const productWithTimestamps = {
           ...product,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         };
-        await setDoc(doc(db, 'products', product.id), productWithTimestamps);
+        await setDoc(productRef, productWithTimestamps);
+        console.log(`Producto ${product.id} creado en Firebase`);
       }
-      console.log('Productos inicializados en Firebase con timestamps del servidor');
     }
   } catch (error) {
     console.error('Error inicializando productos en Firebase:', error);

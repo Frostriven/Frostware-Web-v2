@@ -77,10 +77,11 @@ const initializeApp = () => {
       });
     }
 
-    // Re-bind cart events after header render
+    // Re-bind cart events after header render and update cart count
     setTimeout(() => {
       if (window.cart) {
         window.cart.bindEvents();
+        window.cart.updateCartCount(); // Always update count after header render
       }
     }, 50);
   };
@@ -164,6 +165,8 @@ const initializeApp = () => {
         window.cart.bindEvents();
         // Reload purchased products to ensure up-to-date state
         await window.cart.loadUserPurchasedProducts();
+        // Always update cart count after header render
+        window.cart.updateCartCount();
       }
     }, 100);
   });

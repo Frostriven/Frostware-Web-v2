@@ -6,6 +6,11 @@ class ShoppingCart {
         this.cart = JSON.parse(localStorage.getItem('cart')) || [];
         this.userPurchasedProducts = new Set();
         this.initializeCart();
+
+        // Force update cart count on initialization
+        setTimeout(() => {
+            this.updateCartCount();
+        }, 200);
     }
 
     async initializeCart() {
@@ -23,6 +28,11 @@ class ShoppingCart {
             } catch (error) {
                 console.error('Error loading user products:', error);
             }
+        } else {
+            // If no user is logged in, clear the cart
+            this.cart = [];
+            localStorage.removeItem('cart');
+            this.userPurchasedProducts = new Set();
         }
     }
 
@@ -145,11 +155,27 @@ class ShoppingCart {
         if (countElement) {
             const count = this.cart.length;
             countElement.textContent = count;
+
+            // Always show count if there are items, even if it's just added
             if (count > 0) {
                 countElement.classList.remove('hidden');
+                countElement.style.display = 'flex'; // Force display
+                countElement.style.visibility = 'visible'; // Force visibility
+                countElement.style.opacity = '1'; // Force opacity
+                console.log(`✅ Cart count shown: ${count} items`);
             } else {
                 countElement.classList.add('hidden');
+                countElement.style.display = 'none';
+                countElement.style.visibility = 'hidden';
+                countElement.style.opacity = '0';
+                console.log(`🔴 Cart count hidden: 0 items`);
             }
+        } else {
+            console.log('❌ Cart count element not found - header might not be rendered yet');
+            // Try again in a moment if element doesn't exist
+            setTimeout(() => {
+                this.updateCartCount();
+            }, 500);
         }
     }
 
