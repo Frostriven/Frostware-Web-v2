@@ -74,6 +74,41 @@ export async function renderDashboardView(productId) {
   const purchasedProductIds = new Set(userPurchasedProducts.map(p => p.id));
 
   spaRoot.innerHTML = `
+    <style>
+      /* Custom slider styles */
+      .slider::-webkit-slider-thumb {
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #22a7d0;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      }
+
+      .slider::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #22a7d0;
+        cursor: pointer;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      }
+
+      .slider::-webkit-slider-track {
+        background: #e5e7eb;
+        height: 8px;
+        border-radius: 4px;
+      }
+
+      .slider::-moz-range-track {
+        background: #e5e7eb;
+        height: 8px;
+        border-radius: 4px;
+        border: none;
+      }
+    </style>
     <div class="min-h-screen bg-gray-50">
       <!-- Header Navigation -->
       <div class="bg-gradient-to-r from-orange-50 to-amber-50 border-b border-orange-200 p-6">
@@ -117,46 +152,111 @@ export async function renderDashboardView(productId) {
                     const isCurrentProduct = prod.id === productId;
 
                     return `
-                      <div class="flex items-center justify-between p-4 rounded-lg border-2 ${
-                        isPurchased
-                          ? isCurrentProduct
-                            ? 'border-[#22a7d0] bg-blue-50'
-                            : 'border-green-200 bg-green-50'
-                          : 'border-gray-200 bg-gray-50'
-                      }">
-                        <div class="flex items-center space-x-3">
-                          <div class="relative">
-                            <input type="checkbox" id="product-${prod.id}" ${isPurchased ? 'checked' : ''} ${!isPurchased ? 'disabled' : ''}
-                                   class="w-5 h-5 text-[#22a7d0] bg-gray-100 border-gray-300 rounded focus:ring-[#22a7d0] focus:ring-2"
-                                   onchange="toggleProductDatabase('${prod.id}', this.checked)">
-                            ${isPurchased ? `
-                              <svg class="absolute top-0 left-0 w-5 h-5 text-green-500 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                              </svg>
-                            ` : ''}
+                      <div class="space-y-3">
+                        <div class="flex items-center justify-between p-4 rounded-lg border-2 ${
+                          isPurchased
+                            ? isCurrentProduct
+                              ? 'border-[#22a7d0] bg-blue-50'
+                              : 'border-green-200 bg-green-50'
+                            : 'border-gray-300 bg-gray-100 opacity-75'
+                        }">
+                          <div class="flex items-center space-x-3">
+                            <div class="relative">
+                              <input type="checkbox" id="product-${prod.id}" ${isPurchased ? 'checked' : ''} ${!isPurchased ? 'disabled' : ''}
+                                     class="w-5 h-5 text-[#22a7d0] bg-gray-100 border-gray-300 rounded focus:ring-[#22a7d0] focus:ring-2 ${!isPurchased ? 'cursor-not-allowed' : ''}"
+                                     onchange="toggleProductDatabase('${prod.id}', this.checked)">
+                              ${isPurchased ? `
+                                <svg class="absolute top-0 left-0 w-5 h-5 text-green-500 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                              ` : ''}
+                            </div>
+                            <img src="${prod.image}" alt="${prod.name}" class="w-8 h-8 rounded object-cover ${!isPurchased ? 'grayscale' : ''}">
+                            <div>
+                              <h3 class="font-semibold ${isPurchased ? 'text-gray-900' : 'text-gray-500'}">${prod.name}</h3>
+                              <p class="text-sm ${isPurchased ? 'text-gray-600' : 'text-gray-400'}">${prod.category}</p>
+                              ${!isPurchased ? `<p class="text-xs text-gray-500 mt-1">Este producto no ha sido comprado</p>` : ''}
+                            </div>
                           </div>
-                          <img src="${prod.image}" alt="${prod.name}" class="w-8 h-8 rounded object-cover">
-                          <div>
-                            <h3 class="font-semibold text-gray-900">${prod.name}</h3>
-                            <p class="text-sm text-gray-600">${prod.category}</p>
+                          <div class="text-right">
+                            ${isPurchased
+                              ? `<span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">✓ Activo</span>`
+                              : `<div class="text-right">
+                                   <div class="text-lg font-bold text-gray-500">$${prod.price}</div>
+                                   <span class="px-2 py-1 bg-gray-200 text-gray-500 text-xs font-medium rounded-full">No comprado</span>
+                                 </div>`
+                            }
                           </div>
                         </div>
-                        <div class="text-right">
-                          ${isPurchased
-                            ? `<span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">✓ Activo</span>`
-                            : `<span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">No disponible</span>`
-                          }
-                        </div>
+
+                        <!-- Topic Selection for Purchased Products -->
+                        ${isPurchased ? `
+                          <div id="topics-${prod.id}" class="ml-8 space-y-2 ${!document.getElementById('product-' + prod.id)?.checked ? 'hidden' : ''}">
+                            <h4 class="text-sm font-medium text-gray-700">Temas disponibles:</h4>
+                            <div class="grid grid-cols-2 gap-2">
+                              ${(prod.topics || [
+                                { id: 'communications', name: 'Communications', questions: 45 },
+                                { id: 'navigation', name: 'Navigation & Tracks', questions: 38 },
+                                { id: 'weather', name: 'Weather & Environmental', questions: 32 },
+                                { id: 'emergency', name: 'Emergency Procedures', questions: 25 },
+                                { id: 'certification', name: 'Certification Standards', questions: 10 }
+                              ]).map(topic => `
+                                <label class="flex items-center space-x-2 p-2 rounded border border-gray-200 hover:bg-gray-50">
+                                  <input type="checkbox" checked class="text-[#22a7d0] focus:ring-[#22a7d0]"
+                                         onchange="updateTopicSelection('${prod.id}', '${topic.id}', this.checked)">
+                                  <div class="flex-1">
+                                    <div class="text-sm font-medium text-gray-900">${topic.name}</div>
+                                    <div class="text-xs text-gray-500">${topic.questions} preguntas</div>
+                                  </div>
+                                </label>
+                              `).join('')}
+                            </div>
+                          </div>
+                        ` : ''}
                       </div>
                     `;
                   }).join('')}
                 </div>
 
-                <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p class="text-sm text-blue-800">
-                    <strong>Bases activas:</strong> <span id="active-databases-count">${userPurchasedProducts.length}</span> productos
-                    | <strong>Total de preguntas combinadas:</strong> <span id="total-questions">0</span>
-                  </p>
+                <!-- Info and Summary -->
+                <div class="mt-4 space-y-3">
+                  <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div class="flex items-start space-x-3">
+                      <svg class="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                      <div>
+                        <h4 class="font-medium text-amber-900 mb-1">Cómo funciona la selección de bases de datos</h4>
+                        <ul class="text-sm text-amber-800 space-y-1">
+                          <li>• <strong>Productos comprados:</strong> Puedes seleccionar los temas específicos de cada producto</li>
+                          <li>• <strong>Productos no comprados:</strong> Aparecen en gris con el precio, necesitas comprarlos primero</li>
+                          <li>• <strong>Combinación de bases:</strong> Selecciona múltiples productos para combinar sus preguntas en una sola sesión</li>
+                          <li>• <strong>Temas personalizados:</strong> Elige los temas específicos que quieres estudiar de cada producto</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                      <div>
+                        <div class="text-lg font-bold text-[#22a7d0]" id="active-databases-count">${userPurchasedProducts.length}</div>
+                        <div class="text-xs text-blue-800">Bases Activas</div>
+                      </div>
+                      <div>
+                        <div class="text-lg font-bold text-[#22a7d0]" id="total-questions">0</div>
+                        <div class="text-xs text-blue-800">Preguntas Totales</div>
+                      </div>
+                      <div>
+                        <div class="text-lg font-bold text-[#22a7d0]" id="selected-topics">0</div>
+                        <div class="text-xs text-blue-800">Temas Seleccionados</div>
+                      </div>
+                      <div>
+                        <div class="text-lg font-bold text-[#22a7d0]" id="estimated-time">~60min</div>
+                        <div class="text-xs text-blue-800">Tiempo Estimado</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -206,18 +306,52 @@ export async function renderDashboardView(productId) {
 
                   <!-- Exam Timer -->
                   <div id="exam-timer-section" class="hidden">
-                    <label for="exam-timer" class="block text-sm font-medium text-gray-700 mb-3">Tiempo del Examen</label>
-                    <select id="exam-timer" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22a7d0] focus:border-[#22a7d0]">
-                      <option value="30">30 minutos</option>
-                      <option value="60" selected>60 minutos</option>
-                      <option value="90">90 minutos</option>
-                      <option value="120">120 minutos</option>
-                    </select>
+                    <label for="exam-timer" class="block text-sm font-medium text-gray-700 mb-3">
+                      Tiempo del Examen: <span id="timer-display" class="font-bold text-[#22a7d0]">60 minutos</span>
+                    </label>
+                    <input type="range" id="exam-timer" min="15" max="180" value="60" step="15"
+                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                           oninput="updateTimerDisplay(this.value)">
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>15 min</span>
+                      <span>180 min</span>
+                    </div>
+                  </div>
+
+                  <!-- Session Summary -->
+                  <div class="md:col-span-2">
+                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <h4 class="font-medium text-gray-900 mb-3">Resumen de la Sesión</h4>
+                      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <span class="text-gray-600">Modo:</span>
+                          <div class="font-medium" id="session-mode">Práctica</div>
+                        </div>
+                        <div>
+                          <span class="text-gray-600">Preguntas:</span>
+                          <div class="font-medium" id="session-questions">50</div>
+                        </div>
+                        <div>
+                          <span class="text-gray-600">Tiempo:</span>
+                          <div class="font-medium" id="session-time">Sin límite</div>
+                        </div>
+                        <div>
+                          <span class="text-gray-600">Productos:</span>
+                          <div class="font-medium" id="session-products">${userPurchasedProducts.length}</div>
+                        </div>
+                      </div>
+                      <div class="mt-3 pt-3 border-t border-gray-200">
+                        <span class="text-gray-600 text-sm">Temas seleccionados:</span>
+                        <div class="mt-1" id="session-topics-list">
+                          <span class="text-sm text-gray-500">Todos los temas de productos seleccionados</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <!-- Start Button -->
-                  <div class="flex items-end">
-                    <button id="start-training" class="w-full bg-[#22a7d0] text-white px-6 py-3 rounded-lg font-bold hover:bg-[#1e96bc] transition-all duration-300 shadow-lg transform hover:scale-105">
+                  <div class="md:col-span-2">
+                    <button id="start-training" class="w-full bg-[#22a7d0] text-white px-6 py-4 rounded-lg font-bold hover:bg-[#1e96bc] transition-all duration-300 shadow-lg transform hover:scale-105">
                       <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                       </svg>
@@ -348,14 +482,46 @@ export async function renderDashboardView(productId) {
       } else {
         examTimerSection.classList.add('hidden');
       }
+      updateSessionSummary();
     });
   });
 
-  // Global functions for checkbox interaction
+  // Question count change listener
+  const questionCountSelect = document.getElementById('question-count');
+  if (questionCountSelect) {
+    questionCountSelect.addEventListener('change', updateSessionSummary);
+  }
+
+  // Global functions for interaction
   window.toggleProductDatabase = function(productId, isSelected) {
     console.log(`Database ${productId} ${isSelected ? 'activated' : 'deactivated'}`);
-    updateDatabaseCount();
-    updateTotalQuestions();
+
+    // Show/hide topics section
+    const topicsSection = document.getElementById(`topics-${productId}`);
+    if (topicsSection) {
+      if (isSelected) {
+        topicsSection.classList.remove('hidden');
+      } else {
+        topicsSection.classList.add('hidden');
+      }
+    }
+
+    updateAllCounts();
+    updateSessionSummary();
+  };
+
+  window.updateTopicSelection = function(productId, topicId, isSelected) {
+    console.log(`Topic ${topicId} in ${productId} ${isSelected ? 'selected' : 'deselected'}`);
+    updateAllCounts();
+    updateSessionSummary();
+  };
+
+  window.updateTimerDisplay = function(value) {
+    const display = document.getElementById('timer-display');
+    if (display) {
+      display.textContent = `${value} minutos`;
+    }
+    updateSessionSummary();
   };
 
   function getSelectedProducts() {
@@ -369,27 +535,112 @@ export async function renderDashboardView(productId) {
     return selectedProducts;
   }
 
-  function updateDatabaseCount() {
+  function getSelectedTopics() {
+    let totalTopics = 0;
+    let totalQuestions = 0;
     const selectedProducts = getSelectedProducts();
+
+    selectedProducts.forEach(productId => {
+      const topicsSection = document.getElementById(`topics-${productId}`);
+      if (topicsSection) {
+        const topicCheckboxes = topicsSection.querySelectorAll('input[type="checkbox"]:checked');
+        totalTopics += topicCheckboxes.length;
+
+        // Calculate questions from selected topics
+        topicCheckboxes.forEach(checkbox => {
+          const questionElement = checkbox.closest('label').querySelector('.text-xs');
+          if (questionElement) {
+            const questions = parseInt(questionElement.textContent.match(/\\d+/)[0]) || 0;
+            totalQuestions += questions;
+          }
+        });
+      }
+    });
+
+    return { totalTopics, totalQuestions };
+  }
+
+  function updateAllCounts() {
+    const selectedProducts = getSelectedProducts();
+    const { totalTopics, totalQuestions } = getSelectedTopics();
+
+    // Update database count
     const countElement = document.getElementById('active-databases-count');
     if (countElement) {
       countElement.textContent = selectedProducts.length;
     }
-  }
 
-  function updateTotalQuestions() {
-    // Simulate question count calculation
-    const selectedProducts = getSelectedProducts();
-    const baseQuestions = 150; // Base questions per product
-    const totalQuestions = selectedProducts.length * baseQuestions;
+    // Update topics count
+    const topicsElement = document.getElementById('selected-topics');
+    if (topicsElement) {
+      topicsElement.textContent = totalTopics;
+    }
 
+    // Update questions count
     const questionsElement = document.getElementById('total-questions');
     if (questionsElement) {
       questionsElement.textContent = totalQuestions;
     }
+
+    // Update estimated time
+    const timeElement = document.getElementById('estimated-time');
+    if (timeElement) {
+      const estimatedMinutes = Math.ceil(totalQuestions * 1.2); // 1.2 minutes per question
+      timeElement.textContent = `~${estimatedMinutes}min`;
+    }
   }
 
-  // Initialize counts
-  updateDatabaseCount();
-  updateTotalQuestions();
+  function updateSessionSummary() {
+    const selectedProducts = getSelectedProducts();
+    const { totalTopics, totalQuestions } = getSelectedTopics();
+    const trainingMode = document.querySelector('input[name="training-mode"]:checked')?.value || 'practice';
+    const questionCount = document.getElementById('question-count')?.value || '50';
+    const examTimer = document.getElementById('exam-timer')?.value || '60';
+
+    // Update session mode
+    const modeElement = document.getElementById('session-mode');
+    if (modeElement) {
+      modeElement.textContent = trainingMode === 'practice' ? 'Práctica' : 'Examen';
+    }
+
+    // Update session questions
+    const questionsElement = document.getElementById('session-questions');
+    if (questionsElement) {
+      if (questionCount === 'all') {
+        questionsElement.textContent = `${totalQuestions} (todas)`;
+      } else {
+        questionsElement.textContent = Math.min(parseInt(questionCount), totalQuestions);
+      }
+    }
+
+    // Update session time
+    const timeElement = document.getElementById('session-time');
+    if (timeElement) {
+      if (trainingMode === 'exam') {
+        timeElement.textContent = `${examTimer} minutos`;
+      } else {
+        timeElement.textContent = 'Sin límite';
+      }
+    }
+
+    // Update session products
+    const productsElement = document.getElementById('session-products');
+    if (productsElement) {
+      productsElement.textContent = selectedProducts.length;
+    }
+
+    // Update topics list
+    const topicsListElement = document.getElementById('session-topics-list');
+    if (topicsListElement) {
+      if (totalTopics > 0) {
+        topicsListElement.innerHTML = `<span class="text-sm text-gray-700">${totalTopics} temas seleccionados de ${selectedProducts.length} productos</span>`;
+      } else {
+        topicsListElement.innerHTML = `<span class="text-sm text-gray-500">Selecciona productos para ver temas disponibles</span>`;
+      }
+    }
+  }
+
+  // Initialize counts and summary
+  updateAllCounts();
+  updateSessionSummary();
 }

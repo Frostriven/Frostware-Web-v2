@@ -429,3 +429,93 @@ export function isAdminEmail(email) {
 
 // Alias para compatibilidad
 export const sampleProducts = products;
+
+/*
+=======================================================================================
+FIREBASE DATABASE SCHEMA FOR SESSION HISTORY AND STATISTICS
+=======================================================================================
+
+Para implementar el historial de sesiones y estadísticas, necesitamos las siguientes
+colecciones y subcollecciones en Firestore:
+
+1. users/{userId}/sessions/{sessionId}
+   - startedAt: timestamp
+   - completedAt: timestamp
+   - mode: 'practice' | 'exam'
+   - totalQuestions: number
+   - answeredQuestions: number
+   - correctAnswers: number
+   - score: number (percentage)
+   - timeSpent: number (seconds)
+   - products: array of productIds
+   - topics: array of {productId, topicIds[]}
+   - configuration: {
+       questionCount: number,
+       examTimer: number (if exam mode),
+       selectedProducts: string[],
+       selectedTopics: object
+     }
+
+2. users/{userId}/statistics/general
+   - totalSessions: number
+   - totalQuestionsAnswered: number
+   - totalTimeSpent: number (seconds)
+   - averageScore: number
+   - bestScore: number
+   - lastSessionDate: timestamp
+   - preferredMode: 'practice' | 'exam'
+   - streak: number (consecutive days)
+
+3. users/{userId}/statistics/products/{productId}
+   - sessionsCompleted: number
+   - questionsAnswered: number
+   - averageScore: number
+   - bestScore: number
+   - timeSpent: number (seconds)
+   - topicsProgress: {
+       [topicId]: {
+         questionsAnswered: number,
+         correctAnswers: number,
+         averageScore: number,
+         lastStudied: timestamp
+       }
+     }
+   - lastSessionDate: timestamp
+
+4. users/{userId}/progress/{productId}
+   - overallProgress: number (percentage)
+   - topicsCompleted: string[]
+   - currentTopic: string
+   - milestones: {
+       firstSession: timestamp,
+       halfway: timestamp,
+       completed: timestamp
+     }
+
+FUNCTIONS TO IMPLEMENT:
+
+// Session Management
+export async function createSession(userId, configuration)
+export async function updateSession(userId, sessionId, progress)
+export async function completeSession(userId, sessionId, results)
+
+// Statistics
+export async function getUserStatistics(userId)
+export async function getProductStatistics(userId, productId)
+export async function updateUserStatistics(userId, sessionResults)
+
+// Progress Tracking
+export async function getProgressByProduct(userId, productId)
+export async function updateProgress(userId, productId, topicId, score)
+
+// History
+export async function getSessionHistory(userId, limit = 10)
+export async function getSessionsByProduct(userId, productId)
+export async function getRecentActivity(userId, days = 7)
+
+=======================================================================================
+*/
+
+// TODO: Implement session tracking functions
+// TODO: Implement statistics calculation functions
+// TODO: Implement progress tracking functions
