@@ -1,5 +1,5 @@
 import { logout, watchAuthState, changePassword, updateUserDisplayName } from '../../../js/auth.js';
-import { getUserProfile, updateUserProfile, getUserProducts, addUserProduct, sampleProducts } from '../../../js/userProfile.js';
+import { getUserProfile, updateUserProfile, getUserProducts, addUserProduct, removeUserProduct, sampleProducts } from '../../../js/userProfile.js';
 import { initializeCountrySelect, setGlobalCountry } from '../../../js/countries.js';
 
 export async function renderAccountView() {
@@ -132,6 +132,8 @@ function initializeAccountPage() {
 
   // Cargar productos del usuario
   async function loadUserProducts(user) {
+    // Hacer disponible globalmente para la función removeUserProduct
+    window.accountLoadUserProducts = loadUserProducts;
     try {
       const products = await getUserProducts(user.uid);
 
@@ -180,19 +182,34 @@ function initializeAccountPage() {
 
       } else {
         productsList.innerHTML = products.map(product => `
-          <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+          <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
             <div class="flex items-start gap-4">
-              <img src="${product.productImage}" alt="${product.productName}" class="w-20 h-20 rounded-lg object-cover">
+              <img src="${product.productImage || 'https://placehold.co/80x80/1a202c/FFFFFF?text=' + encodeURIComponent(product.productName.charAt(0))}" alt="${product.productName}" class="w-20 h-20 rounded-lg object-cover shadow-md">
               <div class="flex-1">
-                <h3 class="font-semibold text-gray-900 mb-1">${product.productName}</h3>
-                <p class="text-gray-600 text-sm mb-2">${product.productDescription}</p>
+                <div class="flex justify-between items-start mb-2">
+                  <h3 class="font-bold text-gray-900 text-lg">${product.productName}</h3>
+                  <div class="flex items-center gap-2">
+                    <button class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-full transition-colors" onclick="removeUserProduct('${product.id}', '${user.uid}')" title="Eliminar producto">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <p class="text-gray-600 text-sm mb-3 line-clamp-2">${product.productDescription}</p>
                 <div class="flex justify-between items-center">
                   <div class="text-sm text-gray-500">
+                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
                     Adquirido: ${product.purchaseDate.toDate().toLocaleDateString('es-ES')}
                   </div>
-                  <div class="flex items-center gap-2">
-                    <span class="text-lg font-bold text-gray-900">$${product.productPrice}</span>
-                    <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Activo</span>
+                  <div class="flex items-center gap-3">
+                    <span class="text-xl font-bold text-[#22a7d0]">$${product.productPrice}</span>
+                    <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full border border-green-200">
+                      <span class="w-2 h-2 bg-green-500 rounded-full inline-block mr-1"></span>
+                      Activo
+                    </span>
                   </div>
                 </div>
               </div>
@@ -399,3 +416,44 @@ function initializeAccountPage() {
     loadUserProducts(user);
   });
 }
+
+// Función global para eliminar productos (accesible desde el HTML)
+window.removeUserProduct = async function(productId, userId) {
+  try {
+    const confirmed = confirm('¿Estás seguro de que deseas eliminar este producto?');
+    if (!confirmed) return;
+
+    await removeUserProduct(productId);
+
+    // Recargar la lista de productos
+    const user = { uid: userId };
+    const loadUserProducts = window.accountLoadUserProducts;
+    if (loadUserProducts) {
+      loadUserProducts(user);
+    } else {
+      // Fallback: recargar la página
+      window.location.reload();
+    }
+
+    // Mostrar mensaje de éxito
+    const profileStatus = document.getElementById('profile-status');
+    if (profileStatus) {
+      profileStatus.textContent = 'Producto eliminado exitosamente';
+      profileStatus.style.color = 'green';
+      setTimeout(() => {
+        profileStatus.textContent = '';
+      }, 3000);
+    }
+
+  } catch (error) {
+    console.error('Error eliminando producto:', error);
+    const profileStatus = document.getElementById('profile-status');
+    if (profileStatus) {
+      profileStatus.textContent = 'Error al eliminar el producto';
+      profileStatus.style.color = 'red';
+      setTimeout(() => {
+        profileStatus.textContent = '';
+      }, 3000);
+    }
+  }
+};

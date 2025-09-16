@@ -261,4 +261,115 @@ input[type="checkbox"] {
     }
 }
 
+/* Products Page Styles */
+.product-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.color-indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.category-filter {
+    transition: all 0.3s ease;
+}
+
+.category-filter:hover {
+    background-color: #f3f4f6;
+    transform: translateY(-1px);
+}
+
+.category-filter.active {
+    background-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 4px 12px rgba(34, 167, 208, 0.3);
+}
+
+.price-tag {
+    background: linear-gradient(135deg, var(--primary-color), #1a8db3);
+}
+
+/* Product modal animations */
+#product-modal {
+    backdrop-filter: blur(8px);
+}
+
+#product-modal .bg-white {
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Line clamp utility for descriptions */
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* New Products Page Styles */
+.product-card {
+    transition: all 0.3s ease;
+}
+.product-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+.filter-btn {
+    transition: all 0.3s ease;
+}
+.filter-btn:hover {
+    transform: translateY(-2px);
+}
+.filter-btn.active {
+    background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+    color: white;
+    box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4);
+}
+.price-badge {
+    background: linear-gradient(135deg, #10B981, #047857);
+}
+.discount-badge {
+    background: linear-gradient(135deg, #EF4444, #DC2626);
+}
+.search-input:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+.btn-primary {
+    background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+    transition: all 0.3s ease;
+}
+.btn-primary:hover {
+    background: linear-gradient(135deg, #1D4ED8, #1E40AF);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4);
+}
+.category-tag {
+    background: linear-gradient(135deg, #F3F4F6, #E5E7EB);
+}
+
+/* Color for primary text elements in new template */
+.text-primary {
+    color: #3B82F6;
+}
+
 
