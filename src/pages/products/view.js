@@ -1,5 +1,6 @@
 import { getProductsFromFirebase, addUserProduct } from '../../js/userProfile.js';
 import { auth } from '../../js/firebase.js';
+import ShoppingCart from '../../js/cart.js';
 
 export async function renderProductsView() {
   const root = document.getElementById('spa-root');
@@ -45,8 +46,8 @@ export async function renderProductsView() {
     // Re-initialize the filter functionality
     initializeProductFilters();
 
-    // Add purchase animations
-    initializePurchaseAnimations();
+    // Initialize product buttons
+    initializeProductButtons();
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -101,7 +102,9 @@ function generateProductsHTML(products) {
             `}
             <span class="text-sm ${badgeColor} px-2 py-1 rounded-full">${product.badge || 'Disponible'}</span>
           </div>
-          <a href="#" class="mt-auto cta-button text-center bg-[#22a7d0] text-white font-bold py-2 px-4 rounded-lg">${product.price === 0 || product.price === "Gratis" ? 'Acceder a la Guía' : 'Obtener Licencia'}</a>
+          <button class="mt-auto product-action-button text-center bg-[#22a7d0] text-white font-bold py-2 px-4 rounded-lg transition-colors hover:bg-[#1e96bc]"
+                  data-product-id="${product.id}"
+                  data-product='${JSON.stringify(product).replace(/'/g, "&apos;")}'></button>
         </div>
       </div>
     `;
@@ -205,93 +208,130 @@ function initializeProductFilters() {
   });
 }
 
-function initializePurchaseAnimations() {
-  // Add purchase functionality to all buttons
-  const purchaseButtons = document.querySelectorAll('.cta-button');
+async function initializeProductButtons() {
+  // Wait for cart to be initialized
+  if (!window.cart) {
+    setTimeout(initializeProductButtons, 100);
+    return;
+  }
 
-  purchaseButtons.forEach(button => {
-    // Remove any existing onclick to prevent duplicates
-    const newButton = button.cloneNode(true);
-    button.parentNode.replaceChild(newButton, button);
+  const productButtons = document.querySelectorAll('.product-action-button');
 
-    newButton.addEventListener('click', async function(e) {
-      e.preventDefault();
-      e.stopPropagation();
+  for (const button of productButtons) {
+    const productData = JSON.parse(button.getAttribute('data-product').replace(/&apos;/g, "'"));
+    const productId = button.getAttribute('data-product-id');
 
-      // Check if user is logged in
-      if (!auth?.currentUser) {
-        showToast('Debes iniciar sesión para obtener productos', 'error');
-        window.location.hash = '#/auth';
-        return;
+    // Check states
+    const isPurchased = window.cart.isProductPurchased(productId);
+    const inCart = window.cart.isProductInCart(productId);
+
+    if (isPurchased) {
+      button.textContent = 'Ya lo tienes';
+      button.disabled = true;
+      button.classList.remove('bg-[#22a7d0]', 'hover:bg-[#1e96bc]');
+      button.classList.add('bg-gray-400', 'cursor-not-allowed');
+    } else if (inCart) {
+      if (productData.price === 0 || productData.price === "Gratis") {
+        button.textContent = 'Obtener Gratis';
+      } else {
+        button.textContent = 'Remover del Carrito';
+        button.classList.remove('bg-[#22a7d0]', 'hover:bg-[#1e96bc]');
+        button.classList.add('bg-orange-500', 'hover:bg-orange-600');
       }
+    } else {
+      if (productData.price === 0 || productData.price === "Gratis") {
+        button.textContent = 'Obtener Gratis';
+      } else {
+        button.textContent = 'Agregar al Carrito';
+      }
+    }
 
-      const originalText = this.textContent;
-      const originalClasses = this.className;
+    // Add click event
+    if (!isPurchased) {
+      button.addEventListener('click', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
 
-      // Get product info from the card
-      const productCard = this.closest('.product-card');
-      const productName = productCard.querySelector('h3').textContent;
-      const productDescription = productCard.querySelector('.text-gray-600').textContent;
+        if (!auth?.currentUser) {
+          showToast('Debes iniciar sesión para agregar productos', 'error');
+          window.location.hash = '#/auth';
+          return;
+        }
 
-      // Purchase animation
-      this.disabled = true;
-      this.textContent = 'Procesando...';
-      this.classList.add('opacity-75');
+        // If product is already in cart for paid products, remove it
+        if (window.cart.isProductInCart(productId) && productData.price !== 0 && productData.price !== "Gratis") {
+          window.cart.removeFromCart(productId);
+          return;
+        }
 
-      try {
-        // Get product info from the current product data (find matching product)
-        const productCategory = productCard.getAttribute('data-category');
-        const products = await getProductsFromFirebase();
-        const currentProduct = products.find(p => p.name === productName);
+        // If it's a free product, add directly to user's library
+        if (productData.price === 0 || productData.price === "Gratis") {
+          const originalText = this.textContent;
+          this.disabled = true;
+          this.textContent = 'Procesando...';
+          this.classList.add('opacity-75');
 
-        // Add to Firebase
-        const productData = {
-          id: currentProduct?.id || productName.toLowerCase().replace(/\s+/g, '-'),
-          name: productName,
-          description: productDescription,
-          price: currentProduct?.price || 99,
-          image: productCard.querySelector('img')?.src || '',
-          category: productCategory || 'general',
-          appUrl: currentProduct?.appUrl || null // Include app URL if available
-        };
+          try {
+            await addUserProduct(auth.currentUser.uid, {
+              id: productData.id,
+              name: productData.name,
+              description: productData.description,
+              price: productData.price,
+              image: productData.image,
+              category: productData.category || 'general',
+              purchaseDate: new Date().toISOString()
+            });
 
-        await addUserProduct(auth.currentUser.uid, productData);
+            this.textContent = '✅ ¡Agregado!';
+            this.classList.remove('bg-[#22a7d0]', 'opacity-75');
+            this.classList.add('bg-green-500');
 
-        setTimeout(() => {
-          // Success state with checkmark
-          this.textContent = '✅ ¡Agregado!';
-          this.classList.remove('bg-[#22a7d0]', 'opacity-75');
-          this.classList.add('bg-green-500');
+            showToast('Producto agregado a tu biblioteca', 'success');
 
-          // Show toast notification with app access info
-          if (productData.appUrl) {
-            showPurchaseToastWithApp(productData.appUrl);
-          } else {
-            showPurchaseToast();
+            // Update button state
+            setTimeout(() => {
+              this.textContent = 'Ya lo tienes';
+              this.classList.remove('bg-green-500');
+              this.classList.add('bg-gray-400', 'cursor-not-allowed');
+              this.disabled = true;
+            }, 2000);
+
+            // Reload user products
+            await window.cart.loadUserPurchasedProducts();
+
+            // Update all product buttons
+            window.cart.updateAllProductButtons();
+
+          } catch (error) {
+            console.error('Error adding free product:', error);
+            this.textContent = '❌ Error';
+            this.classList.add('bg-red-500');
+            showToast('Error al agregar producto', 'error');
+
+            setTimeout(() => {
+              this.textContent = originalText;
+              this.className = 'mt-auto product-action-button text-center bg-[#22a7d0] text-white font-bold py-2 px-4 rounded-lg transition-colors hover:bg-[#1e96bc]';
+              this.disabled = false;
+            }, 2000);
           }
+        } else {
+          // Add to cart for paid products
+          const success = window.cart.addToCart(productData);
+          if (success) {
+            // Optionally update button text temporarily
+            const originalText = this.textContent;
+            this.textContent = '✅ Agregado';
+            this.classList.add('bg-green-500');
 
-          // Reset button after animation
-          setTimeout(() => {
-            this.textContent = originalText;
-            this.className = originalClasses;
-            this.disabled = false;
-          }, 2000);
-        }, 1000);
-
-      } catch (error) {
-        console.error('Error al agregar producto:', error);
-        this.textContent = '❌ Error';
-        this.classList.add('bg-red-500');
-        showToast('Error al agregar producto', 'error');
-
-        setTimeout(() => {
-          this.textContent = originalText;
-          this.className = originalClasses;
-          this.disabled = false;
-        }, 2000);
-      }
-    });
-  });
+            setTimeout(() => {
+              this.textContent = originalText;
+              this.classList.remove('bg-green-500');
+            }, 1500);
+          }
+        }
+      });
+    }
+  }
 }
 
 function showToast(message, type = 'success') {

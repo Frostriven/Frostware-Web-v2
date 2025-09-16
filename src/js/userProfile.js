@@ -66,6 +66,23 @@ export async function getUserProducts(userId) {
 export async function addUserProduct(userId, productData) {
   if (!db) throw new Error('Firestore no inicializado');
 
+  // Check if product already exists for this user
+  const existingProductQuery = query(
+    collection(db, 'userProducts'),
+    where('userId', '==', userId),
+    where('productId', '==', productData.id)
+  );
+
+  const existingSnapshot = await getDocs(existingProductQuery);
+  if (!existingSnapshot.empty) {
+    // Product already exists, return the existing one
+    const existingDoc = existingSnapshot.docs[0];
+    return {
+      id: existingDoc.id,
+      ...existingDoc.data()
+    };
+  }
+
   const productDoc = {
     userId: userId,
     productId: productData.id,

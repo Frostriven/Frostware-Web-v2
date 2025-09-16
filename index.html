@@ -28,7 +28,16 @@
           <a class="py-2 px-3 text-gray-300 hover:text-white nav-link" href="#/products">Productos</a>
           <a class="py-2 px-3 text-gray-300 hover:text-white nav-link" href="#pricing">Precios</a>
         </div>
-        <div class="flex items-center">
+        <div class="flex items-center space-x-4">
+          <!-- Carrito de compras -->
+          <div class="relative">
+            <button id="cart-button" class="text-gray-300 hover:text-white transition-colors">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l-1 12a2 2 0 01-2 2H8a2 2 0 01-2-2L5 9z"></path>
+              </svg>
+              <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+            </button>
+          </div>
           <!-- Fallback a página estática si JS no carga -->
           <a class="cta-button bg-[#22a7d0] text-white font-bold py-2 px-4 rounded-lg" href="#/auth/login">Iniciar sesión</a>
         </div>
@@ -176,7 +185,37 @@
     
     <footer class="bg-gray-900 text-white"></footer>
 
-    <div id="cart-modal" class="fixed inset-0 z-[100] hidden"></div>
+    <!-- Modal del Carrito -->
+    <div id="cart-modal" class="fixed inset-0 z-[110] hidden items-center justify-center bg-black bg-opacity-50">
+        <div class="bg-white rounded-lg shadow-2xl max-w-2xl w-full m-4 max-h-[80vh] overflow-hidden">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h2 class="text-2xl font-bold">Carrito de Compras</h2>
+                <button id="cart-close-button" class="text-gray-400 hover:text-gray-600 text-3xl">&times;</button>
+            </div>
+            <div id="cart-content" class="p-6 max-h-[50vh] overflow-y-auto">
+                <div id="cart-empty" class="text-center py-8 text-gray-500">
+                    <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m-2.4 8L5 21h14a2 2 0 002-2V9H5m0 4v6a2 2 0 002 2h10a2 2 0 002-2v-6M9 21v-2m6 2v-2"></path>
+                    </svg>
+                    <p class="text-lg">Tu carrito está vacío</p>
+                </div>
+                <div id="cart-items" class="space-y-4"></div>
+            </div>
+            <div id="cart-footer" class="p-6 border-t bg-gray-50">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xl font-bold">Total: $<span id="cart-total">0.00</span></span>
+                </div>
+                <div class="flex space-x-4">
+                    <button id="clear-cart" class="flex-1 bg-gray-500 text-white py-3 px-6 rounded-lg hover:bg-gray-600 transition-colors">
+                        Limpiar Carrito
+                    </button>
+                    <button id="process-payment" class="flex-1 bg-[#22a7d0] text-white py-3 px-6 rounded-lg hover:bg-[#1e96bc] transition-colors">
+                        Procesar Pago
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal para la Guía -->
     <div id="guideModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black bg-opacity-50">
@@ -250,7 +289,11 @@
                                 <span class="text-2xl font-bold text-gray-900">Gratis</span>
                                 <span class="text-sm px-2 py-1 rounded-full ${badgeClasses[product.badgeColor]}">${product.badge}</span>
                             </div>
-                            <a href="${product.link}" class="mt-auto cta-button text-center bg-[#22a7d0] text-white font-bold py-2 px-4 rounded-lg">Ver Información</a>
+                            <button class="mt-auto product-action-button text-center bg-[#22a7d0] text-white font-bold py-2 px-4 rounded-lg transition-colors hover:bg-[#1e96bc]"
+                                    data-product-id="${product.title.toLowerCase().replace(/\s+/g, '-')}"
+                                    data-product='{"id":"${product.title.toLowerCase().replace(/\s+/g, '-')}","name":"${product.title}","description":"${product.description}","price":0,"image":"${product.image}","category":"aviation"}'>
+                                Obtener Gratis
+                            </button>
                         </div>
                     </div>
                 `;
@@ -258,6 +301,122 @@
                 container.innerHTML += productCard;
             });
         });
+
+        // Inicializar carrito cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Importar y inicializar el carrito
+            try {
+                await import('./src/js/cart.js');
+                // Inicializar botones de productos después de un breve delay
+                setTimeout(initializeHomeProductButtons, 500);
+
+                // Fallback para el botón del carrito en caso de que no se inicialice
+                setTimeout(() => {
+                    const cartButton = document.getElementById('cart-button');
+                    if (cartButton && !cartButton.onclick) {
+                        cartButton.addEventListener('click', () => {
+                            if (window.cart) {
+                                window.cart.openCart();
+                            }
+                        });
+                        console.log('Fallback cart button event added');
+                    }
+                }, 1000);
+            } catch (error) {
+                console.error('Error loading cart:', error);
+            }
+        });
+
+        // Función para inicializar botones de productos en la página de inicio
+        async function initializeHomeProductButtons() {
+            // Wait for cart to be initialized
+            if (!window.cart) {
+                setTimeout(initializeHomeProductButtons, 100);
+                return;
+            }
+
+            const productButtons = document.querySelectorAll('.product-action-button');
+
+            for (const button of productButtons) {
+                const productData = JSON.parse(button.getAttribute('data-product'));
+                const productId = button.getAttribute('data-product-id');
+
+                // Check states
+                const isPurchased = window.cart.isProductPurchased(productId);
+                const inCart = window.cart.isProductInCart(productId);
+
+                if (isPurchased) {
+                    button.textContent = 'Ya lo tienes';
+                    button.disabled = true;
+                    button.classList.remove('bg-[#22a7d0]', 'hover:bg-[#1e96bc]');
+                    button.classList.add('bg-gray-400', 'cursor-not-allowed');
+                    continue;
+                } else if (inCart) {
+                    // For free products in cart, still show "Obtener Gratis"
+                    button.textContent = 'Obtener Gratis';
+                }
+
+                // Add click event for free products
+                button.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    // Import auth from firebase
+                    const { auth } = await import('./src/js/firebase.js');
+                    const { addUserProduct } = await import('./src/js/userProfile.js');
+
+                    if (!auth?.currentUser) {
+                        window.cart.showToast('Debes iniciar sesión para obtener productos', 'error');
+                        window.location.hash = '#/auth';
+                        return;
+                    }
+
+                    const originalText = this.textContent;
+                    this.disabled = true;
+                    this.textContent = 'Procesando...';
+                    this.classList.add('opacity-75');
+
+                    try {
+                        await addUserProduct(auth.currentUser.uid, {
+                            ...productData,
+                            purchaseDate: new Date().toISOString()
+                        });
+
+                        this.textContent = '✅ ¡Agregado!';
+                        this.classList.remove('bg-[#22a7d0]', 'opacity-75');
+                        this.classList.add('bg-green-500');
+
+                        window.cart.showToast('Producto agregado a tu biblioteca', 'success');
+
+                        // Update button state
+                        setTimeout(() => {
+                            this.textContent = 'Ya lo tienes';
+                            this.classList.remove('bg-green-500');
+                            this.classList.add('bg-gray-400', 'cursor-not-allowed');
+                            this.disabled = true;
+                        }, 2000);
+
+                        // Reload user products
+                        await window.cart.loadUserPurchasedProducts();
+
+                        // Update all product buttons
+                        window.cart.updateAllProductButtons();
+
+                    } catch (error) {
+                        console.error('Error adding free product:', error);
+                        this.textContent = '❌ Error';
+                        this.classList.add('bg-red-500');
+                        window.cart.showToast('Error al agregar producto', 'error');
+
+                        setTimeout(() => {
+                            this.textContent = originalText;
+                            this.className = 'mt-auto product-action-button text-center bg-[#22a7d0] text-white font-bold py-2 px-4 rounded-lg transition-colors hover:bg-[#1e96bc]';
+                            this.disabled = false;
+                        }, 2000);
+                    }
+                });
+            }
+        }
     </script>
     <style>
         .line-clamp-3 {

@@ -2,7 +2,7 @@ import { logout, watchAuthState, changePassword, updateUserDisplayName } from '.
 import { getUserProfile, updateUserProfile, getUserProducts, addUserProduct, removeUserProduct, sampleProducts } from '../../../js/userProfile.js';
 import { initializeCountrySelect, setGlobalCountry } from '../../../js/countries.js';
 
-export async function renderAccountView() {
+export async function renderAccountView(initialTab = 'profile') {
   const root = document.getElementById('spa-root');
   if (!root) return;
 
@@ -23,7 +23,7 @@ export async function renderAccountView() {
     }
 
     // Inicializar la funcionalidad
-    initializeAccountPage();
+    initializeAccountPage(initialTab);
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -33,7 +33,7 @@ export async function renderAccountView() {
   }
 }
 
-function initializeAccountPage() {
+function initializeAccountPage(initialTab = 'profile') {
   let currentUser = null;
 
   // Elementos del DOM
@@ -414,6 +414,9 @@ function initializeAccountPage() {
     // Cargar datos del usuario
     loadUserProfile(user);
     loadUserProducts(user);
+
+    // Mostrar la pestaña inicial
+    showTab(initialTab);
   });
 }
 
