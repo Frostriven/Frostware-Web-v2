@@ -266,6 +266,18 @@ function initializeAdminPage() {
     };
 
     try {
+      // Check if user is authenticated and admin
+      if (!auth?.currentUser) {
+        alert('Debes iniciar sesión para realizar esta acción');
+        return;
+      }
+
+      const userIsAdmin = await isUserAdmin(auth.currentUser.uid) || isAdminEmail(auth.currentUser.email);
+      if (!userIsAdmin) {
+        alert('No tienes permisos para agregar productos. Solo los administradores pueden realizar esta acción.');
+        return;
+      }
+
       const submitBtn = addProductForm.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
       submitBtn.textContent = 'Agregando...';
@@ -286,6 +298,11 @@ function initializeAdminPage() {
     } catch (error) {
       console.error('Error agregando producto:', error);
       alert('Error al agregar producto: ' + error.message);
+
+      // Re-enable submit button
+      const submitBtn = addProductForm.querySelector('button[type="submit"]');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Agregar Producto';
     }
   });
 }
@@ -293,6 +310,19 @@ function initializeAdminPage() {
 // Global function to delete products
 window.deleteProduct = async function(productId) {
   try {
+    // Check if user is authenticated and admin
+    if (!auth?.currentUser) {
+      alert('Debes iniciar sesión para realizar esta acción');
+      window.location.hash = '#/auth';
+      return;
+    }
+
+    const userIsAdmin = await isUserAdmin(auth.currentUser.uid) || isAdminEmail(auth.currentUser.email);
+    if (!userIsAdmin) {
+      alert('No tienes permisos para eliminar productos. Solo los administradores pueden realizar esta acción.');
+      return;
+    }
+
     const confirmed = confirm('¿Estás seguro de que deseas eliminar este producto?');
     if (!confirmed) return;
 
