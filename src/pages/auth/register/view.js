@@ -55,7 +55,7 @@ export async function renderRegisterView() {
           statusDiv.textContent = 'Cuenta creada exitosamente!';
           statusDiv.style.color = 'green';
           setTimeout(() => {
-            window.location.hash = '#/account';
+            window.location.hash = '#/';
           }, 1500);
         } catch (error) {
           console.error("Error en el registro:", error);
@@ -78,7 +78,7 @@ export async function renderRegisterView() {
                 statusDiv.textContent = 'Sesión iniciada con Google!';
                 statusDiv.style.color = 'green';
                 setTimeout(() => {
-                    window.location.hash = '#/account';
+                    window.location.hash = '#/';
                 }, 1000);
             } catch (e) {
                 console.error('Error con Google:', e);

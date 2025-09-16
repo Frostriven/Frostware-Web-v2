@@ -13,7 +13,6 @@
   <style>body{font-family: 'Inter', sans-serif}</style>
 </head>
 <body class="bg-white text-gray-800">
-  <div class="global-bubbles"></div>
   <header class="dark-header bg-gray-900/90 backdrop-blur-md sticky top-0 z-50 border-b border-gray-700 text-white">
     <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
       <div class="flex items-center">
@@ -74,7 +73,7 @@
                   </div>
                   <div>
                     <label for="profile-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input type="email" id="profile-email" class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50" placeholder="tu@email.com" readonly>
+                    <input type="email" id="profile-email" class="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed" placeholder="tu@email.com" readonly disabled>
                   </div>
                 </div>
 
@@ -86,31 +85,7 @@
                   <div>
                     <label for="profile-country" class="block text-sm font-medium text-gray-700 mb-1">País</label>
                     <select id="profile-country" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22a7d0] focus:border-transparent">
-                      <option value="">Selecciona tu país</option>
-                      <option value="ES">España</option>
-                      <option value="MX">México</option>
-                      <option value="AR">Argentina</option>
-                      <option value="CO">Colombia</option>
-                      <option value="PE">Perú</option>
-                      <option value="CL">Chile</option>
-                      <option value="VE">Venezuela</option>
-                      <option value="EC">Ecuador</option>
-                      <option value="BO">Bolivia</option>
-                      <option value="PY">Paraguay</option>
-                      <option value="UY">Uruguay</option>
-                      <option value="CR">Costa Rica</option>
-                      <option value="PA">Panamá</option>
-                      <option value="GT">Guatemala</option>
-                      <option value="HN">Honduras</option>
-                      <option value="SV">El Salvador</option>
-                      <option value="NI">Nicaragua</option>
-                      <option value="DO">República Dominicana</option>
-                      <option value="CU">Cuba</option>
-                      <option value="PR">Puerto Rico</option>
-                      <option value="US">Estados Unidos</option>
-                      <option value="CA">Canadá</option>
-                      <option value="BR">Brasil</option>
-                      <option value="OTHER">Otro</option>
+                      <!-- Countries will be populated by JavaScript -->
                     </select>
                   </div>
                 </div>
@@ -127,7 +102,7 @@
 
                 <div class="flex justify-between items-center pt-4">
                   <div id="profile-status" class="text-sm"></div>
-                  <button type="submit" class="bg-[#22a7d0] text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors font-medium">
+                  <button type="submit" class="save-changes-btn bg-[#22a7d0] text-white px-6 py-2 rounded-lg font-medium transition-all duration-300 hover:bg-[#1a8db3] hover:shadow-[0_0_20px_rgba(34,167,208,0.5)] hover:scale-105">
                     Guardar Cambios
                   </button>
                 </div>
@@ -158,11 +133,8 @@
             <div class="bg-white rounded-lg shadow border p-6">
               <h3 class="text-lg font-semibold text-gray-900 mb-4">Acciones de Cuenta</h3>
               <div class="space-y-3">
-                <button class="w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                <button id="btn-change-password" class="w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
                   Cambiar contraseña
-                </button>
-                <button class="w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
-                  Descargar mis datos
                 </button>
                 <button id="btn-logout" class="w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                   Cerrar sesión
@@ -202,6 +174,41 @@
 
     </div>
   </main>
+
+  <!-- Modal para cambio de contraseña -->
+  <div id="password-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-white rounded-lg shadow-2xl max-w-md w-full m-4">
+      <div class="p-6 border-b flex justify-between items-center">
+        <h2 class="text-xl font-bold text-gray-900">Cambiar Contraseña</h2>
+        <button id="modal-close" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+      </div>
+      <div class="p-6">
+        <form id="password-form" class="space-y-4">
+          <div>
+            <label for="current-password" class="block text-sm font-medium text-gray-700 mb-1">Contraseña actual</label>
+            <input type="password" id="current-password" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22a7d0] focus:border-transparent" placeholder="Tu contraseña actual" required>
+          </div>
+          <div>
+            <label for="new-password" class="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña</label>
+            <input type="password" id="new-password" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22a7d0] focus:border-transparent" placeholder="Nueva contraseña (mínimo 6 caracteres)" required minlength="6">
+          </div>
+          <div>
+            <label for="confirm-new-password" class="block text-sm font-medium text-gray-700 mb-1">Confirmar nueva contraseña</label>
+            <input type="password" id="confirm-new-password" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22a7d0] focus:border-transparent" placeholder="Confirma tu nueva contraseña" required minlength="6">
+          </div>
+          <div id="password-status" class="text-sm text-center"></div>
+          <div class="flex gap-3 pt-4">
+            <button type="button" id="modal-cancel" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+              Cancelar
+            </button>
+            <button type="submit" class="flex-1 px-4 py-2 bg-[#22a7d0] text-white rounded-lg hover:bg-blue-600 transition-colors">
+              Cambiar Contraseña
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 
   <footer class="bg-gray-800 text-white py-10 mt-12">
     <div class="container mx-auto text-center text-sm">© 2025 Frostware. Todos los derechos reservados.</div>

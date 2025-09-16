@@ -1,5 +1,6 @@
-import { logout, watchAuthState } from '../../../js/auth.js';
+import { logout, watchAuthState, changePassword, updateUserDisplayName } from '../../../js/auth.js';
 import { getUserProfile, updateUserProfile, getUserProducts, addUserProduct, sampleProducts } from '../../../js/userProfile.js';
+import { initializeCountrySelect, setGlobalCountry } from '../../../js/countries.js';
 
 export async function renderAccountView() {
   const root = document.getElementById('spa-root');
@@ -61,8 +62,19 @@ function initializeAccountPage() {
   // Lista de productos
   const productsList = document.getElementById('products-list');
 
-  // Botón de logout
+  // Botones de acción
   const btnLogout = document.getElementById('btn-logout');
+  const btnChangePassword = document.getElementById('btn-change-password');
+
+  // Modal de cambio de contraseña
+  const passwordModal = document.getElementById('password-modal');
+  const modalClose = document.getElementById('modal-close');
+  const modalCancel = document.getElementById('modal-cancel');
+  const passwordForm = document.getElementById('password-form');
+  const currentPassword = document.getElementById('current-password');
+  const newPassword = document.getElementById('new-password');
+  const confirmNewPassword = document.getElementById('confirm-new-password');
+  const passwordStatus = document.getElementById('password-status');
 
   // Funciones de navegación entre tabs
   function showTab(tabName) {
@@ -82,6 +94,9 @@ function initializeAccountPage() {
   // Event listeners para tabs
   tabProfile?.addEventListener('click', () => showTab('profile'));
   tabProducts?.addEventListener('click', () => showTab('products'));
+
+  // Initialize global country selection
+  initializeCountrySelect(profileCountry);
 
   // Cargar perfil del usuario
   async function loadUserProfile(user) {
@@ -222,6 +237,14 @@ function initializeAccountPage() {
         bio: profileBio.value.trim()
       };
 
+      // Update global country selection
+      setGlobalCountry(profileData.country);
+
+      // Update Firebase display name if name changed
+      if (profileData.name && profileData.name !== (currentUser.displayName || '')) {
+        await updateUserDisplayName(profileData.name);
+      }
+
       await updateUserProfile(currentUser.uid, profileData);
 
       profileStatus.textContent = 'Perfil actualizado exitosamente!';
@@ -243,6 +266,111 @@ function initializeAccountPage() {
       const submitBtn = profileForm.querySelector('button[type="submit"]');
       submitBtn.disabled = false;
       submitBtn.textContent = 'Guardar Cambios';
+    }
+  });
+
+  // Funciones del modal
+  function openPasswordModal() {
+    passwordModal.classList.remove('hidden');
+    passwordModal.classList.add('flex');
+    currentPassword.focus();
+  }
+
+  function closePasswordModal() {
+    passwordModal.classList.add('hidden');
+    passwordModal.classList.remove('flex');
+    passwordForm.reset();
+    passwordStatus.textContent = '';
+  }
+
+  // Event listeners del modal
+  btnChangePassword?.addEventListener('click', openPasswordModal);
+  modalClose?.addEventListener('click', closePasswordModal);
+  modalCancel?.addEventListener('click', closePasswordModal);
+
+  // Cerrar modal al hacer click fuera de él
+  passwordModal?.addEventListener('click', (e) => {
+    if (e.target === passwordModal) {
+      closePasswordModal();
+    }
+  });
+
+  // Formulario de cambio de contraseña
+  passwordForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (!currentUser) {
+      passwordStatus.textContent = 'Error: Usuario no autenticado';
+      passwordStatus.style.color = 'red';
+      return;
+    }
+
+    const currentPass = currentPassword.value;
+    const newPass = newPassword.value;
+    const confirmPass = confirmNewPassword.value;
+
+    // Validar que las contraseñas coincidan
+    if (newPass !== confirmPass) {
+      passwordStatus.textContent = 'Las nuevas contraseñas no coinciden';
+      passwordStatus.style.color = 'red';
+      return;
+    }
+
+    // Validar longitud mínima
+    if (newPass.length < 6) {
+      passwordStatus.textContent = 'La nueva contraseña debe tener al menos 6 caracteres';
+      passwordStatus.style.color = 'red';
+      return;
+    }
+
+    // Verificar que la nueva contraseña sea diferente
+    if (currentPass === newPass) {
+      passwordStatus.textContent = 'La nueva contraseña debe ser diferente a la actual';
+      passwordStatus.style.color = 'red';
+      return;
+    }
+
+    try {
+      const submitBtn = passwordForm.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Cambiando...';
+
+      passwordStatus.textContent = 'Cambiando contraseña...';
+      passwordStatus.style.color = 'blue';
+
+      await changePassword(currentPass, newPass);
+
+      passwordStatus.textContent = '¡Contraseña cambiada exitosamente!';
+      passwordStatus.style.color = 'green';
+
+      // Cerrar modal después de 2 segundos
+      setTimeout(() => {
+        closePasswordModal();
+        profileStatus.textContent = 'Contraseña actualizada exitosamente';
+        profileStatus.style.color = 'green';
+        setTimeout(() => {
+          profileStatus.textContent = '';
+        }, 3000);
+      }, 2000);
+
+    } catch (error) {
+      console.error('Error cambiando contraseña:', error);
+      let errorMessage = 'Error al cambiar la contraseña';
+
+      if (error.code === 'auth/wrong-password') {
+        errorMessage = 'La contraseña actual es incorrecta';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'La nueva contraseña es muy débil';
+      } else if (error.code === 'auth/requires-recent-login') {
+        errorMessage = 'Por seguridad, necesitas volver a iniciar sesión para cambiar tu contraseña';
+      }
+
+      passwordStatus.textContent = errorMessage;
+      passwordStatus.style.color = 'red';
+    } finally {
+      const submitBtn = passwordForm.querySelector('button[type="submit"]');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Cambiar Contraseña';
     }
   });
 

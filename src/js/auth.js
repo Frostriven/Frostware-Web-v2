@@ -7,7 +7,10 @@ import {
   sendPasswordResetEmail,
   signOut,
   onAuthStateChanged,
-  updateProfile
+  updateProfile,
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider
 } from 'firebase/auth';
 
 export async function registerWithEmail(name, email, password) {
@@ -35,6 +38,30 @@ export async function loginWithGoogle() {
 export async function resetPassword(email) {
   if (!auth) throw new Error('Firebase no inicializado');
   await sendPasswordResetEmail(auth, email);
+}
+
+export async function changePassword(currentPassword, newPassword) {
+  if (!auth || !auth.currentUser) throw new Error('Usuario no autenticado');
+
+  const user = auth.currentUser;
+
+  // Reautenticar al usuario con su contraseña actual
+  const credential = EmailAuthProvider.credential(user.email, currentPassword);
+  await reauthenticateWithCredential(user, credential);
+
+  // Cambiar la contraseña
+  await updatePassword(user, newPassword);
+
+  return true;
+}
+
+export async function updateUserDisplayName(newName) {
+  if (!auth || !auth.currentUser) throw new Error('Usuario no autenticado');
+
+  const user = auth.currentUser;
+  await updateProfile(user, { displayName: newName });
+
+  return user;
 }
 
 export async function logout() {

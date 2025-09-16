@@ -1,4 +1,5 @@
 import { loginWithEmail, loginWithGoogle } from '../../../js/auth.js';
+import { initializeRememberMe, saveCredentials } from '../../../js/rememberMe.js';
 
 export async function renderLoginView() {
   const root = document.getElementById('spa-root');
@@ -22,8 +23,12 @@ export async function renderLoginView() {
 
     const emailInput = root.querySelector('#email');
     const passwordInput = root.querySelector('#password');
+    const rememberCheckbox = root.querySelector('#remember-me');
     const loginButton = root.querySelector('#btn-login');
     const googleButton = root.querySelector('#btn-google-login');
+
+    // Initialize remember me functionality
+    initializeRememberMe(emailInput, rememberCheckbox);
 
     const statusDiv = document.createElement('div');
     statusDiv.className = 'mt-4 text-sm text-center';
@@ -42,6 +47,10 @@ export async function renderLoginView() {
           statusDiv.textContent = 'Iniciando sesión...';
           statusDiv.style.color = 'black';
           const user = await loginWithEmail(email, password);
+
+          // Save credentials if remember me is checked
+          saveCredentials(email, rememberCheckbox?.checked || false);
+
           statusDiv.textContent = 'Sesión iniciada exitosamente!';
           statusDiv.style.color = 'green';
           setTimeout(() => {
@@ -65,6 +74,12 @@ export async function renderLoginView() {
                 statusDiv.textContent = 'Iniciando sesión con Google...';
                 statusDiv.style.color = 'black';
                 const user = await loginWithGoogle();
+
+                // Save Google user email if remember me is checked
+                if (rememberCheckbox?.checked && user.email) {
+                  saveCredentials(user.email, true);
+                }
+
                 statusDiv.textContent = 'Sesión iniciada con Google!';
                 statusDiv.style.color = 'green';
                 setTimeout(() => {
