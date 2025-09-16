@@ -76,19 +76,18 @@ function generateProductsHTML(products) {
     const reviewsCount = product.reviews || Math.floor(Math.random() * 400) + 50; // Random reviews if not specified
 
     return `
-      <div class="product-card bg-white rounded-lg shadow-lg border border-gray-200 flex flex-col hover:shadow-xl transition-shadow duration-300 cursor-pointer h-full" data-category="${product.category}">
-        <div class="relative h-48 overflow-hidden rounded-t-lg">
-          <img src="${product.image || 'https://placehold.co/600x400/1a202c/FFFFFF?text=' + encodeURIComponent(product.name) + '&font=inter'}"
-               class="w-full h-full object-cover rounded-t-lg"
-               alt="${product.name}">
-        </div>
-        <div class="p-6 flex flex-col flex-grow">
-          <h3 class="text-xl font-bold mb-2 line-clamp-2 min-h-[3.5rem]">${product.name}</h3>
-          <div class="flex items-center mb-3 star-rating">
+      <div class="product-card bg-white shadow-lg border border-gray-200 flex flex-col hover:shadow-xl transition-shadow duration-300 cursor-pointer" data-category="${product.category}" style="border-radius: 14px; overflow: hidden;">
+        <img src="${product.image || 'https://placehold.co/600x400/1a202c/FFFFFF?text=' + encodeURIComponent(product.name) + '&font=inter'}"
+             class="w-full h-auto"
+             style="border-radius: 14px 14px 0 0; margin: 0; padding: 0; display: block;"
+             alt="${product.name}">
+        <div class="p-4 flex flex-col flex-grow">
+          <h3 class="text-xl font-bold mb-2 text-left">${product.name}</h3>
+          <div class="flex items-center mb-3 star-rating justify-start">
             ${starsHTML}
             <span class="text-xs text-gray-500 ml-2">(${reviewsCount})</span>
           </div>
-          <p class="text-gray-600 mb-4 flex-grow line-clamp-3 min-h-[4.5rem]">${product.description}</p>
+          <p class="text-gray-600 mb-4 flex-grow text-left line-clamp-3">${product.description}</p>
           <div class="flex justify-between items-center mb-3">
             ${product.price === 0 || product.price === "Gratis" ? `
               <span class="text-2xl font-bold text-gray-900">Gratis</span>
@@ -123,7 +122,7 @@ function generateProductsHTML(products) {
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           ${productsHTML}
         </div>
       </div>
@@ -412,6 +411,13 @@ if (!document.querySelector('#products-animation-style')) {
     .product-card {
       transition: all 0.3s ease;
       height: 100%;
+      overflow: hidden;
+    }
+
+    .product-card img {
+      margin: 0;
+      padding: 0;
+      display: block;
     }
 
     .product-card:hover {
