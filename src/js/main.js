@@ -20,6 +20,9 @@ import { i18n, t } from '../i18n/index.js';
 import { getFlagSVG } from '../i18n/flags.js';
 import { updateHomepageTranslations } from './homepage-i18n.js';
 
+// Track page load time to prevent automatic actions during page load
+window.pageLoadTime = Date.now();
+
 // Función principal de inicialización
 const initializeApp = () => {
   // Add loading state to prevent auth flash
@@ -133,7 +136,7 @@ const initializeApp = () => {
     setTimeout(() => {
       if (window.cart) {
         window.cart.bindEvents();
-        window.cart.updateCartCount(); // Always update count after header render
+        window.cart.updateCartCountSafe(); // Safe update without retries
       }
     }, 50);
   };
@@ -215,10 +218,13 @@ const initializeApp = () => {
     setTimeout(async () => {
       if (window.cart) {
         window.cart.bindEvents();
-        // Reload purchased products to ensure up-to-date state
-        await window.cart.loadUserPurchasedProducts();
+        // Only reload purchased products when navigating to account/products page
+        const currentHash = window.location.hash;
+        if (currentHash === '#/account/products' || currentHash === '#/account') {
+          await window.cart.loadUserPurchasedProducts();
+        }
         // Always update cart count after header render
-        window.cart.updateCartCount();
+        window.cart.updateCartCountSafe();
       }
     }, 100);
   });

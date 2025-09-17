@@ -259,6 +259,9 @@
 
         // Función para inicializar botones de productos en la página de inicio
         window.initializeHomeProductButtons = async function initializeHomeProductButtons() {
+            // Mark that we're initializing to prevent automatic actions
+            window.isPageInitializing = true;
+
             // Wait for cart to be initialized
             if (!window.cart) {
                 setTimeout(initializeHomeProductButtons, 100);
@@ -285,12 +288,40 @@
                     button.classList.add('bg-gray-400', 'cursor-not-allowed');
                     continue;
                 } else if (inCart) {
-                    // For free products in cart, still show "Obtener Gratis"
-                    button.textContent = 'Obtener Gratis';
+                    // Free products should never be in cart - they go directly to library
+                    // Only paid products should be in cart showing "Remove from Cart"
+                    if (productData.price === 0 || productData.price === "Gratis") {
+                        // If a free product somehow ended up in cart, remove it and show normal button
+                        window.cart.removeFromCart(productId);
+                        button.textContent = 'Obtener Gratis';
+                    } else {
+                        // For paid products in cart, show "Remove from Cart"
+                        button.textContent = 'Remover del Carrito';
+                        button.classList.remove('bg-[#22a7d0]', 'hover:bg-[#1e96bc]');
+                        button.classList.add('bg-orange-500', 'hover:bg-orange-600');
+                    }
                 }
 
                 // Add click event for free products
                 button.addEventListener('click', async function(e) {
+                    // Only process trusted events (real user clicks)
+                    if (!e.isTrusted) {
+                        console.log('🚫 Ignoring untrusted click event on', productData.id);
+                        return;
+                    }
+
+                    // CRITICAL: Never auto-process products during initialization or language changes
+                    if (Date.now() - window.pageLoadTime < 15000 || window.isPageInitializing) {
+                        console.log('🚫 Ignoring click during page load on', productData.id);
+                        return;
+                    }
+
+                    // Additional safety: Only process if user has explicitly clicked (no automatic triggers)
+                    if (!e.clientX && !e.clientY) {
+                        console.log('🚫 Ignoring programmatic click without coordinates on', productData.id);
+                        return;
+                    }
+
                     e.preventDefault();
                     e.stopPropagation();
 
@@ -349,6 +380,12 @@
                     }
                 });
             }
+
+            // Clear initialization flag after all buttons are set up
+            setTimeout(() => {
+                window.isPageInitializing = false;
+                console.log('✅ Page initialization complete - user interactions now allowed');
+            }, 1000);
         }
     </script>
     <style>

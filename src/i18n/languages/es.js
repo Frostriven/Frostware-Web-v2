@@ -74,7 +74,17 @@ export const es = {
     clear: "Limpiar Carrito",
     processPayment: "Procesar Pago",
     added: "¡Agregado al carrito!",
-    removed: "Eliminado del carrito"
+    removed: "Eliminado del carrito",
+    messages: {
+      alreadyOwned: "Este producto ya lo tienes en tu biblioteca",
+      alreadyInCart: "Este producto ya está en tu carrito",
+      addedToCart: "Producto agregado al carrito",
+      removedFromCart: "Producto removido del carrito",
+      cartCleared: "Carrito limpiado",
+      loginRequired: "Debes iniciar sesión para procesar el pago",
+      cartEmpty: "Tu carrito está vacío",
+      paymentError: "Error al procesar el pago. Inténtalo de nuevo."
+    }
   },
 
   // Homepage content
@@ -140,6 +150,60 @@ export const es = {
         title: "Flight Performance Calculator",
         description: "Cálculos avanzados de rendimiento de vuelo para despegue, aterrizaje, planificación de combustible y peso y balance. Compatible con ICAO y múltiples tipos de aeronaves."
       }
+    }
+  },
+
+  // Products page
+  productsPage: {
+    page: {
+      tagline: "SOLUCIONES DIGITALES",
+      title: "Un ecosistema para tu crecimiento",
+      errorLoading: "Error cargando productos"
+    },
+    filters: {
+      all: "Todos los Productos"
+    },
+    categories: {
+      aviation: "Aviación",
+      development: "Desarrollo",
+      education: "Educación",
+      ai: "Inteligencia Artificial",
+      technology: "Tecnología",
+      design: "Diseño",
+      business: "Negocios"
+    },
+    badges: {
+      enterprise: "Enterprise",
+      professional: "Professional",
+      popular: "Popular",
+      new: "Nuevo",
+      bestseller: "Bestseller",
+      premium: "Premium",
+      creative: "Creative",
+      available: "Disponible"
+    },
+    pricing: {
+      free: "Gratis"
+    },
+    buttons: {
+      alreadyOwned: "Ya lo tienes",
+      getFree: "Obtener Gratis",
+      removeFromCart: "Remover del Carrito",
+      addToCart: "Agregar al Carrito",
+      processing: "Procesando...",
+      added: "✅ ¡Agregado!",
+      error: "❌ Error"
+    },
+    messages: {
+      loginRequired: "Debes iniciar sesión para agregar productos",
+      productAdded: "Producto agregado a tu biblioteca",
+      productAddedSuccess: "¡Producto agregado exitosamente!",
+      productAddedDescription: "Ahora tienes acceso a la guía interactiva.",
+      errorAddingProduct: "Error al agregar producto"
+    },
+    toast: {
+      openGuide: "Abrir Guía",
+      viewMyApps: "Ver Mis Apps"
     }
   }
 };

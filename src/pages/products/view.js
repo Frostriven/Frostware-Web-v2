@@ -1,6 +1,7 @@
 import { getProductsFromFirebase, addUserProduct } from '../../js/userProfile.js';
 import { auth } from '../../js/firebase.js';
 import ShoppingCart from '../../js/cart.js';
+import { t, i18n } from '../../i18n/index.js';
 
 export async function renderProductsView() {
   const root = document.getElementById('spa-root');
@@ -69,9 +70,17 @@ export async function renderProductsView() {
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
+    // Add listener for language changes
+    window.addEventListener('languageChanged', () => {
+      setTimeout(() => {
+        // Re-render the products page with new language
+        renderProductsView();
+      }, 100);
+    });
+
   } catch (error) {
     console.error('Error cargando productos:', error);
-    root.innerHTML = `<p class="text-center text-red-500">${error.message}</p>`;
+    root.innerHTML = `<p class="text-center text-red-500">${t('productsPage.page.errorLoading')}: ${error.message}</p>`;
   }
 }
 
@@ -80,7 +89,7 @@ function generateProductsHTML(products) {
 
   const filtersHTML = `
     <button class="filter-btn active px-4 py-2 rounded-full text-sm font-medium transition-colors bg-[#22a7d0] text-white" data-filter="all">
-      Todos los Productos
+      ${t('productsPage.filters.all')}
     </button>
     ${categories.map(category => `
       <button class="filter-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200" data-filter="${category}">
@@ -94,6 +103,12 @@ function generateProductsHTML(products) {
     const starsHTML = generateStarsHTML(product.rating || 4.5);
     const reviewsCount = product.reviews || Math.floor(Math.random() * 400) + 50; // Random reviews if not specified
 
+    // Get description in current language
+    const currentLang = i18n.getCurrentLanguage();
+    const description = typeof product.description === 'object'
+      ? (product.description[currentLang] || product.description['en'] || product.description)
+      : product.description;
+
     return `
       <div class="product-card bg-white shadow-lg border border-gray-200 flex flex-col hover:shadow-xl transition-shadow duration-300 cursor-pointer" data-category="${product.category}" data-product-id="${product.id}" style="border-radius: 14px; overflow: hidden;">
         <img src="${product.image || 'https://placehold.co/600x400/1a202c/FFFFFF?text=' + encodeURIComponent(product.name) + '&font=inter'}"
@@ -106,10 +121,10 @@ function generateProductsHTML(products) {
             ${starsHTML}
             <span class="text-xs text-gray-500 ml-2">(${reviewsCount})</span>
           </div>
-          <p class="text-gray-600 mb-4 flex-grow text-left line-clamp-3">${product.description}</p>
+          <p class="text-gray-600 mb-4 flex-grow text-left line-clamp-3">${description}</p>
           <div class="flex justify-between items-center mb-3">
             ${product.price === 0 || product.price === "Gratis" ? `
-              <span class="text-2xl font-bold text-gray-900">Gratis</span>
+              <span class="text-2xl font-bold text-gray-900">${t('productsPage.pricing.free')}</span>
             ` : product.originalPrice && product.originalPrice > product.price ? `
               <div class="flex items-center space-x-2">
                 <span class="text-2xl font-bold text-gray-900">$${product.price}</span>
@@ -118,7 +133,7 @@ function generateProductsHTML(products) {
             ` : `
               <span class="text-2xl font-bold text-gray-900">$${product.price || 99}</span>
             `}
-            <span class="text-sm ${badgeColor} px-2 py-1 rounded-full">${product.badge || 'Disponible'}</span>
+            <span class="text-sm ${badgeColor} px-2 py-1 rounded-full">${getBadgeDisplayName(product.badge || 'available')}</span>
           </div>
           <button class="mt-auto product-action-button text-center bg-[#22a7d0] text-white font-bold py-2 px-4 rounded-lg transition-colors hover:bg-[#1e96bc]"
                   data-product-id="${product.id}"
@@ -132,8 +147,8 @@ function generateProductsHTML(products) {
     <section id="productos" class="py-20">
       <div class="container mx-auto px-6">
         <div class="text-center mb-12">
-          <h2 class="text-sm font-bold uppercase text-[#22a7d0]">SOLUCIONES DIGITALES</h2>
-          <p class="section-title text-3xl md:text-4xl mt-2">Un ecosistema para tu crecimiento</p>
+          <h2 class="text-sm font-bold uppercase text-[#22a7d0]">${t('productsPage.page.tagline')}</h2>
+          <p class="section-title text-3xl md:text-4xl mt-2">${t('productsPage.page.title')}</p>
         </div>
 
         <!-- Filter Section -->
@@ -152,31 +167,45 @@ function generateProductsHTML(products) {
 }
 
 function getCategoryDisplayName(category) {
-  const categoryNames = {
-    'aviation': 'Aviación',
-    'development': 'Desarrollo',
-    'education': 'Educación',
-    'ai': 'Inteligencia Artificial',
-    'technology': 'Tecnología',
-    'design': 'Diseño',
-    'business': 'Negocios'
-  };
-  return categoryNames[category] || category.charAt(0).toUpperCase() + category.slice(1);
+  const categoryKey = `productsPage.categories.${category}`;
+  const translatedCategory = t(categoryKey);
+
+  // If translation doesn't exist, fallback to capitalized category name
+  if (translatedCategory === categoryKey) {
+    return category.charAt(0).toUpperCase() + category.slice(1);
+  }
+
+  return translatedCategory;
+}
+
+function getBadgeDisplayName(badge) {
+  const badgeKey = `productsPage.badges.${badge.toLowerCase()}`;
+  const translatedBadge = t(badgeKey);
+
+  // If translation doesn't exist, return original badge
+  if (translatedBadge === badgeKey) {
+    return badge;
+  }
+
+  return translatedBadge;
 }
 
 function getBadgeColor(badge) {
+  const normalizedBadge = badge.toLowerCase();
   const badgeColors = {
-    'Enterprise': 'text-indigo-600 bg-indigo-100',
-    'Professional': 'text-purple-600 bg-purple-100',
-    'Popular': 'text-green-600 bg-green-100',
-    'New': 'text-blue-600 bg-blue-100',
-    'Bestseller': 'text-orange-600 bg-orange-100',
-    'Premium': 'text-cyan-600 bg-cyan-100',
-    'Creative': 'text-pink-600 bg-pink-100',
-    'Disponible': 'text-blue-600 bg-blue-100',
-    'Default': 'text-blue-600 bg-blue-100'
+    'enterprise': 'text-indigo-600 bg-indigo-100',
+    'professional': 'text-purple-600 bg-purple-100',
+    'popular': 'text-green-600 bg-green-100',
+    'new': 'text-blue-600 bg-blue-100',
+    'nuevo': 'text-blue-600 bg-blue-100',
+    'bestseller': 'text-orange-600 bg-orange-100',
+    'premium': 'text-cyan-600 bg-cyan-100',
+    'creative': 'text-pink-600 bg-pink-100',
+    'disponible': 'text-blue-600 bg-blue-100',
+    'available': 'text-blue-600 bg-blue-100',
+    'default': 'text-blue-600 bg-blue-100'
   };
-  return badgeColors[badge] || badgeColors['Default'];
+  return badgeColors[normalizedBadge] || badgeColors['default'];
 }
 
 function generateStarsHTML(rating) {
@@ -233,8 +262,12 @@ async function initializeProductButtons() {
     return;
   }
 
-  // Force reload user purchased products to ensure latest state
-  await window.cart.loadUserPurchasedProducts();
+  // Only reload user purchased products if we haven't done it recently
+  // This prevents unnecessary reloads that could cause UI issues
+  if (!window.cart._lastProductsReload || (Date.now() - window.cart._lastProductsReload) > 30000) {
+    await window.cart.loadUserPurchasedProducts();
+    window.cart._lastProductsReload = Date.now();
+  }
 
   const productButtons = document.querySelectorAll('.product-action-button');
 
@@ -247,23 +280,23 @@ async function initializeProductButtons() {
     const inCart = window.cart.isProductInCart(productId);
 
     if (isPurchased) {
-      button.textContent = 'Ya lo tienes';
+      button.textContent = t('productsPage.buttons.alreadyOwned');
       button.disabled = true;
       button.classList.remove('bg-[#22a7d0]', 'hover:bg-[#1e96bc]');
       button.classList.add('bg-gray-400', 'cursor-not-allowed');
     } else if (inCart) {
       if (productData.price === 0 || productData.price === "Gratis") {
-        button.textContent = 'Obtener Gratis';
+        button.textContent = t('productsPage.buttons.getFree');
       } else {
-        button.textContent = 'Remover del Carrito';
+        button.textContent = t('productsPage.buttons.removeFromCart');
         button.classList.remove('bg-[#22a7d0]', 'hover:bg-[#1e96bc]');
         button.classList.add('bg-orange-500', 'hover:bg-orange-600');
       }
     } else {
       if (productData.price === 0 || productData.price === "Gratis") {
-        button.textContent = 'Obtener Gratis';
+        button.textContent = t('productsPage.buttons.getFree');
       } else {
-        button.textContent = 'Agregar al Carrito';
+        button.textContent = t('productsPage.buttons.addToCart');
       }
     }
 
@@ -274,7 +307,7 @@ async function initializeProductButtons() {
         e.stopPropagation();
 
         if (!auth?.currentUser) {
-          showToast('Debes iniciar sesión para agregar productos', 'error');
+          showToast(t('productsPage.messages.loginRequired'), 'error');
           window.location.hash = '#/auth';
           return;
         }
@@ -289,7 +322,7 @@ async function initializeProductButtons() {
         if (productData.price === 0 || productData.price === "Gratis") {
           const originalText = this.textContent;
           this.disabled = true;
-          this.textContent = 'Procesando...';
+          this.textContent = t('productsPage.buttons.processing');
           this.classList.add('opacity-75');
 
           try {
@@ -303,15 +336,15 @@ async function initializeProductButtons() {
               purchaseDate: new Date().toISOString()
             });
 
-            this.textContent = '✅ ¡Agregado!';
+            this.textContent = t('productsPage.buttons.added');
             this.classList.remove('bg-[#22a7d0]', 'opacity-75');
             this.classList.add('bg-green-500');
 
-            showToast('Producto agregado a tu biblioteca', 'success');
+            showToast(t('productsPage.messages.productAdded'), 'success');
 
             // Update button state
             setTimeout(() => {
-              this.textContent = 'Ya lo tienes';
+              this.textContent = t('productsPage.buttons.alreadyOwned');
               this.classList.remove('bg-green-500');
               this.classList.add('bg-gray-400', 'cursor-not-allowed');
               this.disabled = true;
@@ -325,9 +358,9 @@ async function initializeProductButtons() {
 
           } catch (error) {
             console.error('Error adding free product:', error);
-            this.textContent = '❌ Error';
+            this.textContent = t('productsPage.buttons.error');
             this.classList.add('bg-red-500');
-            showToast('Error al agregar producto', 'error');
+            showToast(t('productsPage.messages.errorAddingProduct'), 'error');
 
             setTimeout(() => {
               this.textContent = originalText;
@@ -341,7 +374,7 @@ async function initializeProductButtons() {
           if (success) {
             // Optionally update button text temporarily
             const originalText = this.textContent;
-            this.textContent = '✅ Agregado';
+            this.textContent = t('productsPage.buttons.added');
             this.classList.add('bg-green-500');
 
             setTimeout(() => {
@@ -397,7 +430,7 @@ function showToast(message, type = 'success') {
 }
 
 function showPurchaseToast() {
-  showToast('¡Producto agregado exitosamente!', 'success');
+  showToast(t('productsPage.messages.productAddedSuccess'), 'success');
 }
 
 function showPurchaseToastWithApp(appUrl) {
@@ -412,16 +445,16 @@ function showPurchaseToastWithApp(appUrl) {
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
         </svg>
         <div class="flex-1">
-          <p class="font-medium mb-2">¡Producto agregado exitosamente!</p>
-          <p class="text-sm mb-3">Ahora tienes acceso a la guía interactiva.</p>
+          <p class="font-medium mb-2">${t('productsPage.messages.productAddedSuccess')}</p>
+          <p class="text-sm mb-3">${t('productsPage.messages.productAddedDescription')}</p>
           <div class="flex space-x-2">
             <button onclick="window.open('${appUrl}', '_blank')"
                     class="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded text-sm font-medium transition-colors">
-              Abrir Guía
+              ${t('productsPage.toast.openGuide')}
             </button>
             <button onclick="window.location.hash = '#/account'"
                     class="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded text-sm font-medium transition-colors">
-              Ver Mis Apps
+              ${t('productsPage.toast.viewMyApps')}
             </button>
           </div>
         </div>

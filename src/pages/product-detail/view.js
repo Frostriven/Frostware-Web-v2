@@ -339,8 +339,8 @@ function setupProductDetailEventListeners(product) {
         window.cart.removeFromCart(product.id);
         updateBothButtons(false);
         // Force update cart count in header
-        if (window.cart.updateCartCount) {
-          window.cart.updateCartCount();
+        if (window.cart.updateCartCountSafe) {
+          window.cart.updateCartCountSafe();
         }
       } else {
         // Add to cart
@@ -348,8 +348,8 @@ function setupProductDetailEventListeners(product) {
         if (success) {
           updateBothButtons(true);
           // Force update cart count in header
-          if (window.cart.updateCartCount) {
-            window.cart.updateCartCount();
+          if (window.cart.updateCartCountSafe) {
+            window.cart.updateCartCountSafe();
           }
         }
       }

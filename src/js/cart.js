@@ -1,9 +1,30 @@
 import { auth } from './firebase.js';
+import { t } from '../i18n/index.js';
 import { getUserProducts } from './userProfile.js';
 
 class ShoppingCart {
     constructor() {
-        this.cart = JSON.parse(localStorage.getItem('cart')) || [];
+        // CAPA 2: Sistema de recuperación de backup
+        let savedCart = localStorage.getItem('cart');
+
+        // Si el carrito está vacío, intentar recuperar del backup
+        if (!savedCart || savedCart === '[]') {
+            const backupCart = localStorage.getItem('cart_backup');
+            const backupTimestamp = localStorage.getItem('cart_backup_timestamp');
+
+            if (backupCart && backupTimestamp) {
+                const timeDiff = Date.now() - parseInt(backupTimestamp);
+                // Usar backup si es menor a 30 segundos (cambios de idioma recientes)
+                if (timeDiff < 30000) {
+                    savedCart = backupCart;
+                    localStorage.setItem('cart', savedCart);
+                    console.log('🔄 Cart restored from backup (age:', timeDiff, 'ms)');
+                }
+            }
+        }
+
+        this.cart = JSON.parse(savedCart) || [];
+
         this.userPurchasedProducts = new Set();
         this.initializeCart();
 
@@ -21,18 +42,45 @@ class ShoppingCart {
     }
 
     async loadUserPurchasedProducts() {
+        // CAPA 3: Protección múltiple contra borrado de carrito
+
+        // Verificar si tenemos productos en el carrito antes de hacer cualquier cosa
+        const hasCartItems = this.cart && this.cart.length > 0;
+
+        // Wait for auth to be ready during page initialization
+        let retries = 0;
+        while (!auth?.currentUser && retries < 15) { // Aumenté a 15 intentos
+            await new Promise(resolve => setTimeout(resolve, 200)); // Aumenté a 200ms
+            retries++;
+        }
+
         if (auth?.currentUser) {
             try {
                 const userProducts = await getUserProducts(auth.currentUser.uid);
-                this.userPurchasedProducts = new Set(userProducts.map(product => product.id));
+                const purchasedProductIds = userProducts.map(product => product.id);
+
+                this.userPurchasedProducts = new Set(purchasedProductIds);
             } catch (error) {
                 console.error('Error loading user products:', error);
+                // Don't clear the set on error to prevent false positives
             }
         } else {
-            // If no user is logged in, clear the cart
-            this.cart = [];
-            localStorage.removeItem('cart');
-            this.userPurchasedProducts = new Set();
+            // CAPA 3: NUNCA borrar carrito si tiene productos, sin importar el estado de auth
+            if (hasCartItems) {
+                console.log('🛡️ PROTECTION: Cart has items - preserving regardless of auth state');
+                this.userPurchasedProducts = new Set(); // Solo limpiar productos comprados
+                return; // NO borrar carrito
+            }
+
+            // Solo borrar si realmente no hay usuario Y no hay productos en carrito
+            if (retries >= 15) {
+                console.log('⚠️ No user found after extended wait - clearing empty cart');
+                this.cart = [];
+                localStorage.removeItem('cart');
+                this.userPurchasedProducts = new Set();
+            } else {
+                console.log('🔄 Auth not ready yet - keeping cart intact');
+            }
         }
     }
 
@@ -98,14 +146,14 @@ class ShoppingCart {
     addToCart(product) {
         // Verificar si el producto ya fue comprado
         if (this.userPurchasedProducts.has(product.id)) {
-            this.showToast('Este producto ya lo tienes en tu biblioteca', 'info');
+            this.showToast(t('cart.messages.alreadyOwned'), 'info');
             return false;
         }
 
         // Verificar si el producto ya está en el carrito
         const existingProduct = this.cart.find(item => item.id === product.id);
         if (existingProduct) {
-            this.showToast('Este producto ya está en tu carrito', 'info');
+            this.showToast(t('cart.messages.alreadyInCart'), 'info');
             return false;
         }
 
@@ -121,7 +169,7 @@ class ShoppingCart {
         this.saveCart();
         this.updateCartUI();
         this.updateAllProductButtons();
-        this.showToast('Producto agregado al carrito', 'success');
+        this.showToast(t('cart.messages.addedToCart'), 'success');
         return true;
     }
 
@@ -130,7 +178,7 @@ class ShoppingCart {
         this.saveCart();
         this.updateCartUI();
         this.updateAllProductButtons();
-        this.showToast('Producto removido del carrito', 'success');
+        this.showToast(t('cart.messages.removedFromCart'), 'removed');
     }
 
     clearCart() {
@@ -138,11 +186,55 @@ class ShoppingCart {
         this.saveCart();
         this.updateCartUI();
         this.updateAllProductButtons();
-        this.showToast('Carrito limpiado', 'success');
+        this.showToast(t('cart.messages.cartCleared'), 'warning');
     }
 
     saveCart() {
         localStorage.setItem('cart', JSON.stringify(this.cart));
+
+        // CAPA 4: Sistema de vigilancia y auto-recuperación
+        // Crear múltiples backups en diferentes claves
+        if (this.cart.length > 0) {
+            localStorage.setItem('cart_backup', JSON.stringify(this.cart));
+            localStorage.setItem('cart_backup_timestamp', Date.now().toString());
+            localStorage.setItem('cart_emergency_backup', JSON.stringify(this.cart));
+        }
+
+        // CAPA 4: Auto-vigilancia - verificar que no se pierda
+        setTimeout(() => {
+            const currentCart = localStorage.getItem('cart');
+            if (this.cart.length > 0 && (!currentCart || currentCart === '[]')) {
+                console.log('🚨 CART LOSS DETECTED - Auto-recovering...');
+                this.autoRecoverCart();
+            }
+        }, 1000);
+    }
+
+    // CAPA 4: Función de auto-recuperación
+    autoRecoverCart() {
+        const backups = [
+            localStorage.getItem('cart_backup'),
+            localStorage.getItem('cart_emergency_backup')
+        ];
+
+        for (const backup of backups) {
+            if (backup && backup !== '[]') {
+                try {
+                    const recoveredCart = JSON.parse(backup);
+                    if (recoveredCart.length > 0) {
+                        this.cart = recoveredCart;
+                        localStorage.setItem('cart', backup);
+                        this.updateCartUI();
+                        console.log('✅ Cart auto-recovered from backup');
+                        this.showToast('Cart recovered automatically', 'success');
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Error in auto-recovery:', error);
+                }
+            }
+        }
+        return false;
     }
 
     updateCartUI() {
@@ -150,7 +242,7 @@ class ShoppingCart {
         this.updateCartModal();
     }
 
-    updateCartCount() {
+    updateCartCount(retryCount = 0, allowRetries = true) {
         const countElement = document.getElementById('cart-count');
         if (countElement) {
             const count = this.cart.length;
@@ -171,12 +263,24 @@ class ShoppingCart {
                 console.log(`🔴 Cart count hidden: 0 items`);
             }
         } else {
-            console.log('❌ Cart count element not found - header might not be rendered yet');
-            // Try again in a moment if element doesn't exist
-            setTimeout(() => {
-                this.updateCartCount();
-            }, 500);
+            // FIXED: Only retry if explicitly allowed and within limits
+            if (allowRetries && retryCount < 5) { // Reduced to 5 attempts max
+                console.log(`⏳ Cart count element not found - retry ${retryCount + 1}/5`);
+                setTimeout(() => {
+                    this.updateCartCount(retryCount + 1, true);
+                }, 300); // Reduced timeout
+            } else {
+                // Silently fail if retries not allowed or exhausted
+                if (retryCount === 0) {
+                    console.log('⚠️ Cart count element not available - skipping update');
+                }
+            }
         }
+    }
+
+    // Safe version for external calls (no retries)
+    updateCartCountSafe() {
+        this.updateCartCount(0, false);
     }
 
     updateCartModal() {
@@ -249,13 +353,13 @@ class ShoppingCart {
 
     async processPayment() {
         if (!auth?.currentUser) {
-            this.showToast('Debes iniciar sesión para procesar el pago', 'error');
+            this.showToast(t('cart.messages.loginRequired'), 'error');
             window.location.hash = '#/auth';
             return;
         }
 
         if (this.cart.length === 0) {
-            this.showToast('Tu carrito está vacío', 'error');
+            this.showToast(t('cart.messages.cartEmpty'), 'error');
             return;
         }
 
@@ -319,7 +423,7 @@ class ShoppingCart {
         } catch (error) {
             console.error('Error processing payment:', error);
             progressModal.remove();
-            this.showToast('Error al procesar el pago. Inténtalo de nuevo.', 'error');
+            this.showToast(t('cart.messages.paymentError'), 'error');
         }
     }
 
@@ -461,28 +565,28 @@ class ShoppingCart {
             const inCart = this.isProductInCart(productId);
 
             // Reset button classes
-            button.classList.remove('bg-gray-400', 'cursor-not-allowed', 'bg-green-500', 'bg-orange-500');
+            button.classList.remove('bg-gray-400', 'cursor-not-allowed', 'bg-green-500', 'bg-orange-500', 'hover:bg-orange-600');
             button.classList.add('bg-[#22a7d0]', 'hover:bg-[#1e96bc]');
             button.disabled = false;
 
             if (isPurchased) {
-                button.textContent = 'Ya lo tienes';
+                button.textContent = t('productsPage.buttons.alreadyOwned');
                 button.disabled = true;
                 button.classList.remove('bg-[#22a7d0]', 'hover:bg-[#1e96bc]');
                 button.classList.add('bg-gray-400', 'cursor-not-allowed');
             } else if (inCart) {
                 if (productData.price === 0 || productData.price === "Gratis") {
-                    button.textContent = 'Obtener Gratis';
+                    button.textContent = t('productsPage.buttons.getFree');
                 } else {
-                    button.textContent = 'Remover del Carrito';
+                    button.textContent = t('productsPage.buttons.removeFromCart');
                     button.classList.remove('bg-[#22a7d0]', 'hover:bg-[#1e96bc]');
                     button.classList.add('bg-orange-500', 'hover:bg-orange-600');
                 }
             } else {
                 if (productData.price === 0 || productData.price === "Gratis") {
-                    button.textContent = 'Obtener Gratis';
+                    button.textContent = t('productsPage.buttons.getFree');
                 } else {
-                    button.textContent = 'Agregar al Carrito';
+                    button.textContent = t('productsPage.buttons.addToCart');
                 }
             }
         });
@@ -495,13 +599,17 @@ class ShoppingCart {
         const bgColor = {
             'success': 'bg-green-500',
             'error': 'bg-red-500',
-            'info': 'bg-blue-500'
+            'info': 'bg-blue-500',
+            'warning': 'bg-yellow-500',
+            'removed': 'bg-orange-500'
         }[type] || 'bg-green-500';
 
         const icon = {
             'success': `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`,
             'error': `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`,
-            'info': `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`
+            'info': `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`,
+            'warning': `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`,
+            'removed': `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`
         }[type] || '';
 
         toast.innerHTML = `
@@ -519,9 +627,35 @@ class ShoppingCart {
             setTimeout(() => toast.remove(), 300);
         }, 3000);
     }
+
+    // CAPA 5: Función de emergencia manual
+    emergencyCartRecovery() {
+        console.log('🚑 EMERGENCY CART RECOVERY ACTIVATED');
+
+        const allBackups = {
+            cart_backup: localStorage.getItem('cart_backup'),
+            cart_emergency_backup: localStorage.getItem('cart_emergency_backup')
+        };
+
+        console.log('Available backups:', allBackups);
+
+        // Intentar recuperar del backup más reciente
+        const success = this.autoRecoverCart();
+
+        if (success) {
+            console.log('✅ Emergency recovery successful');
+            return true;
+        } else {
+            console.log('❌ Emergency recovery failed - no valid backups found');
+            return false;
+        }
+    }
 }
 
 // Inicializar carrito global
 window.cart = new ShoppingCart();
+
+// CAPA 5: Hacer función de emergencia disponible globalmente
+window.emergencyCartRecovery = () => window.cart.emergencyCartRecovery();
 
 export default ShoppingCart;

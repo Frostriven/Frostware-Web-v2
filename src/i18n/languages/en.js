@@ -74,7 +74,17 @@ export const en = {
     clear: "Clear Cart",
     processPayment: "Process Payment",
     added: "Added to cart!",
-    removed: "Removed from cart"
+    removed: "Removed from cart",
+    messages: {
+      alreadyOwned: "You already have this product in your library",
+      alreadyInCart: "This product is already in your cart",
+      addedToCart: "Product added to cart",
+      removedFromCart: "Product removed from cart",
+      cartCleared: "Cart cleared",
+      loginRequired: "You must log in to process payment",
+      cartEmpty: "Your cart is empty",
+      paymentError: "Error processing payment. Please try again."
+    }
   },
 
   // Homepage content
@@ -140,6 +150,60 @@ export const en = {
         title: "Flight Performance Calculator",
         description: "Advanced flight performance calculations for takeoff, landing, fuel planning and weight & balance. ICAO compliant with multiple aircraft types."
       }
+    }
+  },
+
+  // Products page
+  productsPage: {
+    page: {
+      tagline: "DIGITAL SOLUTIONS",
+      title: "An ecosystem for your growth",
+      errorLoading: "Error loading products"
+    },
+    filters: {
+      all: "All Products"
+    },
+    categories: {
+      aviation: "Aviation",
+      development: "Development",
+      education: "Education",
+      ai: "Artificial Intelligence",
+      technology: "Technology",
+      design: "Design",
+      business: "Business"
+    },
+    badges: {
+      enterprise: "Enterprise",
+      professional: "Professional",
+      popular: "Popular",
+      new: "New",
+      bestseller: "Bestseller",
+      premium: "Premium",
+      creative: "Creative",
+      available: "Available"
+    },
+    pricing: {
+      free: "Free"
+    },
+    buttons: {
+      alreadyOwned: "You have it",
+      getFree: "Get Free",
+      removeFromCart: "Remove from Cart",
+      addToCart: "Add to Cart",
+      processing: "Processing...",
+      added: "✅ Added!",
+      error: "❌ Error"
+    },
+    messages: {
+      loginRequired: "You must log in to add products",
+      productAdded: "Product added to your library",
+      productAddedSuccess: "Product added successfully!",
+      productAddedDescription: "You now have access to the interactive guide.",
+      errorAddingProduct: "Error adding product"
+    },
+    toast: {
+      openGuide: "Open Guide",
+      viewMyApps: "View My Apps"
     }
   }
 };

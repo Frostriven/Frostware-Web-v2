@@ -60,6 +60,30 @@ export async function getUserProducts(userId) {
 }
 
 // Agregar producto al usuario (simulando compra)
+// Emergency function to clear phantom products
+export async function clearPhantomProducts(userId) {
+  if (!db) throw new Error('Firestore no inicializado');
+
+  try {
+    const userProductsRef = collection(db, 'users', userId, 'purchasedProducts');
+    const snapshot = await getDocs(userProductsRef);
+
+    console.log('🧹 Clearing', snapshot.size, 'phantom products...');
+
+    const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+    await Promise.all(deletePromises);
+
+    console.log('✅ All phantom products cleared');
+    return snapshot.size;
+  } catch (error) {
+    console.error('Error clearing phantom products:', error);
+    throw error;
+  }
+}
+
+// Make cleanup function available globally for emergency use
+window.clearPhantomProducts = clearPhantomProducts;
+
 export async function addUserProduct(userId, productData) {
   if (!db) throw new Error('Firestore no inicializado');
 
@@ -162,8 +186,14 @@ export const products = [
   {
     id: 'north-atlantic-ops',
     name: 'North Atlantic Operational Procedures',
-    description: 'A comprehensive question bank for transoceanic pilots operating in North Atlantic airspace. Based on official ICAO documents with references and justifications.',
-    longDescription: 'The most comprehensive question bank for transoceanic pilots. Study official ICAO procedures, practice with real scenarios, and pass your NAT operations certification with confidence.',
+    description: {
+      es: 'Un banco de preguntas completo para pilotos transoceánicos que operan en el espacio aéreo del Atlántico Norte. Basado en documentos oficiales de OACI con referencias y justificaciones.',
+      en: 'A comprehensive question bank for transoceanic pilots operating in North Atlantic airspace. Based on official ICAO documents with references and justifications.'
+    },
+    longDescription: {
+      es: 'El banco de preguntas más completo para pilotos transoceánicos. Estudia procedimientos oficiales de OACI, practica con escenarios reales y aprueba tu certificación de operaciones NAT con confianza.',
+      en: 'The most comprehensive question bank for transoceanic pilots. Study official ICAO procedures, practice with real scenarios, and pass your NAT operations certification with confidence.'
+    },
     price: 99,
     originalPrice: 150,
     image: 'https://placehold.co/600x400/1a202c/FFFFFF?text=NAT+OPS&font=inter',
@@ -213,8 +243,14 @@ export const products = [
   {
     id: 'p2',
     name: 'P2',
-    description: 'A comprehensive question bank for transoceanic pilots operating in North Atlantic airspace. Based on official ICAO documents with references and justifications.',
-    longDescription: 'The most comprehensive question bank for transoceanic pilots. Study official ICAO procedures, practice with real scenarios, and pass your NAT operations certification with confidence.',
+    description: {
+      es: 'Un banco de preguntas completo para pilotos transoceánicos que operan en el espacio aéreo del Atlántico Norte. Basado en documentos oficiales de OACI con referencias y justificaciones.',
+      en: 'A comprehensive question bank for transoceanic pilots operating in North Atlantic airspace. Based on official ICAO documents with references and justifications.'
+    },
+    longDescription: {
+      es: 'El banco de preguntas más completo para pilotos transoceánicos. Estudia procedimientos oficiales de OACI, practica con escenarios reales y aprueba tu certificación de operaciones NAT con confianza.',
+      en: 'The most comprehensive question bank for transoceanic pilots. Study official ICAO procedures, practice with real scenarios, and pass your NAT operations certification with confidence.'
+    },
     price: 99,
     originalPrice: 150,
     image: 'https://static.vecteezy.com/system/resources/previews/001/194/635/non_2x/snowflake-png.png',
@@ -358,14 +394,22 @@ export async function initializeProductsInFirebase() {
       const productDoc = await getDoc(productRef);
 
       if (productDoc.exists()) {
-        // Si existe, actualizar con los nuevos campos (detailedFeatures)
+        // Si existe, actualizar con los nuevos campos (detailedFeatures y descripciones multilingües)
         const existingData = productDoc.data();
-        if (!existingData.detailedFeatures || existingData.detailedFeatures.length !== product.detailedFeatures?.length) {
+        const needsUpdate =
+          !existingData.detailedFeatures ||
+          existingData.detailedFeatures.length !== product.detailedFeatures?.length ||
+          typeof existingData.description === 'string' || // Old format
+          typeof existingData.longDescription === 'string'; // Old format
+
+        if (needsUpdate) {
           await updateDoc(productRef, {
+            description: product.description,
+            longDescription: product.longDescription,
             detailedFeatures: product.detailedFeatures || [],
             updatedAt: serverTimestamp()
           });
-          console.log(`Producto ${product.id} actualizado con detailedFeatures`);
+          console.log(`Producto ${product.id} actualizado con estructura multilingüe`);
         }
       } else {
         // Si no existe, crear nuevo
@@ -375,7 +419,7 @@ export async function initializeProductsInFirebase() {
           updatedAt: serverTimestamp()
         };
         await setDoc(productRef, productWithTimestamps);
-        console.log(`Producto ${product.id} creado en Firebase`);
+        console.log(`Producto ${product.id} creado en Firebase con estructura multilingüe`);
       }
     }
   } catch (error) {

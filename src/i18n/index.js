@@ -97,6 +97,14 @@ export const t = (key, params) => i18n.t(key, params);
 // Función para cambiar idioma (usar en onclick)
 window.changeLanguage = (lang) => {
   if (i18n.setLanguage(lang)) {
+    // CAPA 1: Backup del carrito antes del reload
+    const currentCart = localStorage.getItem('cart');
+    if (currentCart) {
+      localStorage.setItem('cart_backup', currentCart);
+      localStorage.setItem('cart_backup_timestamp', Date.now().toString());
+      console.log('🔒 Cart backed up before language change');
+    }
+
     // Recargar la página actual para aplicar nuevas traducciones
     window.location.reload();
   }
