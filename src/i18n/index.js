@@ -102,12 +102,19 @@ window.changeLanguage = (lang) => {
 
     // Emitir evento para que las páginas se actualicen sin recargar
     console.log(`🌐 Language changed to: ${lang} - updating views`);
+    console.log('📍 Current hash before language change:', window.location.hash);
 
     // Pequeño delay para evitar el flash en la navegación
     setTimeout(() => {
+      console.log('📍 Current hash at language event dispatch:', window.location.hash);
       window.dispatchEvent(new CustomEvent('languageChanged', {
         detail: { language: lang }
       }));
+
+      // Check hash again after event dispatch
+      setTimeout(() => {
+        console.log('📍 Current hash after language event:', window.location.hash);
+      }, 100);
     }, 50);
   }
 };

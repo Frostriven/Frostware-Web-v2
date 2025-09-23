@@ -345,9 +345,10 @@ const initializeApp = () => {
     await renderHeader(currentUser);
     console.log('✅ Header updated after language change');
 
-    // Update cart modal content if it exists
+    // Update cart modal content if it exists - but don't interfere with page navigation
     const cartModal = document.getElementById('cart-modal');
-    if (cartModal) {
+    if (cartModal && !cartModal.classList.contains('updating')) {
+      cartModal.classList.add('updating');
       cartModal.remove();
       // Re-create the cart modal with updated translations
       if (!document.getElementById('cart-modal')) {
@@ -393,6 +394,11 @@ const initializeApp = () => {
             window.cart.bindEvents();
             window.cart.updateCartUI();
             console.log('✅ Cart modal updated and events rebound after language change');
+          }
+          // Remove updating flag
+          const updatedModal = document.getElementById('cart-modal');
+          if (updatedModal) {
+            updatedModal.classList.remove('updating');
           }
         }, 100);
       }

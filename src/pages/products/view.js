@@ -73,12 +73,17 @@ export async function renderProductsView() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     // Add listener for language changes
-    window.addEventListener('languageChanged', () => {
+    const handleLanguageChange = () => {
       setTimeout(() => {
         // Re-render the products page with new language
         renderProductsView();
       }, 100);
-    });
+    };
+
+    // Remove existing listener to avoid duplicates
+    window.removeEventListener('languageChanged', handleLanguageChange);
+    // Add new listener
+    window.addEventListener('languageChanged', handleLanguageChange);
 
   } catch (error) {
     console.error('Error cargando productos:', error);
@@ -105,8 +110,13 @@ function generateProductsHTML(products) {
     const starsHTML = generateStarsHTML(product.rating || 4.5);
     const reviewsCount = product.reviews || Math.floor(Math.random() * 400) + 50; // Random reviews if not specified
 
-    // Get description in current language
+    // Get name and description in current language
     const currentLang = i18n.getCurrentLanguage();
+
+    const name = typeof product.name === 'object'
+      ? (product.name[currentLang] || product.name['en'] || product.name)
+      : product.name;
+
     const description = typeof product.description === 'object'
       ? (product.description[currentLang] || product.description['en'] || product.description)
       : product.description;
@@ -114,13 +124,13 @@ function generateProductsHTML(products) {
     return `
       <div class="product-card bg-white shadow-lg border border-gray-200 flex flex-col hover:shadow-xl transition-shadow duration-300 cursor-pointer" data-category="${product.category}" data-product-id="${product.id}" style="border-radius: 14px; overflow: hidden; height: 720px;">
         <div class="w-full h-1/2 overflow-hidden" style="border-radius: 14px 14px 0 0;">
-          <img src="${product.image || 'https://placehold.co/600x400/1a202c/FFFFFF?text=' + encodeURIComponent(product.name) + '&font=inter'}"
+          <img src="${product.image || 'https://placehold.co/600x400/1a202c/FFFFFF?text=' + encodeURIComponent(name) + '&font=inter'}"
                class="w-full h-full object-cover"
-               alt="${product.name}">
+               alt="${name}">
         </div>
         <div class="p-4 flex flex-col h-1/2 justify-between">
           <div class="flex-grow">
-            <h3 class="text-lg font-bold mb-2 text-left">${product.name}</h3>
+            <h3 class="text-lg font-bold mb-2 text-left">${name}</h3>
             <div class="flex items-center mb-2 star-rating justify-start">
               ${starsHTML}
               <span class="text-xs text-gray-500 ml-2">(${reviewsCount})</span>

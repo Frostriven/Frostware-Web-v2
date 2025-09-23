@@ -1,6 +1,7 @@
 import { getUserProfile, verifyUserAppAccess } from '../../js/userProfile.js';
 import { auth } from '../../js/firebase.js';
 import { getProductsFromFirebase } from '../../js/userProfile.js';
+import { t, i18n } from '../../i18n/index.js';
 
 export async function renderProductDetailView(productId) {
   const root = document.getElementById('spa-root');
@@ -15,8 +16,8 @@ export async function renderProductDetailView(productId) {
       root.innerHTML = `
         <div class="flex items-center justify-center min-h-screen">
           <div class="text-center">
-            <h2 class="text-2xl font-bold text-gray-900 mb-4">Producto no encontrado</h2>
-            <a href="#/products" class="text-[#22a7d0] hover:text-[#1e96c8]">Volver a productos</a>
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">${t('productDetail.productNotFound')}</h2>
+            <a href="#/products" class="text-[#22a7d0] hover:text-[#1e96c8]">${t('productDetail.backToProducts')}</a>
           </div>
         </div>
       `;
@@ -53,7 +54,7 @@ export async function renderProductDetailView(productId) {
             <svg class="w-4 h-4 mr-2 transition-transform duration-200 group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
             </svg>
-            Volver a Productos
+            ${t('productDetail.backToProducts')}
           </button>
         </div>
 
@@ -65,13 +66,16 @@ export async function renderProductDetailView(productId) {
                 <div>
                   <div class="mb-6">
                     <span class="inline-block bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full text-sm font-medium mb-4">
-                      ${product.category === 'aviation' ? 'Professional Aviation Training' : 'Premium Digital Product'}
+                      ${product.category === 'aviation' ? t('productDetail.category.aviation') : t('productDetail.category.premium')}
                     </span>
                     <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
-                      ${product.name}
+                      ${typeof product.name === 'object' ? product.name[i18n.currentLanguage] || product.name.es || product.name : product.name}
                     </h1>
                     <p class="text-xl text-blue-100 mb-8">
-                      ${product.longDescription || product.description}
+                      ${(() => {
+                        const desc = product.longDescription || product.description;
+                        return typeof desc === 'object' ? desc[i18n.currentLanguage] || desc.es || desc : desc;
+                      })()}
                     </p>
                   </div>
 
@@ -89,14 +93,14 @@ export async function renderProductDetailView(productId) {
                   <div class="flex flex-col sm:flex-row gap-4">
                     ${hasPurchased ? `
                       <a href="#/dashboard/${product.id}" class="inline-flex items-center justify-center px-8 py-4 bg-[#22a7d0] text-white font-bold rounded-lg text-lg hover:bg-[#1e96c8] transition-colors shadow-lg">
-                        Acceder Ahora
+                        ${t('productDetail.accessNow')}
                         <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                         </svg>
                       </a>
                     ` : !hasPurchased ? `
                       <button id="add-to-cart-btn" class="inline-flex items-center justify-center px-8 py-4 ${isInCart ? 'bg-green-500 hover:bg-green-600' : 'bg-[#22a7d0] hover:bg-[#1e96c8]'} text-white font-bold rounded-lg text-lg transition-colors shadow-lg" data-product-id="${product.id}">
-                        ${isInCart ? 'En el Carrito' : 'Agregar al Carrito'}
+                        ${isInCart ? t('productDetail.inCart') : t('productDetail.addToCart')}
                         <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           ${isInCart ? `
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -107,7 +111,7 @@ export async function renderProductDetailView(productId) {
                       </button>
                     ` : ''}
                     <button id="learn-more-btn" class="inline-flex items-center justify-center px-8 py-4 border-2 border-white/30 text-white font-semibold rounded-lg text-lg hover:bg-white/10 transition-colors">
-                      Ver Detalles
+                      ${t('productDetail.viewDetails')}
                     </button>
                   </div>
                 </div>
@@ -135,10 +139,13 @@ export async function renderProductDetailView(productId) {
           <div class="container mx-auto px-6">
             <div class="max-w-6xl mx-auto">
               <div class="text-center mb-16">
-                <h2 class="text-sm font-bold uppercase text-[#22a7d0] mb-2">PRODUCTO COMPLETO</h2>
-                <h3 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Todo lo que necesitas</h3>
+                <h2 class="text-sm font-bold uppercase text-[#22a7d0] mb-2">${t('productDetail.completeProduct')}</h2>
+                <h3 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">${t('productDetail.everythingYouNeed')}</h3>
                 <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                  ${product.longDescription || product.description}
+                  ${(() => {
+                    const desc = product.longDescription || product.description;
+                    return typeof desc === 'object' ? desc[i18n.currentLanguage] || desc.es || desc : desc;
+                  })()}
                 </p>
               </div>
 
@@ -171,8 +178,8 @@ export async function renderProductDetailView(productId) {
                             ${iconPath}
                           </svg>
                         </div>
-                        <h4 class="text-xl font-bold text-gray-900 mb-3">${feature.title}</h4>
-                        <p class="text-gray-600">${feature.description}</p>
+                        <h4 class="text-xl font-bold text-gray-900 mb-3">${typeof feature.title === 'object' ? feature.title[i18n.currentLanguage] || feature.title.es || feature.title : feature.title}</h4>
+                        <p class="text-gray-600">${typeof feature.description === 'object' ? feature.description[i18n.currentLanguage] || feature.description.es || feature.description : feature.description}</p>
                       </div>
                     `;
                   }).join('')}
@@ -192,7 +199,7 @@ export async function renderProductDetailView(productId) {
                           </svg>
                         </div>
                         <h4 class="text-xl font-bold text-gray-900 mb-3">${feature}</h4>
-                        <p class="text-gray-600">Funcionalidad completa incluida en este producto premium.</p>
+                        <p class="text-gray-600">${t('productDetail.fallbackFeature')}</p>
                       </div>
                     `;
                   }).join('')}
@@ -207,26 +214,26 @@ export async function renderProductDetailView(productId) {
           <div class="container mx-auto px-6">
             <div class="max-w-6xl mx-auto">
               <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Producto Confiable y Probado</h2>
-                <p class="text-xl text-gray-600">Únete a los usuarios satisfechos que ya disfrutan de este producto</p>
+                <h2 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">${t('productDetail.trustedProduct')}</h2>
+                <p class="text-xl text-gray-600">${t('productDetail.satisfiedUsers')}</p>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
                 <div>
                   <div class="text-4xl font-extrabold text-[#22a7d0] mb-2">${product.reviews || '50'}+</div>
-                  <div class="text-gray-600">Usuarios Activos</div>
+                  <div class="text-gray-600">${t('productDetail.activeUsers')}</div>
                 </div>
                 <div>
                   <div class="text-4xl font-extrabold text-[#22a7d0] mb-2">${product.rating || '5.0'}</div>
-                  <div class="text-gray-600">Calificación Promedio</div>
+                  <div class="text-gray-600">${t('productDetail.averageRating')}</div>
                 </div>
                 <div>
                   <div class="text-4xl font-extrabold text-[#22a7d0] mb-2">${product.features?.length || '10'}</div>
-                  <div class="text-gray-600">Funcionalidades</div>
+                  <div class="text-gray-600">${t('productDetail.features')}</div>
                 </div>
                 <div>
                   <div class="text-4xl font-extrabold text-[#22a7d0] mb-2">95%</div>
-                  <div class="text-gray-600">Satisfacción</div>
+                  <div class="text-gray-600">${t('productDetail.satisfaction')}</div>
                 </div>
               </div>
             </div>
@@ -237,14 +244,17 @@ export async function renderProductDetailView(productId) {
         <section class="py-20" style="${gradientStyle}">
           <div class="container mx-auto px-6">
             <div class="max-w-4xl mx-auto text-center text-white">
-              <h2 class="text-3xl md:text-4xl font-extrabold mb-4">Obtén Acceso Completo</h2>
+              <h2 class="text-3xl md:text-4xl font-extrabold mb-4">${t('productDetail.getFullAccess')}</h2>
               <p class="text-xl mb-8 text-blue-100">
-                ${product.longDescription || product.description}
+                ${(() => {
+                  const desc = product.longDescription || product.description;
+                  return typeof desc === 'object' ? desc[i18n.currentLanguage] || desc.es || desc : desc;
+                })()}
               </p>
 
               ${hasPurchased ? `
                 <a href="#/dashboard/${product.id}" class="inline-flex items-center px-10 py-4 bg-white text-[#22a7d0] font-bold rounded-lg text-xl hover:bg-blue-50 transition-colors shadow-lg">
-                  Acceder Ahora
+                  ${t('productDetail.accessNow')}
                   <svg class="w-6 h-6 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                   </svg>
@@ -252,7 +262,7 @@ export async function renderProductDetailView(productId) {
               ` : !hasPurchased ? `
                 <div class="text-2xl font-bold mb-4">$${product.price}</div>
                 <button id="add-to-cart-btn-cta" class="inline-flex items-center px-10 py-4 ${isInCart ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-white text-[#22a7d0] hover:bg-blue-50'} font-bold rounded-lg text-xl transition-colors shadow-lg" data-product-id="${product.id}">
-                  ${isInCart ? 'En el Carrito' : 'Agregar al Carrito'}
+                  ${isInCart ? t('productDetail.inCart') : t('productDetail.addToCart')}
                   <svg class="w-6 h-6 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     ${isInCart ? `
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -271,6 +281,30 @@ export async function renderProductDetailView(productId) {
     // Add event listeners after rendering
     setupProductDetailEventListeners(product);
 
+    // Add language change listener with debouncing to prevent navigation issues
+    const languageChangeListener = (event) => {
+      console.log('🔄 Product detail received language change event');
+
+      // Use a longer delay to ensure all other listeners complete first
+      setTimeout(() => {
+        const currentHash = window.location.hash;
+        console.log('🔍 Checking hash after language change:', currentHash);
+
+        // Only re-render if we're still on the same product detail page
+        if (currentHash.includes(`#/product/${productId}`)) {
+          console.log('✅ Re-rendering product detail page for language change');
+          renderProductDetailView(productId);
+        } else {
+          console.log('⚠️ Not re-rendering - hash changed:', currentHash);
+        }
+      }, 100);
+    };
+
+    // Remove existing listener to prevent duplicates
+    window.removeEventListener('languageChanged', window.productDetailLanguageListener);
+    window.productDetailLanguageListener = languageChangeListener;
+    window.addEventListener('languageChanged', languageChangeListener);
+
     // Animate page entrance
     requestAnimationFrame(() => {
       const page = root.querySelector('.product-detail-page');
@@ -282,13 +316,21 @@ export async function renderProductDetailView(productId) {
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
+    // Store cleanup function globally so it can be called when navigating away
+    window.cleanupProductDetail = () => {
+      if (window.productDetailLanguageListener) {
+        window.removeEventListener('languageChanged', window.productDetailLanguageListener);
+        window.productDetailLanguageListener = null;
+      }
+    };
+
   } catch (error) {
     console.error('Error rendering product detail:', error);
     root.innerHTML = `
       <div class="flex items-center justify-center min-h-screen">
         <div class="text-center">
-          <p class="text-red-500 mb-4">Error cargando el producto</p>
-          <a href="#/products" class="text-[#22a7d0] hover:text-[#1e96c8]">Volver a productos</a>
+          <p class="text-red-500 mb-4">${t('productDetail.errorLoading')}</p>
+          <a href="#/products" class="text-[#22a7d0] hover:text-[#1e96c8]">${t('productDetail.backToProducts')}</a>
         </div>
       </div>
     `;
@@ -324,7 +366,7 @@ function setupProductDetailEventListeners(product) {
     if (!auth?.currentUser) {
       // Show toast or redirect to login
       if (window.cart && window.cart.showToast) {
-        window.cart.showToast('Debes iniciar sesión para agregar productos', 'error');
+        window.cart.showToast(t('productDetail.mustLogin'), 'error');
       }
       window.location.hash = '#/auth';
       return;
@@ -361,7 +403,7 @@ function setupProductDetailEventListeners(product) {
     const topButton = document.getElementById('add-to-cart-btn');
     const bottomButton = document.getElementById('add-to-cart-btn-cta');
 
-    const buttonText = inCart ? 'En el Carrito' : 'Agregar al Carrito';
+    const buttonText = inCart ? t('productDetail.inCart') : t('productDetail.addToCart');
     const iconPath = inCart
       ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>'
       : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l-1 12a2 2 0 01-2 2H8a2 2 0 01-2-2L5 9z"></path>';

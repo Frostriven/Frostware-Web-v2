@@ -185,7 +185,10 @@ export async function removeUserProduct(userId, productId) {
 export const products = [
   {
     id: 'north-atlantic-ops',
-    name: 'North Atlantic Operational Procedures',
+    name: {
+      es: 'Procedimientos Operacionales del Atlántico Norte',
+      en: 'North Atlantic Operational Procedures'
+    },
     description: {
       es: 'Un banco de preguntas completo para pilotos transoceánicos que operan en el espacio aéreo del Atlántico Norte. Basado en documentos oficiales de OACI con referencias y justificaciones.',
       en: 'A comprehensive question bank for transoceanic pilots operating in North Atlantic airspace. Based on official ICAO documents with references and justifications.'
@@ -198,7 +201,7 @@ export const products = [
     originalPrice: 150,
     image: 'https://placehold.co/600x400/1a202c/FFFFFF?text=NAT+OPS&font=inter',
     category: 'aviation',
-    colors: ['#d4d8dfff', '#39c815ff', '#51023cff'],
+    colors: ['#1b1b25', '#190d36', '#1b1b25'],
     badge: 'Disponible',
     badgeColor: 'blue',
     rating: 5.0,
@@ -207,33 +210,69 @@ export const products = [
     detailedFeatures: [
       {
         icon: 'radio',
-        title: 'Communications Procedures',
-        description: 'Master HF radio protocols, SELCAL operations, and position reporting requirements for oceanic flight.'
+        title: {
+          es: 'Procedimientos de Comunicación',
+          en: 'Communications Procedures'
+        },
+        description: {
+          es: 'Domina protocolos de radio HF, operaciones SELCAL y requisitos de reporte de posición para vuelos oceánicos.',
+          en: 'Master HF radio protocols, SELCAL operations, and position reporting requirements for oceanic flight.'
+        }
       },
       {
         icon: 'map',
-        title: 'Navigation & Track Systems',
-        description: 'Learn NAT track systems, waypoint procedures, and RNAV requirements for safe oceanic navigation.'
+        title: {
+          es: 'Sistemas de Navegación y Rutas',
+          en: 'Navigation & Track Systems'
+        },
+        description: {
+          es: 'Aprende sistemas de rutas NAT, procedimientos de waypoints y requisitos RNAV para navegación oceánica segura.',
+          en: 'Learn NAT track systems, waypoint procedures, and RNAV requirements for safe oceanic navigation.'
+        }
       },
       {
         icon: 'cloud',
-        title: 'Weather & Environmental',
-        description: 'Understand SIGWX charts, turbulence reporting, and how weather affects NAT operations.'
+        title: {
+          es: 'Meteorología y Ambiente',
+          en: 'Weather & Environmental'
+        },
+        description: {
+          es: 'Comprende cartas SIGWX, reporte de turbulencias y cómo el clima afecta las operaciones NAT.',
+          en: 'Understand SIGWX charts, turbulence reporting, and how weather affects NAT operations.'
+        }
       },
       {
         icon: 'warning',
-        title: 'Emergency Procedures',
-        description: 'Practice contingency procedures, diversions, and ETOPS requirements for safe operations.'
+        title: {
+          es: 'Procedimientos de Emergencia',
+          en: 'Emergency Procedures'
+        },
+        description: {
+          es: 'Practica procedimientos de contingencia, desvíos y requisitos ETOPS para operaciones seguras.',
+          en: 'Practice contingency procedures, diversions, and ETOPS requirements for safe operations.'
+        }
       },
       {
         icon: 'certificate',
-        title: 'Certification Ready',
-        description: 'Questions designed to match real certification exams with detailed explanations and references.'
+        title: {
+          es: 'Listo para Certificación',
+          en: 'Certification Ready'
+        },
+        description: {
+          es: 'Preguntas diseñadas para coincidir con exámenes de certificación reales con explicaciones detalladas y referencias.',
+          en: 'Questions designed to match real certification exams with detailed explanations and references.'
+        }
       },
       {
         icon: 'lightning',
-        title: 'Interactive Learning',
-        description: 'Hints, detailed explanations, and progress tracking to optimize your study sessions.'
+        title: {
+          es: 'Aprendizaje Interactivo',
+          en: 'Interactive Learning'
+        },
+        description: {
+          es: 'Pistas, explicaciones detalladas y seguimiento de progreso para optimizar tus sesiones de estudio.',
+          en: 'Hints, detailed explanations, and progress tracking to optimize your study sessions.'
+        }
       }
     ],
     tags: ['aviation', 'NAT', 'oceanic', 'procedures'],
@@ -242,10 +281,13 @@ export const products = [
 
   {
     id: 'p2',
-    name: 'P2',
+    name: {
+      es: 'Calculadora de Rendimiento P2',
+      en: 'P2 Performance Calculator'
+    },
     description: {
-      es: 'Un banco de preguntas completo para pilotos transoceánicos que operan en el espacio aéreo del Atlántico Norte. Basado en documentos oficiales de OACI con referencias y justificaciones.',
-      en: 'A comprehensive question bank for transoceanic pilots operating in North Atlantic airspace. Based on official ICAO documents with references and justifications.'
+      es: 'Herramienta avanzada de cálculo de rendimiento para operaciones de vuelo. Incluye análisis de peso y balance, consumo de combustible y optimización de rutas.',
+      en: 'Advanced flight performance calculation tool. Includes weight and balance analysis, fuel consumption and route optimization.'
     },
     longDescription: {
       es: 'El banco de preguntas más completo para pilotos transoceánicos. Estudia procedimientos oficiales de OACI, practica con escenarios reales y aprueba tu certificación de operaciones NAT con confianza.',
@@ -264,33 +306,69 @@ export const products = [
     detailedFeatures: [
       {
         icon: 'radio',
-        title: 'Communications Procedures',
-        description: 'Master HF radio protocols, SELCAL operations, and position reporting requirements for oceanic flight.'
+        title: {
+          es: 'Procedimientos de Comunicación',
+          en: 'Communications Procedures'
+        },
+        description: {
+          es: 'Domina protocolos de radio HF, operaciones SELCAL y requisitos de reporte de posición para vuelos oceánicos.',
+          en: 'Master HF radio protocols, SELCAL operations, and position reporting requirements for oceanic flight.'
+        }
       },
       {
         icon: 'map',
-        title: 'Navigation & Track Systems',
-        description: 'Learn NAT track systems, waypoint procedures, and RNAV requirements for safe oceanic navigation.'
+        title: {
+          es: 'Sistemas de Navegación y Rutas',
+          en: 'Navigation & Track Systems'
+        },
+        description: {
+          es: 'Aprende sistemas de rutas NAT, procedimientos de waypoints y requisitos RNAV para navegación oceánica segura.',
+          en: 'Learn NAT track systems, waypoint procedures, and RNAV requirements for safe oceanic navigation.'
+        }
       },
       {
         icon: 'cloud',
-        title: 'Weather & Environmental',
-        description: 'Understand SIGWX charts, turbulence reporting, and how weather affects NAT operations.'
+        title: {
+          es: 'Meteorología y Ambiente',
+          en: 'Weather & Environmental'
+        },
+        description: {
+          es: 'Comprende cartas SIGWX, reporte de turbulencias y cómo el clima afecta las operaciones NAT.',
+          en: 'Understand SIGWX charts, turbulence reporting, and how weather affects NAT operations.'
+        }
       },
       {
         icon: 'warning',
-        title: 'Emergency Procedures',
-        description: 'Practice contingency procedures, diversions, and ETOPS requirements for safe operations.'
+        title: {
+          es: 'Procedimientos de Emergencia',
+          en: 'Emergency Procedures'
+        },
+        description: {
+          es: 'Practica procedimientos de contingencia, desvíos y requisitos ETOPS para operaciones seguras.',
+          en: 'Practice contingency procedures, diversions, and ETOPS requirements for safe operations.'
+        }
       },
       {
         icon: 'certificate',
-        title: 'Certification Ready',
-        description: 'Questions designed to match real certification exams with detailed explanations and references.'
+        title: {
+          es: 'Listo para Certificación',
+          en: 'Certification Ready'
+        },
+        description: {
+          es: 'Preguntas diseñadas para coincidir con exámenes de certificación reales con explicaciones detalladas y referencias.',
+          en: 'Questions designed to match real certification exams with detailed explanations and references.'
+        }
       },
       {
         icon: 'lightning',
-        title: 'Interactive Learning',
-        description: 'Hints, detailed explanations, and progress tracking to optimize your study sessions.'
+        title: {
+          es: 'Aprendizaje Interactivo',
+          en: 'Interactive Learning'
+        },
+        description: {
+          es: 'Pistas, explicaciones detalladas y seguimiento de progreso para optimizar tus sesiones de estudio.',
+          en: 'Hints, detailed explanations, and progress tracking to optimize your study sessions.'
+        }
       }
     ],
     tags: ['aviation', 'NAT', 'oceanic', 'procedures'],
@@ -376,6 +454,14 @@ export async function getProductsFromFirebase() {
       console.warn('No se encontraron productos en Firebase. Ejecute initializeProductsInFirebase() primero.');
     }
 
+    // Debug: log first product structure
+    if (firebaseProducts.length > 0) {
+      console.log('🔍 First product from Firebase:', JSON.stringify(firebaseProducts[0], null, 2));
+      if (firebaseProducts[0].detailedFeatures) {
+        console.log('🔍 First detailed feature:', JSON.stringify(firebaseProducts[0].detailedFeatures[0], null, 2));
+      }
+    }
+
     return firebaseProducts;
   } catch (error) {
     console.error('Error cargando productos desde Firebase:', error);
@@ -400,10 +486,13 @@ export async function initializeProductsInFirebase() {
           !existingData.detailedFeatures ||
           existingData.detailedFeatures.length !== product.detailedFeatures?.length ||
           typeof existingData.description === 'string' || // Old format
-          typeof existingData.longDescription === 'string'; // Old format
+          typeof existingData.longDescription === 'string' || // Old format
+          (existingData.detailedFeatures && existingData.detailedFeatures.length > 0 && typeof existingData.detailedFeatures[0].title === 'string'); // Force update if detailedFeatures titles are still strings
 
         if (needsUpdate) {
+          console.log(`🔄 Updating product ${product.id} with new multilingual structure...`);
           await updateDoc(productRef, {
+            name: product.name,
             description: product.description,
             longDescription: product.longDescription,
             detailedFeatures: product.detailedFeatures || [],
@@ -563,3 +652,58 @@ export async function getRecentActivity(userId, days = 7)
 // TODO: Implement session tracking functions
 // TODO: Implement statistics calculation functions
 // TODO: Implement progress tracking functions
+
+// Force update Firebase products (for debugging)
+window.forceUpdateFirebaseProducts = async () => {
+  console.log('🔄 Force updating Firebase products...');
+  await initializeProductsInFirebase();
+  console.log('✅ Firebase products force updated');
+};
+
+// Completely recreate Firebase products (nuclear option)
+window.recreateFirebaseProducts = async () => {
+  if (!db) {
+    console.error('❌ Firestore not initialized');
+    return;
+  }
+
+  console.log('💥 Completely recreating Firebase products...');
+
+  try {
+    // Delete all existing products
+    const productsQuery = query(collection(db, 'products'));
+    const querySnapshot = await getDocs(productsQuery);
+
+    const deletePromises = [];
+    querySnapshot.forEach((doc) => {
+      deletePromises.push(deleteDoc(doc.ref));
+    });
+
+    await Promise.all(deletePromises);
+    console.log('🗑️ Deleted all existing products');
+
+    // Recreate products with new structure
+    const { serverTimestamp } = await import('firebase/firestore');
+
+    for (const product of products) {
+      const productRef = doc(db, 'products', product.id);
+      const productWithTimestamps = {
+        ...product,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+      await setDoc(productRef, productWithTimestamps);
+      console.log(`✅ Recreated product ${product.id} with new structure`);
+    }
+
+    console.log('🎉 All products recreated successfully!');
+
+    // Reload the page to get fresh data
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+
+  } catch (error) {
+    console.error('❌ Error recreating products:', error);
+  }
+};

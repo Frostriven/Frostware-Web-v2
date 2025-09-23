@@ -28,6 +28,19 @@ export async function renderAccountView(initialTab = 'profile') {
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
+    // Add listener for language changes
+    const handleLanguageChange = () => {
+      setTimeout(() => {
+        // Re-render the account page with new language
+        renderAccountView(initialTab);
+      }, 100);
+    };
+
+    // Remove existing listener to avoid duplicates
+    window.removeEventListener('languageChanged', handleLanguageChange);
+    // Add new listener
+    window.addEventListener('languageChanged', handleLanguageChange);
+
   } catch (error) {
     console.error('Error general en account:', error);
     root.innerHTML = `<p class="text-center text-red-500">${error.message}</p>`;
@@ -183,17 +196,25 @@ function initializeAccountPage(initialTab = 'profile') {
 
       } else {
         productsList.innerHTML = products.map(product => {
+          // Handle name that might be an object
+          const currentLang = i18n.getCurrentLanguage();
+
+          let name = '';
+          if (typeof product.name === 'object' && product.name !== null) {
+            name = product.name[currentLang] || product.name['en'] || product.name['es'] || '';
+          } else {
+            name = product.name || '';
+          }
+
           // Handle description that might be an object
           let description = '';
           if (typeof product.description === 'object' && product.description !== null) {
-            const currentLang = i18n.getCurrentLanguage();
             description = product.description[currentLang] || product.description['en'] || product.description['es'] || '';
           } else {
             description = product.description || '';
           }
 
           // Handle date formatting based on current language
-          const currentLang = i18n.getCurrentLanguage();
           const dateLocale = currentLang === 'es' ? 'es-ES' : 'en-US';
           const formattedDate = product.purchaseDate?.toDate ? product.purchaseDate.toDate().toLocaleDateString(dateLocale) :
                                product.purchaseDate instanceof Date ? product.purchaseDate.toLocaleDateString(dateLocale) :
@@ -202,10 +223,10 @@ function initializeAccountPage(initialTab = 'profile') {
           return `
           <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
             <div class="flex items-start gap-4">
-              <img src="${product.image || 'https://placehold.co/80x80/1a202c/FFFFFF?text=' + encodeURIComponent(product.name.charAt(0))}" alt="${product.name}" class="w-20 h-20 rounded-lg object-cover shadow-md">
+              <img src="${product.image || 'https://placehold.co/80x80/1a202c/FFFFFF?text=' + encodeURIComponent(name.charAt(0))}" alt="${name}" class="w-20 h-20 rounded-lg object-cover shadow-md">
               <div class="flex-1">
                 <div class="flex justify-between items-start mb-2">
-                  <h3 class="font-bold text-gray-900 text-lg">${product.name}</h3>
+                  <h3 class="font-bold text-gray-900 text-lg">${name}</h3>
                   <div class="flex items-center gap-2">
                     <button class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-full transition-colors" onclick="removeUserProduct('${product.id}', '${user.uid}')" title="Eliminar producto">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

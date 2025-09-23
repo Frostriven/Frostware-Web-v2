@@ -128,6 +128,32 @@ export const en = {
     }
   },
 
+  // Product detail page
+  productDetail: {
+    backToProducts: "Back to Products",
+    productNotFound: "Product not found",
+    completeProduct: "COMPLETE PRODUCT",
+    everythingYouNeed: "Everything you need",
+    accessNow: "Access Now",
+    addToCart: "Add to Cart",
+    inCart: "In Cart",
+    viewDetails: "View Details",
+    trustedProduct: "Trusted and Proven Product",
+    satisfiedUsers: "Join satisfied users who already enjoy this product",
+    activeUsers: "Active Users",
+    averageRating: "Average Rating",
+    features: "Features",
+    satisfaction: "Satisfaction",
+    getFullAccess: "Get Full Access",
+    fallbackFeature: "Complete functionality included in this premium product.",
+    mustLogin: "You must log in to add products",
+    errorLoading: "Error loading product",
+    category: {
+      aviation: "Professional Aviation Training",
+      premium: "Premium Digital Product"
+    }
+  },
+
   // Homepage content
   homepage: {
     heroTitle: "Software is not the limit.",

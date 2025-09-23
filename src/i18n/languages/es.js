@@ -128,6 +128,32 @@ export const es = {
     }
   },
 
+  // Página de detalle de producto
+  productDetail: {
+    backToProducts: "Volver a Productos",
+    productNotFound: "Producto no encontrado",
+    completeProduct: "PRODUCTO COMPLETO",
+    everythingYouNeed: "Todo lo que necesitas",
+    accessNow: "Acceder Ahora",
+    addToCart: "Agregar al Carrito",
+    inCart: "En el Carrito",
+    viewDetails: "Ver Detalles",
+    trustedProduct: "Producto Confiable y Probado",
+    satisfiedUsers: "Únete a los usuarios satisfechos que ya disfrutan de este producto",
+    activeUsers: "Usuarios Activos",
+    averageRating: "Calificación Promedio",
+    features: "Funcionalidades",
+    satisfaction: "Satisfacción",
+    getFullAccess: "Obtén Acceso Completo",
+    fallbackFeature: "Funcionalidad completa incluida en este producto premium.",
+    mustLogin: "Debes iniciar sesión para agregar productos",
+    errorLoading: "Error cargando el producto",
+    category: {
+      aviation: "Entrenamiento Profesional en Aviación",
+      premium: "Producto Digital Premium"
+    }
+  },
+
   // Homepage content
   homepage: {
     heroTitle: "El software no es el límite.",

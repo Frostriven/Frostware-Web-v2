@@ -312,10 +312,19 @@ class ShoppingCart {
 
         // Render cart items
         itemsDiv.innerHTML = this.cart.map(item => {
+            const currentLang = i18n.getCurrentLanguage();
+
+            // Handle name that might be an object or string
+            let name = '';
+            if (typeof item.name === 'object' && item.name !== null) {
+                name = item.name[currentLang] || item.name['en'] || item.name['es'] || '';
+            } else {
+                name = item.name || '';
+            }
+
             // Handle description that might be an object or string
             let description = '';
             if (typeof item.description === 'object' && item.description !== null) {
-                const currentLang = i18n.getCurrentLanguage();
                 description = item.description[currentLang] || item.description['en'] || item.description['es'] || '';
             } else {
                 description = item.description || '';
@@ -324,10 +333,10 @@ class ShoppingCart {
             return `
             <div class="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
                 <img src="${item.image || 'https://placehold.co/80x80/e5e7eb/9ca3af?text=No+Image'}"
-                     alt="${item.name}"
+                     alt="${name}"
                      class="w-16 h-16 rounded-lg object-cover">
                 <div class="flex-grow">
-                    <h4 class="font-bold text-lg">${item.name}</h4>
+                    <h4 class="font-bold text-lg">${name}</h4>
                     <p class="text-gray-600 text-sm line-clamp-2">${description}</p>
                     <p class="text-[#22a7d0] font-bold text-lg">
                         ${item.price === 0 ? t('cart.price.free') : `$${item.price}`}
