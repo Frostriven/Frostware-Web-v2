@@ -11,6 +11,9 @@ import { renderProductsView } from '../pages/products/view.js';
 import { renderAdminView } from '../pages/admin/view.js';
 import { renderProductDetailView } from '../pages/product-detail/view.js';
 import { renderDashboardView } from '../pages/dashboard/view.js';
+import { renderTermsView } from '../pages/terms/view.js';
+import { renderPrivacyView } from '../pages/privacy/view.js';
+import { renderContactView } from '../pages/contact/view.js';
 import { watchAuthState, logout } from './auth.js';
 import { initializeProductsInFirebase, isUserAdmin, isAdminEmail } from './userProfile.js';
 import { isDevelopment, AUTO_DEMO_LOGIN } from './config.js';
@@ -51,7 +54,9 @@ const initializeApp = () => {
         <div class="hidden md:flex items-center space-x-1">
           <a class="py-2 px-3 text-gray-300 hover:text-white nav-link ${currentHash === '#/' ? 'active' : ''}" href="#/">${t('navigation.home')}</a>
           <a class="py-2 px-3 text-gray-300 hover:text-white nav-link ${currentHash === '#/products' ? 'active' : ''}" href="#/products">${t('navigation.products')}</a>
-          <a class="py-2 px-3 text-gray-300 hover:text-white nav-link" href="#pricing">${t('navigation.pricing')}</a>
+          <a class="py-2 px-3 text-gray-300 hover:text-white nav-link ${currentHash === '#/terms' ? 'active' : ''}" href="#/terms">${t('navigation.terms')}</a>
+          <a class="py-2 px-3 text-gray-300 hover:text-white nav-link ${currentHash === '#/privacy' ? 'active' : ''}" href="#/privacy">${t('navigation.privacy')}</a>
+          <a class="py-2 px-3 text-gray-300 hover:text-white nav-link ${currentHash === '#/contact' ? 'active' : ''}" href="#/contact">${t('navigation.contact')}</a>
         </div>
         <div class="flex items-center space-x-4">
           <!-- Language Selector -->
@@ -317,7 +322,82 @@ const initializeApp = () => {
     }
   });
 
+  // Register new page routes
+  registerRoute('#/terms', () => {
+    setMainVisible(false);
+    renderTermsView();
+  });
+
+  registerRoute('#/privacy', () => {
+    setMainVisible(false);
+    renderPrivacyView();
+  });
+
+  registerRoute('#/contact', () => {
+    setMainVisible(false);
+    renderContactView();
+  });
+
   initRouter();
+
+  // Listen for language changes and update header
+  window.addEventListener('languageChanged', async () => {
+    await renderHeader(currentUser);
+    console.log('✅ Header updated after language change');
+
+    // Update cart modal content if it exists
+    const cartModal = document.getElementById('cart-modal');
+    if (cartModal) {
+      cartModal.remove();
+      // Re-create the cart modal with updated translations
+      if (!document.getElementById('cart-modal')) {
+        const newCartModal = document.createElement('div');
+        newCartModal.innerHTML = `
+          <!-- Modal del Carrito -->
+          <div id="cart-modal" class="fixed inset-0 z-[110] hidden items-center justify-center bg-black bg-opacity-50">
+              <div class="bg-white rounded-lg shadow-2xl max-w-2xl w-full m-4 max-h-[80vh] overflow-hidden">
+                  <div class="p-6 border-b flex justify-between items-center">
+                      <h2 class="text-2xl font-bold">${t('cart.title')}</h2>
+                      <button id="cart-close-button" class="text-gray-400 hover:text-gray-600 text-3xl">&times;</button>
+                  </div>
+                  <div id="cart-content" class="p-6 max-h-[50vh] overflow-y-auto">
+                      <div id="cart-empty" class="text-center py-8 text-gray-500">
+                          <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m-2.4 8L5 21h14a2 2 0 002-2V9H5m0 4v6a2 2 0 002 2h10a2 2 0 002-2v-6M9 21v-2m6 2v-2"></path>
+                          </svg>
+                          <p class="text-lg">${t('cart.empty')}</p>
+                      </div>
+                      <div id="cart-items" class="space-y-4"></div>
+                  </div>
+                  <div id="cart-footer" class="p-6 border-t bg-gray-50">
+                      <div class="flex justify-between items-center mb-4">
+                          <span class="text-xl font-bold">${t('cart.total')}: $<span id="cart-total">0.00</span></span>
+                      </div>
+                      <div class="flex space-x-4">
+                          <button id="clear-cart" class="flex-1 bg-gray-500 text-white py-3 px-6 rounded-lg hover:bg-gray-600 transition-colors">
+                              ${t('cart.clear')}
+                          </button>
+                          <button id="process-payment" class="flex-1 bg-[#22a7d0] text-white py-3 px-6 rounded-lg hover:bg-[#1e96bc] transition-colors">
+                              ${t('cart.processPayment')}
+                          </button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+        `;
+        document.body.appendChild(newCartModal.firstElementChild);
+
+        // Re-bind cart events
+        setTimeout(() => {
+          if (window.cart) {
+            window.cart.bindEvents();
+            window.cart.updateCartUI();
+            console.log('✅ Cart modal updated and events rebound after language change');
+          }
+        }, 100);
+      }
+    }
+  });
 
   // Update homepage translations if starting on homepage
   setTimeout(() => {

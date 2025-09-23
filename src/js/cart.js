@@ -1,5 +1,5 @@
 import { auth } from './firebase.js';
-import { t } from '../i18n/index.js';
+import { t, i18n } from '../i18n/index.js';
 import { getUserProducts } from './userProfile.js';
 
 class ShoppingCart {
@@ -39,6 +39,15 @@ class ShoppingCart {
         this.updateCartUI();
         // Wait for DOM elements to be available before binding events
         setTimeout(() => this.bindEvents(), 100);
+
+        // Listen for language changes and update cart content
+        window.addEventListener('languageChanged', () => {
+            setTimeout(() => {
+                this.updateCartUI();
+                this.updateAllProductButtons();
+                console.log('✅ Cart content and product buttons updated after language change');
+            }, 150);
+        });
     }
 
     async loadUserPurchasedProducts() {
@@ -226,7 +235,7 @@ class ShoppingCart {
                         localStorage.setItem('cart', backup);
                         this.updateCartUI();
                         console.log('✅ Cart auto-recovered from backup');
-                        this.showToast('Cart recovered automatically', 'success');
+                        this.showToast(t('cart.messages.cartRecovered'), 'success');
                         return true;
                     }
                 } catch (error) {
@@ -302,16 +311,26 @@ class ShoppingCart {
         footer.classList.remove('hidden');
 
         // Render cart items
-        itemsDiv.innerHTML = this.cart.map(item => `
+        itemsDiv.innerHTML = this.cart.map(item => {
+            // Handle description that might be an object or string
+            let description = '';
+            if (typeof item.description === 'object' && item.description !== null) {
+                const currentLang = i18n.getCurrentLanguage();
+                description = item.description[currentLang] || item.description['en'] || item.description['es'] || '';
+            } else {
+                description = item.description || '';
+            }
+
+            return `
             <div class="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
                 <img src="${item.image || 'https://placehold.co/80x80/e5e7eb/9ca3af?text=No+Image'}"
                      alt="${item.name}"
                      class="w-16 h-16 rounded-lg object-cover">
                 <div class="flex-grow">
                     <h4 class="font-bold text-lg">${item.name}</h4>
-                    <p class="text-gray-600 text-sm line-clamp-2">${item.description || ''}</p>
+                    <p class="text-gray-600 text-sm line-clamp-2">${description}</p>
                     <p class="text-[#22a7d0] font-bold text-lg">
-                        ${item.price === 0 ? 'Gratis' : `$${item.price}`}
+                        ${item.price === 0 ? t('cart.price.free') : `$${item.price}`}
                     </p>
                 </div>
                 <button onclick="window.cart.removeFromCart('${item.id}')"
@@ -321,7 +340,8 @@ class ShoppingCart {
                     </svg>
                 </button>
             </div>
-        `).join('');
+            `;
+        }).join('');
 
         // Update total
         const total = this.cart.reduce((sum, item) => sum + (item.price || 0), 0);
@@ -330,6 +350,10 @@ class ShoppingCart {
 
     openCart() {
         console.log('Opening cart...');
+
+        // Always check and ensure cart modal has current language
+        this.ensureCartModalLanguage();
+
         const modal = document.getElementById('cart-modal');
         if (modal) {
             console.log('Cart modal found, opening...');
@@ -337,8 +361,74 @@ class ShoppingCart {
             modal.classList.add('flex');
             // Update cart content when opening
             this.updateCartModal();
+            // Update product buttons to reflect current cart state
+            this.updateAllProductButtons();
         } else {
             console.error('Cart modal not found!');
+        }
+    }
+
+    ensureCartModalLanguage() {
+        const modal = document.getElementById('cart-modal');
+        if (modal) {
+            // Check if modal title matches current language
+            const titleElement = modal.querySelector('h2');
+            const currentTitle = t('cart.title');
+
+            if (!titleElement || titleElement.textContent !== currentTitle) {
+                console.log('🔄 Cart modal language mismatch detected, recreating...');
+                modal.remove();
+                this.createCartModal();
+            }
+        } else {
+            // Create modal if it doesn't exist
+            this.createCartModal();
+        }
+    }
+
+    createCartModal() {
+        if (!document.getElementById('cart-modal')) {
+            const newCartModal = document.createElement('div');
+            newCartModal.innerHTML = `
+              <!-- Modal del Carrito -->
+              <div id="cart-modal" class="fixed inset-0 z-[110] hidden items-center justify-center bg-black bg-opacity-50">
+                  <div class="bg-white rounded-lg shadow-2xl max-w-2xl w-full m-4 max-h-[80vh] overflow-hidden">
+                      <div class="p-6 border-b flex justify-between items-center">
+                          <h2 class="text-2xl font-bold">${t('cart.title')}</h2>
+                          <button id="cart-close-button" class="text-gray-400 hover:text-gray-600 text-3xl">&times;</button>
+                      </div>
+                      <div id="cart-content" class="p-6 max-h-[50vh] overflow-y-auto">
+                          <div id="cart-empty" class="text-center py-8 text-gray-500">
+                              <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m-2.4 8L5 21h14a2 2 0 002-2V9H5m0 4v6a2 2 0 002 2h10a2 2 0 002-2v-6M9 21v-2m6 2v-2"></path>
+                              </svg>
+                              <p class="text-lg">${t('cart.empty')}</p>
+                          </div>
+                          <div id="cart-items" class="space-y-4"></div>
+                      </div>
+                      <div id="cart-footer" class="p-6 border-t bg-gray-50">
+                          <div class="flex justify-between items-center mb-4">
+                              <span class="text-xl font-bold">${t('cart.total')}: $<span id="cart-total">0.00</span></span>
+                          </div>
+                          <div class="flex space-x-4">
+                              <button id="clear-cart" class="flex-1 bg-gray-500 text-white py-3 px-6 rounded-lg hover:bg-gray-600 transition-colors">
+                                  ${t('cart.clear')}
+                              </button>
+                              <button id="process-payment" class="flex-1 bg-[#22a7d0] text-white py-3 px-6 rounded-lg hover:bg-[#1e96bc] transition-colors">
+                                  ${t('cart.processPayment')}
+                              </button>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+            `;
+            document.body.appendChild(newCartModal.firstElementChild);
+
+            // Re-bind cart events
+            setTimeout(() => {
+                this.bindEvents();
+                console.log('✅ Cart modal created with current language and events bound');
+            }, 50);
         }
     }
 
@@ -368,19 +458,19 @@ class ShoppingCart {
 
         try {
             // Update progress: Iniciando pago (10%)
-            this.updateProgress(progressModal, 10, 'Iniciando procesamiento...');
+            this.updateProgress(progressModal, 10, t('cart.processing.initiating'));
             await new Promise(resolve => setTimeout(resolve, 500));
 
             // Update progress: Verificando datos (30%)
-            this.updateProgress(progressModal, 30, 'Verificando información...');
+            this.updateProgress(progressModal, 30, t('cart.processing.verifying'));
             await new Promise(resolve => setTimeout(resolve, 600));
 
             // Update progress: Procesando pago (60%)
-            this.updateProgress(progressModal, 60, 'Procesando pago...');
+            this.updateProgress(progressModal, 60, t('cart.processing.status'));
             await new Promise(resolve => setTimeout(resolve, 800));
 
             // Update progress: Agregando productos (80%)
-            this.updateProgress(progressModal, 80, 'Agregando productos a tu biblioteca...');
+            this.updateProgress(progressModal, 80, t('cart.processing.adding'));
 
             // Agregar productos a la biblioteca del usuario
             const { addUserProduct } = await import('./userProfile.js');
@@ -398,7 +488,7 @@ class ShoppingCart {
             }
 
             // Update progress: Finalizando (100%)
-            this.updateProgress(progressModal, 100, '¡Pago completado exitosamente!');
+            this.updateProgress(progressModal, 100, t('cart.processing.completed'));
             await new Promise(resolve => setTimeout(resolve, 500));
 
             // Remove progress modal
@@ -445,8 +535,8 @@ class ShoppingCart {
                         </div>
                     </div>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-2">Procesando Pago</h3>
-                <p id="progress-message" class="text-gray-600">Iniciando...</p>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">${t('cart.processing.title')}</h3>
+                <p id="progress-message" class="text-gray-600">${t('cart.processing.starting')}</p>
             </div>
         `;
         document.body.appendChild(progressModal);
@@ -508,16 +598,16 @@ class ShoppingCart {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-900 mb-4">¡Pago Exitoso!</h3>
-                <p class="text-gray-600 mb-6">Tus productos han sido agregados a tu biblioteca. Ya puedes acceder a ellos.</p>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">${t('cart.success.title')}</h3>
+                <p class="text-gray-600 mb-6">${t('cart.success.message')}</p>
                 <div class="flex space-x-4">
                     <button onclick="this.parentElement.parentElement.parentElement.remove()"
                             class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors">
-                        Cerrar
+                        ${t('cart.success.close')}
                     </button>
                     <button onclick="window.location.hash = '#/account/products'; this.parentElement.parentElement.parentElement.remove();"
                             class="flex-1 bg-[#22a7d0] text-white py-2 px-4 rounded-lg hover:bg-[#1e96bc] transition-colors">
-                        Ver Mi Biblioteca
+                        ${t('cart.success.viewLibrary')}
                     </button>
                 </div>
             </div>

@@ -66,12 +66,7 @@ class I18nManager {
       this.currentLanguage = lang;
       localStorage.setItem('selectedLanguage', lang);
 
-      // Emitir evento para que las páginas se actualicen
-      window.dispatchEvent(new CustomEvent('languageChanged', {
-        detail: { language: lang }
-      }));
-
-      console.log(`🌐 Language changed to: ${lang}`);
+      console.log(`🌐 Language set to: ${lang}`);
       return true;
     } else {
       console.error(`❌ Language ${lang} not available`);
@@ -97,7 +92,7 @@ export const t = (key, params) => i18n.t(key, params);
 // Función para cambiar idioma (usar en onclick)
 window.changeLanguage = (lang) => {
   if (i18n.setLanguage(lang)) {
-    // CAPA 1: Backup del carrito antes del reload
+    // CAPA 1: Backup del carrito antes del cambio
     const currentCart = localStorage.getItem('cart');
     if (currentCart) {
       localStorage.setItem('cart_backup', currentCart);
@@ -105,8 +100,15 @@ window.changeLanguage = (lang) => {
       console.log('🔒 Cart backed up before language change');
     }
 
-    // Recargar la página actual para aplicar nuevas traducciones
-    window.location.reload();
+    // Emitir evento para que las páginas se actualicen sin recargar
+    console.log(`🌐 Language changed to: ${lang} - updating views`);
+
+    // Pequeño delay para evitar el flash en la navegación
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('languageChanged', {
+        detail: { language: lang }
+      }));
+    }, 50);
   }
 };
 

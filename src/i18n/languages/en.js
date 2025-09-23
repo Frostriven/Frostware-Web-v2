@@ -7,7 +7,19 @@ export const en = {
     login: "Login",
     logout: "Logout",
     myAccount: "My Account",
-    admin: "Admin"
+    admin: "Admin",
+    terms: "Terms",
+    privacy: "Privacy",
+    contact: "Contact"
+  },
+
+  // Common navigation
+  nav: {
+    home: "Home",
+    products: "Products",
+    terms: "Terms",
+    privacy: "Privacy",
+    contact: "Contact"
   },
 
   // Homepage
@@ -83,7 +95,36 @@ export const en = {
       cartCleared: "Cart cleared",
       loginRequired: "You must log in to process payment",
       cartEmpty: "Your cart is empty",
-      paymentError: "Error processing payment. Please try again."
+      paymentError: "Error processing payment. Please try again.",
+      cartRecovered: "Cart recovered automatically"
+    },
+    processing: {
+      title: "Processing Payment",
+      status: "Processing payment...",
+      starting: "Starting...",
+      initiating: "Initiating processing...",
+      verifying: "Verifying information...",
+      adding: "Adding products to your library...",
+      completed: "Payment completed successfully!"
+    },
+    price: {
+      free: "Free"
+    },
+    success: {
+      title: "Payment Successful!",
+      message: "Your products have been added to your library. You can now access them.",
+      close: "Close",
+      viewLibrary: "View My Library"
+    }
+  },
+
+  // Account page
+  account: {
+    product: {
+      acquired: "Acquired",
+      active: "Active",
+      dateNotAvailable: "Date not available",
+      viewDetails: "View Details"
     }
   },
 
@@ -204,6 +245,171 @@ export const en = {
     toast: {
       openGuide: "Open Guide",
       viewMyApps: "View My Apps"
+    }
+  },
+
+  // Terms page
+  terms: {
+    title: "Terms of Service",
+    lastUpdated: "Last updated: December 2024",
+    disclaimer: {
+      title: "⚠️ IMPORTANT DISCLAIMER",
+      content: "All products and services offered by Frostware are intended solely for educational and testing purposes in controlled environments. Misuse of our products for illegal, unauthorized, or malicious activities is strictly prohibited. Frostware is not responsible for any damage, loss, or legal consequences arising from misuse of our products."
+    },
+    acceptance: {
+      title: "1. Acceptance of Terms",
+      content: "By accessing and using Frostware's products and services, you agree to be bound by these Terms of Service. If you do not agree to these terms, you should not use our products or services."
+    },
+    useRestrictions: {
+      title: "2. Use Restrictions",
+      intro: "You agree NOT to use our products for:",
+      list: "Illegal or unauthorized activities,Compromising systems or networks without explicit authorization,Distributing malware or malicious software,Violating third-party privacy,Activities that violate local, state, or international laws"
+    },
+    intellectualProperty: {
+      title: "3. Intellectual Property",
+      content: "All content, code, designs, and materials provided by Frostware are protected by copyright and other intellectual property laws. Reproduction, distribution, or modification without express authorization is not permitted."
+    },
+    liability: {
+      title: "4. Limitation of Liability",
+      content: "Frostware shall not be liable for any direct, indirect, incidental, special, or consequential damages resulting from the use or inability to use our products, even if advised of the possibility of such damages."
+    },
+    indemnification: {
+      title: "5. Indemnification",
+      content: "You agree to indemnify and hold Frostware, its employees and affiliates harmless from any claims, damages, losses, or expenses, including reasonable attorney fees, arising from your use of our products or violation of these terms."
+    },
+    termination: {
+      title: "6. Termination",
+      content: "We reserve the right to terminate or suspend your access to our products and services at any time, without prior notice, for any reason, including violation of these Terms of Service."
+    },
+    changes: {
+      title: "7. Changes to Terms",
+      content: "Frostware reserves the right to modify these terms at any time. Changes will take effect immediately upon publication. Continued use of our products constitutes acceptance of the modified terms."
+    },
+    governingLaw: {
+      title: "8. Governing Law",
+      content: "These terms shall be governed and construed in accordance with applicable laws, without regard to its conflict of law provisions."
+    },
+    contact: {
+      title: "9. Contact",
+      content: "If you have questions about these Terms of Service, you can contact us through our contact page."
+    },
+    contactLink: "Questions? Contact us"
+  },
+
+  // Privacy page
+  privacy: {
+    title: "Privacy Policy",
+    lastUpdated: "Last updated: December 2024",
+    commitment: "At Frostware, we are committed to protecting your privacy and ensuring the security of your personal information. This policy describes how we collect, use, and protect your data.",
+    collection: {
+      title: "1. Information We Collect",
+      intro: "We may collect the following types of information:",
+      personal: {
+        title: "Personal Information",
+        list: "First and last name,Email address,Contact information,Username"
+      },
+      technical: {
+        title: "Technical Information",
+        list: "IP address,Browser type,Operating system,Product usage data,Activity logs"
+      }
+    },
+    use: {
+      title: "2. Use of Information",
+      intro: "We use your information to:",
+      list: "Provide and improve our products and services,Communicate with you about updates and support,Process transactions and payments,Comply with legal obligations,Detect and prevent fraud or abuse,Analysis and improvement of user experience"
+    },
+    protection: {
+      title: "3. Data Protection",
+      content: "We implement appropriate technical and organizational security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction. This includes:",
+      measures: "Data encryption in transit and at rest,Restricted access to personal information,Regular security audits,Staff training in data protection"
+    },
+    sharing: {
+      title: "4. Information Sharing",
+      content: "We do not sell, rent, or share your personal information with third parties, except in the following cases:",
+      exceptions: "With your explicit consent,To comply with legal requirements,To protect our rights and property,With service providers who help us operate our business"
+    },
+    cookies: {
+      title: "5. Cookies and Similar Technologies",
+      content: "We use cookies and similar technologies to improve your experience, analyze site usage, and personalize content. You can configure your browser to reject cookies, but this may affect the functionality of our services.",
+      table: {
+        type: "Cookie Type",
+        purpose: "Purpose"
+      },
+      essential: {
+        name: "Essential",
+        desc: "Necessary for basic site functionality"
+      },
+      analytics: {
+        name: "Analytics",
+        desc: "Help us understand how our site is used"
+      },
+      preferences: {
+        name: "Preferences",
+        desc: "Remember your settings and preferences"
+      }
+    },
+    retention: {
+      title: "6. Data Retention",
+      content: "We retain your personal information only for as long as necessary to fulfill the purposes described in this policy, unless the law requires or permits a longer retention period."
+    },
+    rights: {
+      title: "7. Your Rights",
+      intro: "You have the right to:",
+      list: "Access your personal information,Correct inaccurate data,Request deletion of your data,Object to processing of your data,Request data portability,Withdraw your consent at any time"
+    },
+    children: {
+      title: "8. Children's Privacy",
+      content: "Our services are not directed to children under 18 years of age. We do not knowingly collect personal information from minors. If we discover that we have collected information from a minor, we will delete it immediately."
+    },
+    changes: {
+      title: "9. Changes to this Policy",
+      content: "We may update this privacy policy periodically. We will notify you of significant changes by posting the new policy on our website and updating the \"last updated\" date."
+    },
+    contact: {
+      title: "10. Contact",
+      content: "If you have questions or concerns about this privacy policy or our data practices, please contact us through our contact page."
+    },
+    contactLink: "Privacy questions? Contact us"
+  },
+
+  // Contact page
+  contact: {
+    title: "Contact",
+    subtitle: "We're here to help. Contact us for support, inquiries, or partnerships.",
+    form: {
+      title: "Send us a Message",
+      name: "Full Name",
+      email: "Email Address",
+      subject: "Subject",
+      "subject.choose": "Select a subject",
+      "subject.support": "Technical Support",
+      "subject.sales": "Sales Inquiry",
+      "subject.partnership": "Partnership",
+      "subject.bug": "Report Bug",
+      "subject.other": "Other",
+      message: "Message",
+      submit: "Send Message",
+      success: "Message sent successfully! We'll respond soon.",
+      error: "Error sending message. Please try again."
+    },
+    info: {
+      title: "Contact Information",
+      email: "Email",
+      hours: "Business Hours",
+      "hours.detail": "24/7 - Support available",
+      location: "Location",
+      "location.detail": "Global - International Service"
+    },
+    faq: {
+      title: "Frequently Asked Questions",
+      q1: "What is the average response time?",
+      a1: "We typically respond within 24-48 business hours. For urgent cases, we recommend contacting us through Discord.",
+      q2: "Do you offer free technical support?",
+      a2: "Yes, we offer free basic technical support for all our products. Premium support is available for customers with active licenses.",
+      q3: "How can I report an error or bug?",
+      a3: "You can report errors using the contact form by selecting \"Report Bug\" as the subject, or directly in our GitHub repository.",
+      q4: "Are you available for partnerships?",
+      a4: "Yes, we're always open to collaborations and partnerships. Contact us with your proposal and we'll evaluate it."
     }
   }
 };

@@ -1,6 +1,7 @@
 import { logout, watchAuthState, changePassword, updateUserDisplayName } from '../../../js/auth.js';
 import { getUserProfile, updateUserProfile, getUserProducts, addUserProduct, removeUserProduct, sampleProducts } from '../../../js/userProfile.js';
 import { initializeCountrySelect, setGlobalCountry } from '../../../js/countries.js';
+import { t, i18n } from '../../../i18n/index.js';
 
 export async function renderAccountView(initialTab = 'profile') {
   const root = document.getElementById('spa-root');
@@ -181,7 +182,24 @@ function initializeAccountPage(initialTab = 'profile') {
         });
 
       } else {
-        productsList.innerHTML = products.map(product => `
+        productsList.innerHTML = products.map(product => {
+          // Handle description that might be an object
+          let description = '';
+          if (typeof product.description === 'object' && product.description !== null) {
+            const currentLang = i18n.getCurrentLanguage();
+            description = product.description[currentLang] || product.description['en'] || product.description['es'] || '';
+          } else {
+            description = product.description || '';
+          }
+
+          // Handle date formatting based on current language
+          const currentLang = i18n.getCurrentLanguage();
+          const dateLocale = currentLang === 'es' ? 'es-ES' : 'en-US';
+          const formattedDate = product.purchaseDate?.toDate ? product.purchaseDate.toDate().toLocaleDateString(dateLocale) :
+                               product.purchaseDate instanceof Date ? product.purchaseDate.toLocaleDateString(dateLocale) :
+                               t('account.product.dateNotAvailable');
+
+          return `
           <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
             <div class="flex items-start gap-4">
               <img src="${product.image || 'https://placehold.co/80x80/1a202c/FFFFFF?text=' + encodeURIComponent(product.name.charAt(0))}" alt="${product.name}" class="w-20 h-20 rounded-lg object-cover shadow-md">
@@ -196,21 +214,19 @@ function initializeAccountPage(initialTab = 'profile') {
                     </button>
                   </div>
                 </div>
-                <p class="text-gray-600 text-sm mb-3 line-clamp-2">${product.description}</p>
+                <p class="text-gray-600 text-sm mb-3 line-clamp-2">${description}</p>
                 <div class="flex justify-between items-center mb-3">
                   <div class="text-sm text-gray-500">
                     <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                     </svg>
-                    Adquirido: ${product.purchaseDate?.toDate ? product.purchaseDate.toDate().toLocaleDateString('es-ES') :
-                               product.purchaseDate instanceof Date ? product.purchaseDate.toLocaleDateString('es-ES') :
-                               'Fecha no disponible'}
+                    ${t('account.product.acquired')}: ${formattedDate}
                   </div>
                   <div class="flex items-center gap-3">
-                    <span class="text-xl font-bold text-[#22a7d0]">${product.price === 0 ? 'Gratis' : `$${product.price}`}</span>
+                    <span class="text-xl font-bold text-[#22a7d0]">${product.price === 0 ? t('cart.price.free') : `$${product.price}`}</span>
                     <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full border border-green-200">
                       <span class="w-2 h-2 bg-green-500 rounded-full inline-block mr-1"></span>
-                      Activo
+                      ${t('account.product.active')}
                     </span>
                   </div>
                 </div>
@@ -225,13 +241,14 @@ function initializeAccountPage(initialTab = 'profile') {
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    Ver Detalles
+                    ${t('account.product.viewDetails')}
                   </a>
                 </div>
               </div>
             </div>
           </div>
-        `).join('');
+          `;
+        }).join('');
       }
 
     } catch (error) {

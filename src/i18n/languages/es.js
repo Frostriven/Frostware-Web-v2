@@ -7,7 +7,19 @@ export const es = {
     login: "Iniciar sesión",
     logout: "Salir",
     myAccount: "Mi cuenta",
-    admin: "Admin"
+    admin: "Admin",
+    terms: "Términos",
+    privacy: "Privacidad",
+    contact: "Contacto"
+  },
+
+  // Common navigation
+  nav: {
+    home: "Inicio",
+    products: "Productos",
+    terms: "Términos",
+    privacy: "Privacidad",
+    contact: "Contacto"
   },
 
   // Página principal
@@ -83,7 +95,36 @@ export const es = {
       cartCleared: "Carrito limpiado",
       loginRequired: "Debes iniciar sesión para procesar el pago",
       cartEmpty: "Tu carrito está vacío",
-      paymentError: "Error al procesar el pago. Inténtalo de nuevo."
+      paymentError: "Error al procesar el pago. Inténtalo de nuevo.",
+      cartRecovered: "Carrito recuperado automáticamente"
+    },
+    processing: {
+      title: "Procesando Pago",
+      status: "Procesando pago...",
+      starting: "Iniciando...",
+      initiating: "Iniciando procesamiento...",
+      verifying: "Verificando información...",
+      adding: "Agregando productos a tu biblioteca...",
+      completed: "¡Pago completado exitosamente!"
+    },
+    price: {
+      free: "Gratis"
+    },
+    success: {
+      title: "¡Pago Exitoso!",
+      message: "Tus productos han sido agregados a tu biblioteca. Ya puedes acceder a ellos.",
+      close: "Cerrar",
+      viewLibrary: "Ver Mi Biblioteca"
+    }
+  },
+
+  // Account page
+  account: {
+    product: {
+      acquired: "Adquirido",
+      active: "Activo",
+      dateNotAvailable: "Fecha no disponible",
+      viewDetails: "Ver Detalles"
     }
   },
 
@@ -204,6 +245,214 @@ export const es = {
     toast: {
       openGuide: "Abrir Guía",
       viewMyApps: "Ver Mis Apps"
+    }
+  },
+
+  // Terms page
+  terms: {
+    title: "Términos de Servicio",
+    lastUpdated: "Última actualización: Diciembre 2024",
+    disclaimer: {
+      title: "⚠️ DESCARGO DE RESPONSABILIDAD IMPORTANTE",
+      content: "Todos los productos y servicios ofrecidos por Frostware están destinados únicamente para fines educativos y de prueba en entornos controlados. El uso indebido de nuestros productos para actividades ilegales, no autorizadas o maliciosas está estrictamente prohibido. Frostware no se hace responsable de ningún daño, pérdida o consecuencia legal derivada del mal uso de nuestros productos."
+    },
+    acceptance: {
+      title: "1. Aceptación de los Términos",
+      content: "Al acceder y utilizar los productos y servicios de Frostware, usted acepta estar sujeto a estos Términos de Servicio. Si no está de acuerdo con estos términos, no debe utilizar nuestros productos o servicios."
+    },
+    useRestrictions: {
+      title: "2. Restricciones de Uso",
+      intro: "Usted se compromete a NO utilizar nuestros productos para:",
+      list: [
+        "Actividades ilegales o no autorizadas",
+        "Comprometer sistemas o redes sin autorización explícita",
+        "Distribuir malware o software malicioso",
+        "Violar la privacidad de terceros",
+        "Realizar actividades que violen las leyes locales, estatales o internacionales"
+      ]
+    },
+    intellectualProperty: {
+      title: "3. Propiedad Intelectual",
+      content: "Todo el contenido, código, diseños y materiales proporcionados por Frostware están protegidos por derechos de autor y otras leyes de propiedad intelectual. No está permitida la reproducción, distribución o modificación sin autorización expresa."
+    },
+    liability: {
+      title: "4. Limitación de Responsabilidad",
+      content: "Frostware no será responsable de ningún daño directo, indirecto, incidental, especial o consecuente que resulte del uso o la imposibilidad de uso de nuestros productos, incluso si se ha advertido de la posibilidad de tales daños."
+    },
+    indemnification: {
+      title: "5. Indemnización",
+      content: "Usted acepta indemnizar y eximir de responsabilidad a Frostware, sus empleados y afiliados de cualquier reclamo, daño, pérdida o gasto, incluidos los honorarios razonables de abogados, que surjan de su uso de nuestros productos o violación de estos términos."
+    },
+    termination: {
+      title: "6. Terminación",
+      content: "Nos reservamos el derecho de terminar o suspender su acceso a nuestros productos y servicios en cualquier momento, sin previo aviso, por cualquier motivo, incluida la violación de estos Términos de Servicio."
+    },
+    changes: {
+      title: "7. Cambios en los Términos",
+      content: "Frostware se reserva el derecho de modificar estos términos en cualquier momento. Los cambios entrarán en vigor inmediatamente después de su publicación. El uso continuado de nuestros productos constituye la aceptación de los términos modificados."
+    },
+    governingLaw: {
+      title: "8. Ley Aplicable",
+      content: "Estos términos se regirán e interpretarán de acuerdo con las leyes aplicables, sin tener en cuenta sus disposiciones sobre conflictos de leyes."
+    },
+    contact: {
+      title: "9. Contacto",
+      content: "Si tiene preguntas sobre estos Términos de Servicio, puede contactarnos a través de nuestra página de contacto."
+    },
+    contactLink: "¿Preguntas? Contáctanos"
+  },
+
+  // Privacy page
+  privacy: {
+    title: "Política de Privacidad",
+    lastUpdated: "Última actualización: Diciembre 2024",
+    commitment: "En Frostware, nos comprometemos a proteger su privacidad y garantizar la seguridad de su información personal. Esta política describe cómo recopilamos, usamos y protegemos sus datos.",
+    collection: {
+      title: "1. Información que Recopilamos",
+      intro: "Podemos recopilar los siguientes tipos de información:",
+      personal: {
+        title: "Información Personal",
+        list: [
+          "Nombre y apellidos",
+          "Dirección de correo electrónico",
+          "Información de contacto",
+          "Nombre de usuario"
+        ]
+      },
+      technical: {
+        title: "Información Técnica",
+        list: [
+          "Dirección IP",
+          "Tipo de navegador",
+          "Sistema operativo",
+          "Datos de uso del producto",
+          "Registros de actividad"
+        ]
+      }
+    },
+    use: {
+      title: "2. Uso de la Información",
+      intro: "Utilizamos su información para:",
+      list: [
+        "Proporcionar y mejorar nuestros productos y servicios",
+        "Comunicarnos con usted sobre actualizaciones y soporte",
+        "Procesar transacciones y pagos",
+        "Cumplir con obligaciones legales",
+        "Detectar y prevenir fraudes o abusos",
+        "Análisis y mejora de la experiencia del usuario"
+      ]
+    },
+    protection: {
+      title: "3. Protección de Datos",
+      content: "Implementamos medidas de seguridad técnicas y organizativas apropiadas para proteger su información personal contra acceso no autorizado, alteración, divulgación o destrucción. Esto incluye:",
+      measures: [
+        "Cifrado de datos en tránsito y en reposo",
+        "Acceso restringido a información personal",
+        "Auditorías de seguridad regulares",
+        "Formación del personal en protección de datos"
+      ]
+    },
+    sharing: {
+      title: "4. Compartir Información",
+      content: "No vendemos, alquilamos ni compartimos su información personal con terceros, excepto en los siguientes casos:",
+      exceptions: [
+        "Con su consentimiento explícito",
+        "Para cumplir con requisitos legales",
+        "Para proteger nuestros derechos y propiedad",
+        "Con proveedores de servicios que nos ayudan a operar nuestro negocio"
+      ]
+    },
+    cookies: {
+      title: "5. Cookies y Tecnologías Similares",
+      content: "Utilizamos cookies y tecnologías similares para mejorar su experiencia, analizar el uso del sitio y personalizar el contenido. Puede configurar su navegador para rechazar cookies, pero esto puede afectar la funcionalidad de nuestros servicios.",
+      table: {
+        type: "Tipo de Cookie",
+        purpose: "Propósito"
+      },
+      essential: {
+        name: "Esenciales",
+        desc: "Necesarias para el funcionamiento básico del sitio"
+      },
+      analytics: {
+        name: "Analíticas",
+        desc: "Nos ayudan a entender cómo se usa nuestro sitio"
+      },
+      preferences: {
+        name: "Preferencias",
+        desc: "Recuerdan sus configuraciones y preferencias"
+      }
+    },
+    retention: {
+      title: "6. Retención de Datos",
+      content: "Conservamos su información personal solo durante el tiempo necesario para cumplir con los propósitos descritos en esta política, a menos que la ley requiera o permita un período de retención más largo."
+    },
+    rights: {
+      title: "7. Sus Derechos",
+      intro: "Usted tiene derecho a:",
+      list: [
+        "Acceder a su información personal",
+        "Corregir datos inexactos",
+        "Solicitar la eliminación de sus datos",
+        "Oponerse al procesamiento de sus datos",
+        "Solicitar la portabilidad de sus datos",
+        "Retirar su consentimiento en cualquier momento"
+      ]
+    },
+    children: {
+      title: "8. Privacidad de Menores",
+      content: "Nuestros servicios no están dirigidos a menores de 18 años. No recopilamos conscientemente información personal de menores. Si descubrimos que hemos recopilado información de un menor, la eliminaremos inmediatamente."
+    },
+    changes: {
+      title: "9. Cambios en esta Política",
+      content: "Podemos actualizar esta política de privacidad periódicamente. Le notificaremos sobre cambios significativos publicando la nueva política en nuestro sitio web y actualizando la fecha de \"última actualización\"."
+    },
+    contact: {
+      title: "10. Contacto",
+      content: "Si tiene preguntas o inquietudes sobre esta política de privacidad o nuestras prácticas de datos, por favor contáctenos a través de nuestra página de contacto."
+    },
+    contactLink: "¿Preguntas sobre privacidad? Contáctanos"
+  },
+
+  // Contact page
+  contact: {
+    title: "Contacto",
+    subtitle: "Estamos aquí para ayudarte. Contáctanos para soporte, consultas o colaboraciones.",
+    form: {
+      title: "Envíanos un Mensaje",
+      name: "Nombre Completo",
+      email: "Correo Electrónico",
+      subject: "Asunto",
+      subject: {
+        choose: "Selecciona un asunto",
+        support: "Soporte Técnico",
+        sales: "Consulta de Ventas",
+        partnership: "Colaboración",
+        bug: "Reportar Error",
+        other: "Otro"
+      },
+      message: "Mensaje",
+      submit: "Enviar Mensaje",
+      success: "¡Mensaje enviado con éxito! Te responderemos pronto.",
+      error: "Error al enviar el mensaje. Por favor, intenta de nuevo."
+    },
+    info: {
+      title: "Información de Contacto",
+      email: "Correo Electrónico",
+      hours: "Horario de Atención",
+      "hours.detail": "24/7 - Soporte disponible",
+      location: "Ubicación",
+      "location.detail": "Global - Servicio Internacional"
+    },
+    faq: {
+      title: "Preguntas Frecuentes",
+      q1: "¿Cuál es el tiempo de respuesta promedio?",
+      a1: "Normalmente respondemos dentro de 24-48 horas hábiles. Para casos urgentes, recomendamos contactarnos a través de Discord.",
+      q2: "¿Ofrecen soporte técnico gratuito?",
+      a2: "Sí, ofrecemos soporte técnico básico gratuito para todos nuestros productos. El soporte premium está disponible para clientes con licencias activas.",
+      q3: "¿Cómo puedo reportar un error o bug?",
+      a3: "Puedes reportar errores usando el formulario de contacto seleccionando \"Reportar Error\" como asunto, o directamente en nuestro repositorio de GitHub.",
+      q4: "¿Están disponibles para colaboraciones?",
+      a4: "Sí, siempre estamos abiertos a colaboraciones y asociaciones. Contáctanos con tu propuesta y la evaluaremos."
     }
   }
 };

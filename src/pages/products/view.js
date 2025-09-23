@@ -26,23 +26,25 @@ export async function renderProductsView() {
       }
     }, 50);
 
-    // Animate product cards with smooth fade-in
+    // Animate product cards with smooth fade-in (no scaling)
     setTimeout(() => {
       const productCards = root.querySelectorAll('.product-card');
-      productCards.forEach((card) => {
+      productCards.forEach((card, index) => {
         card.style.opacity = '0';
-        card.style.transform = 'scale(0.9)';
-        card.style.transition = 'all 0.6s cubic-bezier(0.25, 0.8, 0.25, 1)';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'all 0.4s ease-out';
       });
 
-      // Trigger all cards animation simultaneously
+      // Trigger staggered animation
       setTimeout(() => {
-        productCards.forEach((card) => {
-          card.style.opacity = '1';
-          card.style.transform = 'scale(1)';
+        productCards.forEach((card, index) => {
+          setTimeout(() => {
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+          }, index * 100); // 100ms delay between each card
         });
-      }, 50);
-    }, 300);
+      }, 100);
+    }, 200);
 
     // Re-initialize the filter functionality
     initializeProductFilters();
@@ -110,19 +112,23 @@ function generateProductsHTML(products) {
       : product.description;
 
     return `
-      <div class="product-card bg-white shadow-lg border border-gray-200 flex flex-col hover:shadow-xl transition-shadow duration-300 cursor-pointer" data-category="${product.category}" data-product-id="${product.id}" style="border-radius: 14px; overflow: hidden;">
-        <img src="${product.image || 'https://placehold.co/600x400/1a202c/FFFFFF?text=' + encodeURIComponent(product.name) + '&font=inter'}"
-             class="w-full h-auto"
-             style="border-radius: 14px 14px 0 0; margin: 0; padding: 0; display: block;"
-             alt="${product.name}">
-        <div class="p-4 flex flex-col flex-grow">
-          <h3 class="text-xl font-bold mb-2 text-left">${product.name}</h3>
-          <div class="flex items-center mb-3 star-rating justify-start">
-            ${starsHTML}
-            <span class="text-xs text-gray-500 ml-2">(${reviewsCount})</span>
+      <div class="product-card bg-white shadow-lg border border-gray-200 flex flex-col hover:shadow-xl transition-shadow duration-300 cursor-pointer" data-category="${product.category}" data-product-id="${product.id}" style="border-radius: 14px; overflow: hidden; height: 720px;">
+        <div class="w-full h-1/2 overflow-hidden" style="border-radius: 14px 14px 0 0;">
+          <img src="${product.image || 'https://placehold.co/600x400/1a202c/FFFFFF?text=' + encodeURIComponent(product.name) + '&font=inter'}"
+               class="w-full h-full object-cover"
+               alt="${product.name}">
+        </div>
+        <div class="p-4 flex flex-col h-1/2 justify-between">
+          <div class="flex-grow">
+            <h3 class="text-lg font-bold mb-2 text-left">${product.name}</h3>
+            <div class="flex items-center mb-2 star-rating justify-start">
+              ${starsHTML}
+              <span class="text-xs text-gray-500 ml-2">(${reviewsCount})</span>
+            </div>
+            <p class="text-gray-600 text-sm text-left line-clamp-2">${description}</p>
           </div>
-          <p class="text-gray-600 mb-4 flex-grow text-left line-clamp-3">${description}</p>
-          <div class="flex justify-between items-center mb-3">
+          <div class="mt-auto">
+            <div class="flex justify-between items-center mb-3">
             ${product.price === 0 || product.price === "Gratis" ? `
               <span class="text-2xl font-bold text-gray-900">${t('productsPage.pricing.free')}</span>
             ` : product.originalPrice && product.originalPrice > product.price ? `
@@ -133,11 +139,12 @@ function generateProductsHTML(products) {
             ` : `
               <span class="text-2xl font-bold text-gray-900">$${product.price || 99}</span>
             `}
-            <span class="text-sm ${badgeColor} px-2 py-1 rounded-full">${getBadgeDisplayName(product.badge || 'available')}</span>
+              <span class="text-sm ${badgeColor} px-2 py-1 rounded-full">${getBadgeDisplayName(product.badge || 'available')}</span>
+            </div>
+            <button class="product-action-button text-center bg-[#22a7d0] text-white font-bold py-2 px-4 rounded-lg transition-colors hover:bg-[#1e96bc] w-full"
+                    data-product-id="${product.id}"
+                    data-product='${JSON.stringify(product).replace(/'/g, "&apos;")}'></button>
           </div>
-          <button class="mt-auto product-action-button text-center bg-[#22a7d0] text-white font-bold py-2 px-4 rounded-lg transition-colors hover:bg-[#1e96bc]"
-                  data-product-id="${product.id}"
-                  data-product='${JSON.stringify(product).replace(/'/g, "&apos;")}'></button>
         </div>
       </div>
     `;
