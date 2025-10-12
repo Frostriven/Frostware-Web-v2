@@ -250,12 +250,22 @@ export async function renderAdminView() {
                       <tr>
                         <td class="px-6 py-4 whitespace-nowrap">
                           <div class="flex items-center">
-                            <img src="${product.image || 'https://placehold.co/40x40/1a202c/FFFFFF?text=' + encodeURIComponent(product.name.charAt(0))}"
-                                 alt="${product.name}" class="w-10 h-10 rounded-lg object-cover">
-                            <div class="ml-4">
-                              <div class="text-sm font-medium text-gray-900">${product.name}</div>
-                              <div class="text-sm text-gray-500">${product.description.substring(0, 50)}...</div>
-                            </div>
+                            ${(() => {
+                              const productName = typeof product.name === 'string'
+                                ? product.name
+                                : (product.name?.[i18n.getCurrentLanguage()] || product.name?.es || product.name?.en || 'Sin nombre');
+                              const productDesc = typeof product.description === 'string'
+                                ? product.description.substring(0, 50)
+                                : (product.description?.[i18n.getCurrentLanguage()] || product.description?.es || product.description?.en || 'Sin descripción').substring(0, 50);
+                              return `
+                                <img src="${product.image || 'https://placehold.co/40x40/1a202c/FFFFFF?text=' + encodeURIComponent(productName.charAt(0))}"
+                                     alt="${productName}" class="w-10 h-10 rounded-lg object-cover">
+                                <div class="ml-4">
+                                  <div class="text-sm font-medium text-gray-900">${productName}</div>
+                                  <div class="text-sm text-gray-500">${productDesc}...</div>
+                                </div>
+                              `;
+                            })()}
                           </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">

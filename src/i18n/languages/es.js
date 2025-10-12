@@ -11,7 +11,8 @@ export const es = {
     admin: "Admin",
     terms: "Términos",
     privacy: "Privacidad",
-    contact: "Contacto"
+    contact: "Contacto",
+    greeting: "Hola"
   },
 
   // Common navigation

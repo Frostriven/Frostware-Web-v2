@@ -97,15 +97,56 @@ const initializeApp = () => {
           ${loading ? `
             <div class="animate-pulse bg-gray-600 h-8 w-20 rounded"></div>
           ` : user ? `
-            <a class="text-gray-300 hover:text-white ${currentHash === '#/account' ? 'active' : ''}" href="#/account">${t('navigation.myAccount')}</a>
-            <a class="flex items-center gap-2 text-gray-300 hover:text-white ${currentHash === '#/account/products' ? 'active' : ''}" href="#/account/products">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-              </svg>
-              ${t('navigation.myProducts')}
-            </a>
-            ${isAdmin ? `<a class="text-gray-300 hover:text-white ${currentHash === '#/admin' ? 'active' : ''}" href="#/admin">${t('navigation.admin')}</a>` : ''}
-            <button id="btn-header-logout" class="cta-button bg-red-600 text-white font-bold py-2 px-4 rounded-lg">${t('navigation.logout')}</button>
+            <!-- User Menu with Greeting Stacked -->
+            <div class="relative flex flex-col items-center" id="user-menu-container">
+              <button id="user-menu-button" class="flex items-center gap-1 text-gray-300 hover:text-white transition-colors focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                <svg class="w-3 h-3 transition-transform duration-200" id="user-menu-arrow" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                </svg>
+              </button>
+              <!-- User Greeting Below Icon -->
+              <span class="text-gray-300 text-xs mt-0.5 whitespace-nowrap">${t('navigation.greeting')}, <span class="font-semibold text-white">${user.displayName || user.email?.split('@')[0] || 'Usuario'}</span></span>
+
+              <div id="user-menu-dropdown" class="hidden absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden">
+                <div class="py-2">
+                  <a href="#/account" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors ${currentHash === '#/account' ? 'bg-blue-50 text-blue-700' : ''}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    <span class="font-medium">${t('navigation.myAccount')}</span>
+                  </a>
+
+                  <a href="#/account/products" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors ${currentHash === '#/account/products' ? 'bg-blue-50 text-blue-700' : ''}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                    <span class="font-medium">${t('navigation.myProducts')}</span>
+                  </a>
+
+                  ${isAdmin ? `
+                    <a href="#/admin" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors ${currentHash === '#/admin' ? 'bg-blue-50 text-blue-700' : ''}">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                      </svg>
+                      <span class="font-medium">${t('navigation.admin')}</span>
+                    </a>
+                  ` : ''}
+
+                  <hr class="my-2 border-gray-200">
+
+                  <button id="btn-header-logout" class="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                    </svg>
+                    <span class="font-medium">${t('navigation.logout')}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           ` : `
             <a class="cta-button bg-[#22a7d0] text-white font-bold py-2 px-4 rounded-lg" href="#/auth">${t('navigation.login')}</a>
           `}
@@ -140,6 +181,37 @@ const initializeApp = () => {
           languageDropdown.classList.add('hidden');
           languageChevron.style.transform = 'rotate(0deg)';
         }
+      });
+    }
+
+    // Add user menu dropdown event listeners
+    const userMenuButton = header.querySelector('#user-menu-button');
+    const userMenuDropdown = header.querySelector('#user-menu-dropdown');
+    const userMenuArrow = header.querySelector('#user-menu-arrow');
+
+    if (userMenuButton && userMenuDropdown) {
+      userMenuButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        userMenuDropdown.classList.toggle('hidden');
+        userMenuArrow.style.transform = userMenuDropdown.classList.contains('hidden')
+          ? 'rotate(0deg)' : 'rotate(180deg)';
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!userMenuButton.contains(e.target) && !userMenuDropdown.contains(e.target)) {
+          userMenuDropdown.classList.add('hidden');
+          userMenuArrow.style.transform = 'rotate(0deg)';
+        }
+      });
+
+      // Close dropdown when clicking on a menu item (except logout button)
+      userMenuDropdown.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+          userMenuDropdown.classList.add('hidden');
+          userMenuArrow.style.transform = 'rotate(0deg)';
+        });
       });
     }
 

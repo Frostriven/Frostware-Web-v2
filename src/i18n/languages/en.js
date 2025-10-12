@@ -11,7 +11,8 @@ export const en = {
     admin: "Admin",
     terms: "Terms",
     privacy: "Privacy",
-    contact: "Contact"
+    contact: "Contact",
+    greeting: "Hello"
   },
 
   // Common navigation
