@@ -120,11 +120,83 @@ export const en = {
 
   // Account page
   account: {
+    title: "My Account",
+    loading: "Loading...",
+
+    // Tabs
+    tabs: {
+      profile: "Profile",
+      products: "My Products"
+    },
+
+    // Profile section
+    profile: {
+      title: "Personal Information",
+      fullName: "Full name",
+      fullNamePlaceholder: "Your full name",
+      email: "Email",
+      emailPlaceholder: "your@email.com",
+      phone: "Phone",
+      phonePlaceholder: "+1 (555) 123-4567",
+      country: "Country",
+      company: "Company/Organization (optional)",
+      companyPlaceholder: "Your company name",
+      bio: "About you (optional)",
+      bioPlaceholder: "Tell us a little about yourself...",
+      saveChanges: "Save Changes",
+      changesSaved: "Changes saved successfully",
+      errorSaving: "Error saving changes"
+    },
+
+    // Account status
+    status: {
+      title: "Account Status",
+      accountType: "Account type:",
+      freeAccount: "Free",
+      productsAcquired: "Products acquired:",
+      memberSince: "Member since:"
+    },
+
+    // Account actions
+    actions: {
+      title: "Account Actions",
+      changePassword: "Change password",
+      logout: "Logout"
+    },
+
+    // Products section
+    products: {
+      title: "My Products",
+      total: "Total:",
+      totalProducts: "products",
+      noProducts: "You don't have any products yet",
+      noProductsDescription: "Explore our catalog and find the perfect tools for you.",
+      viewProducts: "View Products"
+    },
+
+    // Individual product (used in product list)
     product: {
       acquired: "Acquired",
       active: "Active",
       dateNotAvailable: "Date not available",
       viewDetails: "View Details"
+    },
+
+    // Password modal
+    passwordModal: {
+      title: "Change Password",
+      currentPassword: "Current password",
+      currentPasswordPlaceholder: "Your current password",
+      newPassword: "New password",
+      newPasswordPlaceholder: "New password (minimum 6 characters)",
+      confirmPassword: "Confirm new password",
+      confirmPasswordPlaceholder: "Confirm your new password",
+      cancel: "Cancel",
+      changePassword: "Change Password",
+      passwordChanged: "Password changed successfully",
+      errorChanging: "Error changing password",
+      passwordsDoNotMatch: "Passwords do not match",
+      passwordTooShort: "Password must be at least 6 characters"
     }
   },
 

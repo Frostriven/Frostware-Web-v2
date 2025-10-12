@@ -120,11 +120,83 @@ export const es = {
 
   // Account page
   account: {
+    title: "Mi Cuenta",
+    loading: "Cargando...",
+
+    // Tabs
+    tabs: {
+      profile: "Perfil",
+      products: "Mis Productos"
+    },
+
+    // Profile section
+    profile: {
+      title: "Información Personal",
+      fullName: "Nombre completo",
+      fullNamePlaceholder: "Tu nombre completo",
+      email: "Email",
+      emailPlaceholder: "tu@email.com",
+      phone: "Teléfono",
+      phonePlaceholder: "+1 (555) 123-4567",
+      country: "País",
+      company: "Empresa/Organización (opcional)",
+      companyPlaceholder: "Nombre de tu empresa",
+      bio: "Acerca de ti (opcional)",
+      bioPlaceholder: "Cuéntanos un poco sobre ti...",
+      saveChanges: "Guardar Cambios",
+      changesSaved: "Cambios guardados exitosamente",
+      errorSaving: "Error al guardar cambios"
+    },
+
+    // Account status
+    status: {
+      title: "Estado de la Cuenta",
+      accountType: "Tipo de cuenta:",
+      freeAccount: "Gratuita",
+      productsAcquired: "Productos adquiridos:",
+      memberSince: "Miembro desde:"
+    },
+
+    // Account actions
+    actions: {
+      title: "Acciones de Cuenta",
+      changePassword: "Cambiar contraseña",
+      logout: "Cerrar sesión"
+    },
+
+    // Products section
+    products: {
+      title: "Mis Productos",
+      total: "Total:",
+      totalProducts: "productos",
+      noProducts: "No tienes productos todavía",
+      noProductsDescription: "Explora nuestro catálogo y encuentra las herramientas perfectas para ti.",
+      viewProducts: "Ver Productos"
+    },
+
+    // Individual product (usado en la lista de productos)
     product: {
       acquired: "Adquirido",
       active: "Activo",
       dateNotAvailable: "Fecha no disponible",
       viewDetails: "Ver Detalles"
+    },
+
+    // Password modal
+    passwordModal: {
+      title: "Cambiar Contraseña",
+      currentPassword: "Contraseña actual",
+      currentPasswordPlaceholder: "Tu contraseña actual",
+      newPassword: "Nueva contraseña",
+      newPasswordPlaceholder: "Nueva contraseña (mínimo 6 caracteres)",
+      confirmPassword: "Confirmar nueva contraseña",
+      confirmPasswordPlaceholder: "Confirma tu nueva contraseña",
+      cancel: "Cancelar",
+      changePassword: "Cambiar Contraseña",
+      passwordChanged: "Contraseña cambiada exitosamente",
+      errorChanging: "Error al cambiar contraseña",
+      passwordsDoNotMatch: "Las contraseñas no coinciden",
+      passwordTooShort: "La contraseña debe tener al menos 6 caracteres"
     }
   },
 

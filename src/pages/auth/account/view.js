@@ -8,20 +8,179 @@ export async function renderAccountView(initialTab = 'profile') {
   if (!root) return;
 
   try {
-    const response = await fetch('/pages/auth/account.html');
-    if (!response.ok) {
-      throw new Error(`No se pudo cargar la página de cuenta. Status: ${response.status}`);
+    // Wait for translations to load
+    if (!i18n.translations || Object.keys(i18n.translations).length === 0) {
+      console.log('⏳ Waiting for translations to load...');
+      await i18n.loadTranslations();
     }
-    const html = await response.text();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    const mainContent = doc.querySelector('main');
 
-    if (mainContent) {
-      root.innerHTML = mainContent.innerHTML;
-    } else {
-      throw new Error('Contenido principal no encontrado en la página de cuenta.');
-    }
+    // Build HTML with translations instead of loading static file
+    root.innerHTML = `
+      <main class="py-8">
+        <div class="container mx-auto max-w-6xl px-6">
+          <!-- Header de la cuenta -->
+          <div class="mb-8">
+            <div class="flex items-center gap-4 mb-4">
+              <div class="w-16 h-16 rounded-full bg-gradient-to-r from-[#22a7d0] to-blue-600 flex items-center justify-center text-white text-xl font-bold">
+                <span id="user-avatar">U</span>
+              </div>
+              <div>
+                <h1 class="text-3xl font-bold text-gray-900">${t('account.title')}</h1>
+                <p id="user-email" class="text-gray-600">${t('account.loading')}</p>
+              </div>
+            </div>
+            <div class="border-b border-gray-200">
+              <nav class="flex space-x-8">
+                <button id="tab-profile" class="py-2 px-1 border-b-2 border-[#22a7d0] font-medium text-[#22a7d0] text-sm">
+                  ${t('account.tabs.profile')}
+                </button>
+                <button id="tab-products" class="py-2 px-1 border-b-2 border-transparent font-medium text-gray-500 hover:text-gray-700 text-sm">
+                  ${t('account.tabs.products')}
+                </button>
+              </nav>
+            </div>
+          </div>
+
+          <!-- Tab: Perfil -->
+          <div id="profile-section" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <!-- Información personal -->
+              <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow border p-6">
+                  <h2 class="text-xl font-semibold text-gray-900 mb-6">${t('account.profile.title')}</h2>
+                  <form id="profile-form" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label for="profile-name" class="block text-sm font-medium text-gray-700 mb-1">${t('account.profile.fullName')}</label>
+                        <input type="text" id="profile-name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22a7d0] focus:border-transparent" placeholder="${t('account.profile.fullNamePlaceholder')}">
+                      </div>
+                      <div>
+                        <label for="profile-email" class="block text-sm font-medium text-gray-700 mb-1">${t('account.profile.email')}</label>
+                        <input type="email" id="profile-email" class="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed" placeholder="${t('account.profile.emailPlaceholder')}" readonly disabled>
+                      </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label for="profile-phone" class="block text-sm font-medium text-gray-700 mb-1">${t('account.profile.phone')}</label>
+                        <input type="tel" id="profile-phone" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22a7d0] focus:border-transparent" placeholder="${t('account.profile.phonePlaceholder')}">
+                      </div>
+                      <div>
+                        <label for="profile-country" class="block text-sm font-medium text-gray-700 mb-1">${t('account.profile.country')}</label>
+                        <select id="profile-country" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22a7d0] focus:border-transparent">
+                          <!-- Countries will be populated by JavaScript -->
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label for="profile-company" class="block text-sm font-medium text-gray-700 mb-1">${t('account.profile.company')}</label>
+                      <input type="text" id="profile-company" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22a7d0] focus:border-transparent" placeholder="${t('account.profile.companyPlaceholder')}">
+                    </div>
+
+                    <div>
+                      <label for="profile-bio" class="block text-sm font-medium text-gray-700 mb-1">${t('account.profile.bio')}</label>
+                      <textarea id="profile-bio" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22a7d0] focus:border-transparent" placeholder="${t('account.profile.bioPlaceholder')}"></textarea>
+                    </div>
+
+                    <div class="flex justify-between items-center pt-4">
+                      <div id="profile-status" class="text-sm"></div>
+                      <button type="submit" class="save-changes-btn bg-[#22a7d0] text-white px-6 py-2 rounded-lg font-medium transition-all duration-300 hover:bg-[#1a8db3] hover:shadow-[0_0_20px_rgba(34,167,208,0.5)] hover:scale-105">
+                        ${t('account.profile.saveChanges')}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Información de la cuenta -->
+              <div class="space-y-6">
+                <div class="bg-white rounded-lg shadow border p-6">
+                  <h3 class="text-lg font-semibold text-gray-900 mb-4">${t('account.status.title')}</h3>
+                  <div class="space-y-3">
+                    <div class="flex justify-between">
+                      <span class="text-gray-600">${t('account.status.accountType')}</span>
+                      <span class="font-medium text-green-600">${t('account.status.freeAccount')}</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-600">${t('account.status.productsAcquired')}</span>
+                      <span id="products-count" class="font-medium">0</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-600">${t('account.status.memberSince')}</span>
+                      <span id="member-since" class="font-medium">-</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow border p-6">
+                  <h3 class="text-lg font-semibold text-gray-900 mb-4">${t('account.actions.title')}</h3>
+                  <div class="space-y-3">
+                    <button id="btn-change-password" class="w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                      ${t('account.actions.changePassword')}
+                    </button>
+                    <button id="btn-logout" class="w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                      ${t('account.actions.logout')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab: Productos -->
+          <div id="products-section" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow border p-6">
+              <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-semibold text-gray-900">${t('account.products.title')}</h2>
+                <span class="text-sm text-gray-500">${t('account.products.total')} <span id="total-products">0</span> ${t('account.products.totalProducts')}</span>
+              </div>
+
+              <!-- Lista de productos -->
+              <div id="products-list" class="space-y-4">
+                <!-- Los productos se cargarán aquí dinámicamente -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </main>
+
+      <!-- Modal para cambio de contraseña -->
+      <div id="password-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-50">
+        <div class="bg-white rounded-lg shadow-2xl max-w-md w-full m-4">
+          <div class="p-6 border-b flex justify-between items-center">
+            <h2 class="text-xl font-bold text-gray-900">${t('account.passwordModal.title')}</h2>
+            <button id="modal-close" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+          </div>
+          <div class="p-6">
+            <form id="password-form" class="space-y-4">
+              <div>
+                <label for="current-password" class="block text-sm font-medium text-gray-700 mb-1">${t('account.passwordModal.currentPassword')}</label>
+                <input type="password" id="current-password" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22a7d0] focus:border-transparent" placeholder="${t('account.passwordModal.currentPasswordPlaceholder')}" required>
+              </div>
+              <div>
+                <label for="new-password" class="block text-sm font-medium text-gray-700 mb-1">${t('account.passwordModal.newPassword')}</label>
+                <input type="password" id="new-password" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22a7d0] focus:border-transparent" placeholder="${t('account.passwordModal.newPasswordPlaceholder')}" required minlength="6">
+              </div>
+              <div>
+                <label for="confirm-new-password" class="block text-sm font-medium text-gray-700 mb-1">${t('account.passwordModal.confirmPassword')}</label>
+                <input type="password" id="confirm-new-password" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22a7d0] focus:border-transparent" placeholder="${t('account.passwordModal.confirmPasswordPlaceholder')}" required minlength="6">
+              </div>
+              <div id="password-status" class="text-sm text-center"></div>
+              <div class="flex gap-3 pt-4">
+                <button type="button" id="modal-cancel" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                  ${t('account.passwordModal.cancel')}
+                </button>
+                <button type="submit" class="flex-1 px-4 py-2 bg-[#22a7d0] text-white rounded-lg hover:bg-blue-600 transition-colors">
+                  ${t('account.passwordModal.changePassword')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    `;
 
     // Inicializar la funcionalidad
     initializeAccountPage(initialTab);
@@ -139,7 +298,8 @@ function initializeAccountPage(initialTab = 'profile') {
 
     } catch (error) {
       console.error('Error cargando perfil:', error);
-      profileStatus.textContent = 'Error cargando datos del perfil';
+      const lang = i18n.getCurrentLanguage();
+      profileStatus.textContent = lang === 'es' ? 'Error cargando datos del perfil' : 'Error loading profile data';
       profileStatus.style.color = 'red';
     }
   }
@@ -164,14 +324,14 @@ function initializeAccountPage(initialTab = 'profile') {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
               </svg>
             </div>
-            <p class="text-lg font-medium mb-2">No tienes productos todavía</p>
-            <p class="text-sm">Explora nuestro catálogo y encuentra las herramientas perfectas para ti.</p>
+            <p class="text-lg font-medium mb-2">${t('account.products.noProducts')}</p>
+            <p class="text-sm">${t('account.products.noProductsDescription')}</p>
             <div class="mt-4 space-x-2">
               <a href="#/" class="inline-block bg-[#22a7d0] text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
-                Ver Productos
+                ${t('account.products.viewProducts')}
               </a>
               <button id="add-sample-product" class="inline-block bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
-                Agregar Producto de Prueba
+                ${i18n.getCurrentLanguage() === 'es' ? 'Agregar Producto de Prueba' : 'Add Sample Product'}
               </button>
             </div>
           </div>
@@ -184,7 +344,8 @@ function initializeAccountPage(initialTab = 'profile') {
             const randomProduct = sampleProducts[Math.floor(Math.random() * sampleProducts.length)];
             await addUserProduct(user.uid, randomProduct);
             loadUserProducts(user); // Recargar la lista
-            profileStatus.textContent = `Producto "${randomProduct.name}" agregado exitosamente!`;
+            const lang = i18n.getCurrentLanguage();
+            profileStatus.textContent = lang === 'es' ? `Producto "${randomProduct.name}" agregado exitosamente!` : `Product "${randomProduct.name}" added successfully!`;
             profileStatus.style.color = 'green';
             setTimeout(() => {
               profileStatus.textContent = '';
@@ -256,7 +417,7 @@ function initializeAccountPage(initialTab = 'profile') {
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                     </svg>
-                    Dashboard
+                    ${currentLang === 'es' ? 'Dashboard' : 'Dashboard'}
                   </a>
                   <a href="#/product/${product.id}" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors text-sm">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -274,9 +435,10 @@ function initializeAccountPage(initialTab = 'profile') {
 
     } catch (error) {
       console.error('Error cargando productos:', error);
+      const lang = i18n.getCurrentLanguage();
       productsList.innerHTML = `
         <div class="text-center py-8 text-red-500">
-          <p>Error cargando productos. Inténtalo de nuevo más tarde.</p>
+          <p>${lang === 'es' ? 'Error cargando productos. Inténtalo de nuevo más tarde.' : 'Error loading products. Please try again later.'}</p>
         </div>
       `;
     }
@@ -287,7 +449,8 @@ function initializeAccountPage(initialTab = 'profile') {
     e.preventDefault();
 
     if (!currentUser) {
-      profileStatus.textContent = 'Error: Usuario no autenticado';
+      const lang = i18n.getCurrentLanguage();
+      profileStatus.textContent = lang === 'es' ? 'Error: Usuario no autenticado' : 'Error: User not authenticated';
       profileStatus.style.color = 'red';
       return;
     }
@@ -295,9 +458,9 @@ function initializeAccountPage(initialTab = 'profile') {
     try {
       const submitBtn = profileForm.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Guardando...';
+      submitBtn.textContent = i18n.getCurrentLanguage() === 'es' ? 'Guardando...' : 'Saving...';
 
-      profileStatus.textContent = 'Guardando cambios...';
+      profileStatus.textContent = i18n.getCurrentLanguage() === 'es' ? 'Guardando cambios...' : 'Saving changes...';
       profileStatus.style.color = 'blue';
 
       const profileData = {
@@ -318,7 +481,7 @@ function initializeAccountPage(initialTab = 'profile') {
 
       await updateUserProfile(currentUser.uid, profileData);
 
-      profileStatus.textContent = 'Perfil actualizado exitosamente!';
+      profileStatus.textContent = t('account.profile.changesSaved');
       profileStatus.style.color = 'green';
 
       // Actualizar avatar si cambió el nombre
@@ -331,12 +494,12 @@ function initializeAccountPage(initialTab = 'profile') {
 
     } catch (error) {
       console.error('Error guardando perfil:', error);
-      profileStatus.textContent = `Error: ${error.message}`;
+      profileStatus.textContent = t('account.profile.errorSaving') + `: ${error.message}`;
       profileStatus.style.color = 'red';
     } finally {
       const submitBtn = profileForm.querySelector('button[type="submit"]');
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Guardar Cambios';
+      submitBtn.textContent = t('account.profile.saveChanges');
     }
   });
 
@@ -371,7 +534,8 @@ function initializeAccountPage(initialTab = 'profile') {
     e.preventDefault();
 
     if (!currentUser) {
-      passwordStatus.textContent = 'Error: Usuario no autenticado';
+      const lang = i18n.getCurrentLanguage();
+      passwordStatus.textContent = lang === 'es' ? 'Error: Usuario no autenticado' : 'Error: User not authenticated';
       passwordStatus.style.color = 'red';
       return;
     }
@@ -382,21 +546,21 @@ function initializeAccountPage(initialTab = 'profile') {
 
     // Validar que las contraseñas coincidan
     if (newPass !== confirmPass) {
-      passwordStatus.textContent = 'Las nuevas contraseñas no coinciden';
+      passwordStatus.textContent = t('account.passwordModal.passwordsDoNotMatch');
       passwordStatus.style.color = 'red';
       return;
     }
 
     // Validar longitud mínima
     if (newPass.length < 6) {
-      passwordStatus.textContent = 'La nueva contraseña debe tener al menos 6 caracteres';
+      passwordStatus.textContent = t('account.passwordModal.passwordTooShort');
       passwordStatus.style.color = 'red';
       return;
     }
 
     // Verificar que la nueva contraseña sea diferente
     if (currentPass === newPass) {
-      passwordStatus.textContent = 'La nueva contraseña debe ser diferente a la actual';
+      passwordStatus.textContent = i18n.getCurrentLanguage() === 'es' ? 'La nueva contraseña debe ser diferente a la actual' : 'New password must be different from current';
       passwordStatus.style.color = 'red';
       return;
     }
@@ -404,20 +568,20 @@ function initializeAccountPage(initialTab = 'profile') {
     try {
       const submitBtn = passwordForm.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Cambiando...';
+      submitBtn.textContent = i18n.getCurrentLanguage() === 'es' ? 'Cambiando...' : 'Changing...';
 
-      passwordStatus.textContent = 'Cambiando contraseña...';
+      passwordStatus.textContent = i18n.getCurrentLanguage() === 'es' ? 'Cambiando contraseña...' : 'Changing password...';
       passwordStatus.style.color = 'blue';
 
       await changePassword(currentPass, newPass);
 
-      passwordStatus.textContent = '¡Contraseña cambiada exitosamente!';
+      passwordStatus.textContent = t('account.passwordModal.passwordChanged');
       passwordStatus.style.color = 'green';
 
       // Cerrar modal después de 2 segundos
       setTimeout(() => {
         closePasswordModal();
-        profileStatus.textContent = 'Contraseña actualizada exitosamente';
+        profileStatus.textContent = t('account.passwordModal.passwordChanged');
         profileStatus.style.color = 'green';
         setTimeout(() => {
           profileStatus.textContent = '';
@@ -426,14 +590,15 @@ function initializeAccountPage(initialTab = 'profile') {
 
     } catch (error) {
       console.error('Error cambiando contraseña:', error);
-      let errorMessage = 'Error al cambiar la contraseña';
+      const lang = i18n.getCurrentLanguage();
+      let errorMessage = lang === 'es' ? 'Error al cambiar la contraseña' : 'Error changing password';
 
       if (error.code === 'auth/wrong-password') {
-        errorMessage = 'La contraseña actual es incorrecta';
+        errorMessage = lang === 'es' ? 'La contraseña actual es incorrecta' : 'Current password is incorrect';
       } else if (error.code === 'auth/weak-password') {
-        errorMessage = 'La nueva contraseña es muy débil';
+        errorMessage = lang === 'es' ? 'La nueva contraseña es muy débil' : 'New password is too weak';
       } else if (error.code === 'auth/requires-recent-login') {
-        errorMessage = 'Por seguridad, necesitas volver a iniciar sesión para cambiar tu contraseña';
+        errorMessage = lang === 'es' ? 'Por seguridad, necesitas volver a iniciar sesión para cambiar tu contraseña' : 'For security, you need to log in again to change your password';
       }
 
       passwordStatus.textContent = errorMessage;
@@ -441,7 +606,7 @@ function initializeAccountPage(initialTab = 'profile') {
     } finally {
       const submitBtn = passwordForm.querySelector('button[type="submit"]');
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Cambiar Contraseña';
+      submitBtn.textContent = t('account.passwordModal.changePassword');
     }
   });
 
@@ -477,7 +642,8 @@ function initializeAccountPage(initialTab = 'profile') {
 // Función global para eliminar productos (accesible desde el HTML)
 window.removeUserProduct = async function(productId, userId) {
   try {
-    const confirmed = confirm('¿Estás seguro de que deseas eliminar este producto?');
+    const lang = i18n.getCurrentLanguage();
+    const confirmed = confirm(lang === 'es' ? '¿Estás seguro de que deseas eliminar este producto?' : 'Are you sure you want to delete this product?');
     if (!confirmed) return;
 
     await removeUserProduct(userId, productId);
@@ -495,7 +661,7 @@ window.removeUserProduct = async function(productId, userId) {
     // Mostrar mensaje de éxito
     const profileStatus = document.getElementById('profile-status');
     if (profileStatus) {
-      profileStatus.textContent = 'Producto eliminado exitosamente';
+      profileStatus.textContent = lang === 'es' ? 'Producto eliminado exitosamente' : 'Product deleted successfully';
       profileStatus.style.color = 'green';
       setTimeout(() => {
         profileStatus.textContent = '';
@@ -504,9 +670,10 @@ window.removeUserProduct = async function(productId, userId) {
 
   } catch (error) {
     console.error('Error eliminando producto:', error);
+    const lang = i18n.getCurrentLanguage();
     const profileStatus = document.getElementById('profile-status');
     if (profileStatus) {
-      profileStatus.textContent = 'Error al eliminar el producto';
+      profileStatus.textContent = lang === 'es' ? 'Error al eliminar el producto' : 'Error deleting product';
       profileStatus.style.color = 'red';
       setTimeout(() => {
         profileStatus.textContent = '';
