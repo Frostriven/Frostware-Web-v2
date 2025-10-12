@@ -98,6 +98,12 @@ const initializeApp = () => {
             <div class="animate-pulse bg-gray-600 h-8 w-20 rounded"></div>
           ` : user ? `
             <a class="text-gray-300 hover:text-white ${currentHash === '#/account' ? 'active' : ''}" href="#/account">${t('navigation.myAccount')}</a>
+            <a class="flex items-center gap-2 text-gray-300 hover:text-white ${currentHash === '#/account/products' ? 'active' : ''}" href="#/account/products">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+              </svg>
+              ${t('navigation.myProducts')}
+            </a>
             ${isAdmin ? `<a class="text-gray-300 hover:text-white ${currentHash === '#/admin' ? 'active' : ''}" href="#/admin">${t('navigation.admin')}</a>` : ''}
             <button id="btn-header-logout" class="cta-button bg-red-600 text-white font-bold py-2 px-4 rounded-lg">${t('navigation.logout')}</button>
           ` : `
