@@ -13,8 +13,8 @@ body {
 .hero-bg {
     background-color: #f8f9fa;
     background-image:
-        radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0),
-        radial-gradient(circle at 10px 10px, rgba(0,0,0,0.05) 1px, transparent 0);
+        radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.05) 1px, transparent 0),
+        radial-gradient(circle at 10px 10px, rgba(0, 0, 0, 0.05) 1px, transparent 0);
     background-size: 20px 20px;
 }
 
@@ -92,18 +92,33 @@ body {
 }
 
 @keyframes spin-inner {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 @keyframes spin-middle {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 @keyframes spin-outer {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* Estilo de Selección del Header */
@@ -128,7 +143,8 @@ body {
     z-index: -1;
 }
 
-.nav-link:hover::after, .nav-link.active::after {
+.nav-link:hover::after,
+.nav-link.active::after {
     opacity: 1;
 }
 
@@ -158,6 +174,7 @@ main {
         opacity: 0;
         transform: scale(0.95);
     }
+
     to {
         opacity: 1;
         transform: scale(1);
@@ -183,25 +200,32 @@ main {
 }
 
 /* Smooth Button Interactions */
-button, .cta-button {
+button,
+.cta-button {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-button:hover, .cta-button:hover {
+button:hover,
+.cta-button:hover {
     transform: translateY(-2px);
 }
 
-button:active, .cta-button:active {
+button:active,
+.cta-button:active {
     transform: translateY(0);
     transition-duration: 0.1s;
 }
 
 /* Form Styles */
-input[type="text"], input[type="email"], input[type="password"] {
+input[type="text"],
+input[type="email"],
+input[type="password"] {
     transition: all 0.3s ease;
 }
 
-input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus {
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus {
     box-shadow: 0 0 0 3px rgba(34, 167, 208, 0.1);
 }
 
@@ -241,6 +265,27 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     box-shadow: 0 2px 10px rgba(34, 167, 208, 0.3);
 }
 
+/* Enhanced Hover Animations */
+.hover-neon-glow {
+    transition: all 0.25s ease-out;
+    position: relative;
+    background: white;
+    /* Override Tailwind's shadow-lg to prevent conflicts */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Use box-shadow directly on hover instead of pseudo-element to avoid z-index issues */
+.hover-neon-glow:hover {
+    transform: translateY(-4px) scale(1.01);
+    border-color: rgba(34, 167, 208, 0.6) !important;
+    /* The Glow - Electric Blue #22a7d0 - más suave y sutil */
+    box-shadow:
+        0 0 15px rgba(34, 167, 208, 0.4),
+        0 0 30px rgba(34, 167, 208, 0.3),
+        0 0 45px rgba(34, 167, 208, 0.2),
+        0 8px 25px rgba(0, 0, 0, 0.1) !important;
+}
+
 input[type="checkbox"] {
     accent-color: var(--primary-color);
 }
@@ -255,6 +300,7 @@ input[type="checkbox"] {
         opacity: 0;
         transform: translateY(30px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -266,10 +312,7 @@ input[type="checkbox"] {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.product-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
+/* Hover effect managed by utility classes now */
 
 .color-indicator {
     width: 16px;
@@ -312,6 +355,7 @@ input[type="checkbox"] {
         opacity: 0;
         transform: scale(0.9) translateY(20px);
     }
+
     to {
         opacity: 1;
         transform: scale(1) translateY(0);
@@ -322,6 +366,7 @@ input[type="checkbox"] {
 .line-clamp-3 {
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -330,46 +375,154 @@ input[type="checkbox"] {
 .product-card {
     transition: all 0.3s ease;
 }
-.product-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
+
+/* product-card:hover is managed by hover-neon-glow class (line 269-306) */
+
 .filter-btn {
     transition: all 0.3s ease;
 }
+
 .filter-btn:hover {
     transform: translateY(-2px);
 }
+
 .filter-btn.active {
     background: linear-gradient(135deg, #3B82F6, #1D4ED8);
     color: white;
     box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4);
 }
+
 .price-badge {
     background: linear-gradient(135deg, #10B981, #047857);
 }
+
 .discount-badge {
     background: linear-gradient(135deg, #EF4444, #DC2626);
 }
+
 .search-input:focus {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
+
 .btn-primary {
     background: linear-gradient(135deg, #3B82F6, #1D4ED8);
     transition: all 0.3s ease;
 }
+
 .btn-primary:hover {
     background: linear-gradient(135deg, #1D4ED8, #1E40AF);
     transform: translateY(-2px);
     box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4);
 }
+
 .category-tag {
     background: linear-gradient(135deg, #F3F4F6, #E5E7EB);
 }
 
 /* Color for primary text elements in new template */
-.text-primary {
-    color: #3B82F6;
+
+/* Scroll Animations */
+.fade-in-up {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.fade-in-down {
+    opacity: 0;
+    transform: translateY(-30px);
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
+.fade-in-left {
+    opacity: 0;
+    transform: translateX(-30px);
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-in-right {
+    opacity: 0;
+    transform: translateX(30px);
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-in-scale {
+    opacity: 0;
+    transform: scale(0.9);
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.visible {
+    opacity: 1 !important;
+    transform: translate(0) scale(1) !important;
+}
+
+/* Neon Effects - Electric Blue #22a7d0 */
+.neon-text {
+    text-shadow: 0 0 5px rgba(34, 167, 208, 0.4),
+        0 0 10px rgba(34, 167, 208, 0.3);
+}
+
+.neon-border {
+    border: 1px solid rgba(34, 167, 208, 0.5);
+    box-shadow: 0 0 5px rgba(34, 167, 208, 0.2),
+        inset 0 0 5px rgba(34, 167, 208, 0.1);
+}
+
+.neon-box {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(34, 167, 208, 0.2);
+    box-shadow: 0 0 15px rgba(34, 167, 208, 0.15);
+}
+
+.product-card,
+input:focus,
+textarea:focus,
+select:focus {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Specific glows - product-card:hover is managed by hover-neon-glow class above (line 269-306) */
+
+/* Button glow override */
+.cta-button:hover,
+button.bg-\[\#22a7d0\]:hover {
+    box-shadow: 0 0 20px rgba(34, 167, 208, 0.6),
+        0 0 40px rgba(34, 167, 208, 0.4);
+    transform: translateY(-3px);
+}
+
+.hover-slide-up {
+    transition: transform 0.3s ease;
+}
+
+.hover-slide-up:hover {
+    transform: translateY(-5px);
+}
+
+/* Custom Gradient Text */
+.gradient-text-primary {
+    background: linear-gradient(135deg, #22a7d0 0%, #0d6efd 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Pulse Animation for CTA */
+@keyframes neon-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(34, 167, 208, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(34, 167, 208, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(34, 167, 208, 0);
+    }
+}
+
+.btn-pulse {
+    animation: neon-pulse 2s infinite;
+}

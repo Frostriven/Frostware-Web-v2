@@ -14,37 +14,21 @@ export async function renderProductsView() {
     // Generate HTML dynamically
     const html = generateProductsHTML(products);
 
-    // Wrap it in a container that preserves the styling with animation
-    root.innerHTML = `<div class="bg-gray-50 opacity-0 transform translate-y-4 transition-all duration-700">${html}</div>`;
+    // Wrap it in a container - simplified (no double animation)
+    root.innerHTML = `<div class="bg-gray-50 min-h-screen">${html}</div>`;
 
-    // Trigger entrance animation
-    setTimeout(() => {
-      const container = root.querySelector('.bg-gray-50');
-      if (container) {
-        container.classList.remove('opacity-0', 'translate-y-4');
-        container.classList.add('opacity-100', 'translate-y-0');
-      }
-    }, 50);
-
-    // Animate product cards with smooth fade-in (no scaling)
+    // Animate product cards with smooth fade-in
     setTimeout(() => {
       const productCards = root.querySelectorAll('.product-card');
-      productCards.forEach((card, index) => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(20px)';
-        card.style.transition = 'all 0.4s ease-out';
-      });
 
       // Trigger staggered animation
-      setTimeout(() => {
-        productCards.forEach((card, index) => {
-          setTimeout(() => {
-            card.style.opacity = '1';
-            card.style.transform = 'translateY(0)';
-          }, index * 100); // 100ms delay between each card
-        });
-      }, 100);
-    }, 200);
+      productCards.forEach((card, index) => {
+        setTimeout(() => {
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0)';
+        }, index * 100); // 100ms delay between each card
+      });
+    }, 100);
 
     // Re-initialize the filter functionality
     initializeProductFilters();
@@ -122,39 +106,46 @@ function generateProductsHTML(products) {
       : product.description;
 
     return `
-      <div class="product-card bg-white shadow-lg border border-gray-200 flex flex-col hover:shadow-xl transition-shadow duration-300 cursor-pointer" data-category="${product.category}" data-product-id="${product.id}" style="border-radius: 14px; overflow: hidden; height: 720px;">
-        <div class="w-full h-1/2 overflow-hidden" style="border-radius: 14px 14px 0 0;">
-          <img src="${product.image || 'https://placehold.co/600x400/1a202c/FFFFFF?text=' + encodeURIComponent(name) + '&font=inter'}"
-               class="w-full h-full object-cover"
-               alt="${name}">
-        </div>
-        <div class="p-4 flex flex-col h-1/2 justify-between">
-          <div class="flex-grow">
-            <h3 class="text-lg font-bold mb-2 text-left">${name}</h3>
-            <div class="flex items-center mb-2 star-rating justify-start">
-              ${starsHTML}
-              <span class="text-xs text-gray-500 ml-2">(${reviewsCount})</span>
+      <div class="product-card hover-neon-glow cursor-pointer relative bg-white shadow-lg border border-gray-200"
+           data-category="${product.category}"
+           data-product-id="${product.id}"
+           style="border-radius: 14px; height: 720px; opacity: 0; transform: translateY(20px); z-index: 1;">
+
+        <!-- Inner container for content -->
+        <div class="w-full h-full flex flex-col" style="border-radius: 14px; overflow: hidden;">
+            <div class="w-full h-1/2 overflow-hidden">
+            <img src="${product.image || 'https://placehold.co/600x400/1a202c/FFFFFF?text=' + encodeURIComponent(name) + '&font=inter'}"
+                class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                alt="${name}">
             </div>
-            <p class="text-gray-600 text-sm text-left line-clamp-2">${description}</p>
-          </div>
-          <div class="mt-auto">
-            <div class="flex justify-between items-center mb-3">
-            ${product.price === 0 || product.price === "Gratis" ? `
-              <span class="text-2xl font-bold text-gray-900">${t('productsPage.pricing.free')}</span>
-            ` : product.originalPrice && product.originalPrice > product.price ? `
-              <div class="flex items-center space-x-2">
-                <span class="text-2xl font-bold text-gray-900">$${product.price}</span>
-                <span class="text-lg text-gray-500 line-through">$${product.originalPrice}</span>
-              </div>
-            ` : `
-              <span class="text-2xl font-bold text-gray-900">$${product.price || 99}</span>
-            `}
-              <span class="text-sm ${badgeColor} px-2 py-1 rounded-full">${getBadgeDisplayName(product.badge || 'available')}</span>
+            <div class="p-4 flex flex-col h-1/2 justify-between bg-white">
+            <div class="flex-grow">
+                <h3 class="text-lg font-bold mb-2 text-left">${name}</h3>
+                <div class="flex items-center mb-2 star-rating justify-start">
+                ${starsHTML}
+                <span class="text-xs text-gray-500 ml-2">(${reviewsCount})</span>
+                </div>
+                <p class="text-gray-600 text-sm text-left line-clamp-2">${description}</p>
             </div>
-            <button class="product-action-button text-center bg-[#22a7d0] text-white font-bold py-2 px-4 rounded-lg transition-colors hover:bg-[#1e96bc] w-full"
-                    data-product-id="${product.id}"
-                    data-product='${JSON.stringify(product).replace(/'/g, "&apos;")}'></button>
-          </div>
+            <div class="mt-auto">
+                <div class="flex justify-between items-center mb-3">
+                ${product.price === 0 || product.price === "Gratis" ? `
+                <span class="text-2xl font-bold text-gray-900">${t('productsPage.pricing.free')}</span>
+                ` : product.originalPrice && product.originalPrice > product.price ? `
+                <div class="flex items-center space-x-2">
+                    <span class="text-2xl font-bold text-gray-900">$${product.price}</span>
+                    <span class="text-lg text-gray-500 line-through">$${product.originalPrice}</span>
+                </div>
+                ` : `
+                <span class="text-2xl font-bold text-gray-900">$${product.price || 99}</span>
+                `}
+                <span class="text-sm ${badgeColor} px-2 py-1 rounded-full">${getBadgeDisplayName(product.badge || 'available')}</span>
+                </div>
+                <button class="product-action-button text-center bg-[#22a7d0] text-white font-bold py-2 px-4 rounded-lg transition-colors hover:bg-[#1e96bc] w-full"
+                        data-product-id="${product.id}"
+                        data-product='${JSON.stringify(product).replace(/'/g, "&apos;")}'></button>
+            </div>
+            </div>
         </div>
       </div>
     `;
@@ -175,16 +166,16 @@ function generateProductsHTML(products) {
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-4">
           ${productsHTML}
         </div>
       </div>
-    </section>
-  `;
+    </section >
+    `;
 }
 
 function getCategoryDisplayName(category) {
-  const categoryKey = `productsPage.categories.${category}`;
+  const categoryKey = `productsPage.categories.${category} `;
   const translatedCategory = t(categoryKey);
 
   // If translation doesn't exist, fallback to capitalized category name
@@ -196,7 +187,7 @@ function getCategoryDisplayName(category) {
 }
 
 function getBadgeDisplayName(badge) {
-  const badgeKey = `productsPage.badges.${badge.toLowerCase()}`;
+  const badgeKey = `productsPage.badges.${badge.toLowerCase()} `;
   const translatedBadge = t(badgeKey);
 
   // If translation doesn't exist, return original badge
@@ -248,7 +239,7 @@ function initializeProductFilters() {
   const productCards = document.querySelectorAll('.product-card');
 
   filterButtons.forEach(button => {
-    button.addEventListener('click', function() {
+    button.addEventListener('click', function () {
       const filter = this.getAttribute('data-filter');
 
       // Update active button
@@ -319,7 +310,7 @@ async function initializeProductButtons() {
 
     // Add click event
     if (!isPurchased) {
-      button.addEventListener('click', async function(e) {
+      button.addEventListener('click', async function (e) {
         e.preventDefault();
         e.stopPropagation();
 
@@ -412,21 +403,21 @@ function showToast(message, type = 'success') {
 
   const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
   const icon = type === 'success' ? `
-    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    < svg class="w-6 h-6" fill = "none" stroke = "currentColor" viewBox = "0 0 24 24" >
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-    </svg>
-  ` : `
-    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    </svg >
+    ` : `
+    < svg class="w-6 h-6" fill = "none" stroke = "currentColor" viewBox = "0 0 24 24" >
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-    </svg>
-  `;
+    </svg >
+    `;
 
   toast.innerHTML = `
-    <div class="${bgColor} text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2">
+    < div class="${bgColor} text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2" >
       ${icon}
-      <span class="font-medium">${message}</span>
-    </div>
-  `;
+  <span class="font-medium">${message}</span>
+    </div >
+    `;
 
   document.body.appendChild(toast);
 
@@ -456,7 +447,7 @@ function showPurchaseToastWithApp(appUrl) {
   toast.className = 'fixed top-4 right-4 z-50 transform transition-all duration-500 translate-x-full';
 
   toast.innerHTML = `
-    <div class="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg min-w-80">
+    < div class="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg min-w-80" >
       <div class="flex items-start space-x-3">
         <svg class="w-6 h-6 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -466,11 +457,11 @@ function showPurchaseToastWithApp(appUrl) {
           <p class="text-sm mb-3">${t('productsPage.messages.productAddedDescription')}</p>
           <div class="flex space-x-2">
             <button onclick="window.open('${appUrl}', '_blank')"
-                    class="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded text-sm font-medium transition-colors">
+              class="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded text-sm font-medium transition-colors">
               ${t('productsPage.toast.openGuide')}
             </button>
             <button onclick="window.location.hash = '#/account'"
-                    class="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded text-sm font-medium transition-colors">
+              class="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded text-sm font-medium transition-colors">
               ${t('productsPage.toast.viewMyApps')}
             </button>
           </div>
@@ -481,8 +472,8 @@ function showPurchaseToastWithApp(appUrl) {
           </svg>
         </button>
       </div>
-    </div>
-  `;
+    </div >
+    `;
 
   document.body.appendChild(toast);
 
@@ -508,70 +499,60 @@ if (!document.querySelector('#products-animation-style')) {
   const style = document.createElement('style');
   style.id = 'products-animation-style';
   style.innerHTML = `
-    @keyframes fadeIn {
+  @keyframes fadeIn {
       from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
+      opacity: 0;
+      transform: translateY(10px);
+    }
       to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      opacity: 1;
+      transform: translateY(0);
     }
+  }
 
-    .product-card {
-      transition: all 0.3s ease;
-      height: 100%;
-      overflow: hidden;
-    }
+    .product - card {
+    transition: all 0.3s ease;
+    height: 100 %;
+    overflow: hidden;
+  }
 
-    .product-card img {
-      margin: 0;
-      padding: 0;
-      display: block;
-    }
+    .product - card img {
+    margin: 0;
+    padding: 0;
+    display: block;
+  }
 
-    .product-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    }
+    .cta - button {
+    transition: all 0.3s ease;
+  }
 
-    .cta-button {
-      transition: all 0.3s ease;
-    }
+    .filter - btn {
+    transition: all 0.3s ease;
+  }
 
-    .cta-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(34, 167, 208, 0.3);
-    }
-
-    .filter-btn {
-      transition: all 0.3s ease;
-    }
-
-    .filter-btn:hover {
-      transform: translateY(-1px);
-    }
+    .filter - btn:hover {
+    transform: translateY(-1px);
+  }
 
     /* Line clamp utilities for consistent text heights */
-    .line-clamp-2 {
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
+    .line - clamp - 2 {
+    display: -webkit - box;
+    -webkit - line - clamp: 2;
+    -webkit - box - orient: vertical;
+    overflow: hidden;
+  }
 
-    .line-clamp-3 {
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
+    .line - clamp - 3 {
+    display: -webkit - box;
+    -webkit - line - clamp: 3;
+    -webkit - box - orient: vertical;
+    overflow: hidden;
+  }
 
     /* Ensure grid items stretch to same height */
-    .grid.items-stretch > .product-card {
-      align-self: stretch;
-    }
+    .grid.items - stretch > .product - card {
+    align - self: stretch;
+  }
   `;
   document.head.appendChild(style);
 }

@@ -1,4 +1,5 @@
-import { t } from '../i18n/index.js';
+import { t, i18n } from '../i18n/index.js';
+import { getProductsFromFirebase } from './userProfile.js';
 
 export function updateHomepageTranslations() {
   // Update hero section
@@ -134,95 +135,121 @@ export function updateHomepageTranslations() {
   console.log('✅ Homepage translations updated');
 }
 
-function loadProductsWithTranslations() {
+async function loadProductsWithTranslations() {
   const container = document.getElementById('latest-products');
   if (!container) return;
 
-  // Clear existing products
-  container.innerHTML = '';
+  // Show loading
+  container.innerHTML = '<div class="col-span-3 text-center py-8"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#22a7d0] mx-auto"></div></div>';
 
-  const latestProducts = [
-    {
-      id: 'nopac',
-      image: "https://placehold.co/600x400/1e293b/FFFFFF?text=NOPAC+Procedures&font=inter",
-      alt: "NOPAC North Operational Pacific Procedures",
-      link: "apps/north-operational-pacific-procedures/guide.html",
-      badge: "Q2 2025",
-      badgeColor: "blue"
-    },
-    {
-      id: 'gold',
-      image: "https://placehold.co/600x400/d97706/FFFFFF?text=GOLD+Datalink&font=inter",
-      alt: "GOLD Global Operational Datalink",
-      link: "apps/gold-operational-datalink/guide.html",
-      badge: "Q1 2025",
-      badgeColor: "orange"
-    },
-    {
-      id: 'calculator',
-      image: "https://placehold.co/600x400/4c1d95/FFFFFF?text=Flight+Calculator&font=inter",
-      alt: "Flight Performance Calculator",
-      link: "apps/flight-performance-calculator/guide.html",
-      badge: "Professional",
-      badgeColor: "purple"
-    }
-  ];
+  try {
+    // Load products from Firebase
+    const allProducts = await getProductsFromFirebase();
 
-  latestProducts.forEach(product => {
-    const badgeClasses = {
-      blue: 'text-blue-600 bg-blue-100',
-      orange: 'text-orange-600 bg-orange-100',
-      purple: 'text-purple-600 bg-purple-100'
-    };
+    // Take only the first 3 products
+    const latestProducts = allProducts.slice(0, 3);
 
-    const title = t(`homepage.products.${product.id}.title`);
-    const description = t(`homepage.products.${product.id}.description`);
-    const price = t('homepage.products.price');
-    const getButton = t('homepage.products.getButton');
-    const comingSoon = t('homepage.products.comingSoon');
+    // Clear loading
+    container.innerHTML = '';
 
-    const productCard = `
-      <div class="product-card bg-white shadow-lg border border-gray-200 flex flex-col hover:shadow-xl transition-shadow duration-300 cursor-pointer" style="border-radius: 14px; overflow: hidden; height: 720px;" onclick="window.location.href='${product.link}'">
-        <div class="w-full h-1/2 overflow-hidden" style="border-radius: 14px 14px 0 0;">
-          <img src="${product.image}" class="w-full h-full object-cover" alt="${product.alt}">
-        </div>
-        <div class="p-4 flex flex-col h-1/2 justify-between">
-          <div class="flex-grow">
-            <h3 class="text-lg font-bold mb-2 text-left">${title}</h3>
-            <div class="flex items-center mb-2 star-rating justify-start">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-300" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-300" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-300" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-300" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-300" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-              <span class="text-xs text-gray-500 ml-2">${comingSoon}</span>
-            </div>
-            <p class="text-gray-600 text-sm text-left line-clamp-2">${description}</p>
+    // Get current language
+    const currentLang = i18n.getCurrentLanguage();
+
+    latestProducts.forEach((product, index) => {
+      // Get badge color based on badge text
+      const badgeColorMap = {
+        'new': 'blue',
+        'nuevo': 'blue',
+        'popular': 'green',
+        'bestseller': 'orange',
+        'enterprise': 'purple',
+        'professional': 'purple'
+      };
+
+      const badgeColor = badgeColorMap[product.badge?.toLowerCase()] || 'blue';
+
+      const badgeClasses = {
+        blue: 'text-blue-600 bg-blue-100',
+        green: 'text-green-600 bg-green-100',
+        orange: 'text-orange-600 bg-orange-100',
+        purple: 'text-purple-600 bg-purple-100'
+      };
+
+      // Get translated name and description
+      const name = typeof product.name === 'object'
+        ? (product.name[currentLang] || product.name['en'] || product.name)
+        : product.name;
+
+      const description = typeof product.description === 'object'
+        ? (product.description[currentLang] || product.description['en'] || product.description)
+        : product.description;
+
+      // Use product's badge or default
+      const badge = product.badge || 'New';
+      const price = product.price === 0 ? t('homepage.products.price') : `$${product.price}`;
+      const getButton = product.price === 0 ? t('homepage.products.getButton') : t('productsPage.buttons.addToCart');
+      const rating = product.rating || 0;
+      const reviews = product.reviews || 0;
+
+      const productCard = `
+        <div class="product-card hover-neon-glow relative bg-white shadow-lg border border-gray-200 transition-all duration-300 cursor-pointer fade-in-scale"
+             style="border-radius: 14px; height: 720px; transition-delay: ${index * 0.2}s; z-index: 1;"
+             onclick="window.location.hash='#/product/${product.id}'">
+
+          <!-- Inner container for content -->
+          <div class="w-full h-full flex flex-col" style="border-radius: 14px; overflow: hidden;">
+              <div class="w-full h-1/2 overflow-hidden">
+              <img src="${product.image || 'https://placehold.co/600x400/1a202c/FFFFFF?text=' + encodeURIComponent(name) + '&font=inter'}"
+                   class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                   alt="${name}">
+              </div>
+              <div class="p-4 flex flex-col h-1/2 justify-between bg-white">
+              <div class="flex-grow">
+                  <h3 class="text-lg font-bold mb-2 text-left">${name}</h3>
+                  <div class="flex items-center mb-2 star-rating justify-start">
+                  ${'<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-300" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>'.repeat(5)}
+                  <span class="text-xs text-gray-500 ml-2">(${reviews})</span>
+                  </div>
+                  <p class="text-gray-600 text-sm text-left line-clamp-2">${description}</p>
+              </div>
+              <div class="mt-auto">
+                  <div class="flex justify-between items-center mb-3">
+                  <span class="text-xl font-bold text-gray-900">${price}</span>
+                  <span class="text-xs px-2 py-1 rounded-full ${badgeClasses[badgeColor]}">${badge}</span>
+                  </div>
+                  <button class="product-action-button text-center bg-[#22a7d0] text-white font-bold py-2 px-4 rounded-lg transition-colors hover:bg-[#1e96bc] w-full"
+                          data-product-id="${product.id}"
+                          data-product='${JSON.stringify(product).replace(/'/g, "&apos;")}'>
+                  ${getButton}
+                  </button>
+              </div>
+              </div>
           </div>
-          <div class="mt-auto">
-            <div class="flex justify-between items-center mb-3">
-              <span class="text-xl font-bold text-gray-900">${price}</span>
-              <span class="text-xs px-2 py-1 rounded-full ${badgeClasses[product.badgeColor]}">${product.badge}</span>
-            </div>
-            <button class="product-action-button text-center bg-[#22a7d0] text-white font-bold py-2 px-4 rounded-lg transition-colors hover:bg-[#1e96bc] w-full"
-                    data-product-id="${title.toLowerCase().replace(/\s+/g, '-')}"
-                    data-product='{"id":"${title.toLowerCase().replace(/\s+/g, '-')}","name":"${title}","description":"${description}","price":0,"image":"${product.image}","category":"aviation"}'>
-              ${getButton}
-            </button>
-          </div>
         </div>
-      </div>
-    `;
+      `;
 
-    container.innerHTML += productCard;
-  });
+      container.innerHTML += productCard;
+    });
 
-  // Reinitialize product buttons after loading
-  setTimeout(() => {
-    if (window.initializeHomeProductButtons) {
-      window.initializeHomeProductButtons();
+    // Refresh scroll observer to animate new elements
+    if (window.scrollObserver) {
+      setTimeout(() => {
+        window.scrollObserver.refresh();
+        console.log('🔄 Scroll observer refreshed for new products');
+      }, 100);
     }
-  }, 100);
+
+    // Reinitialize product buttons after loading
+    setTimeout(() => {
+      if (window.initializeHomeProductButtons) {
+        window.initializeHomeProductButtons();
+      }
+    }, 100);
+
+  } catch (error) {
+    console.error('Error loading products from Firebase:', error);
+    container.innerHTML = '<div class="col-span-3 text-center py-8 text-red-500">Error loading products. Please refresh the page.</div>';
+  }
 }
 
 // Listen for language change events

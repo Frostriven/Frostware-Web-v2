@@ -17,6 +17,19 @@ Frostware® v2.0 es una Single Page Application (SPA) que ofrece:
 - **🔒 Autenticación segura** - Firebase Auth con Google Sign-in
 - **📱 Diseño responsive** - Optimizado para todos los dispositivos
 
+## 📚 Documentación
+
+La documentación completa del proyecto está disponible en la carpeta [docs/](./docs/):
+
+- **[Arquitectura del Proyecto](./docs/ARQUITECTURA.md)** - Estructura completa y patrones técnicos
+- **[Changelog](./docs/CHANGELOG.md)** - Registro de cambios y mejoras
+- **[Sistema i18n](./docs/I18N_DOCUMENTATION.md)** - Documentación del sistema de traducciones
+- **[Guía de Desarrollo](./docs/DEVELOPMENT.md)** - Flujo de desarrollo y arquitectura
+- **[Roadmap](./docs/ROADMAP.md)** - Plan de desarrollo y fases completadas
+- **[Guía de Contribución](./docs/CONTRIBUTING.md)** - Cómo contribuir al proyecto
+- **[Demo Setup](./docs/DEMO_SETUP.md)** - Configuración del usuario demo
+- **[Guía de Migración](./docs/MIGRATION_GUIDE.md)** - Mejoras de arquitectura Firebase
+
 ## ✨ Características
 
 ### 🎯 Funcionalidades Principales
@@ -25,6 +38,8 @@ Frostware® v2.0 es una Single Page Application (SPA) que ofrece:
 - ✅ Sistema de productos y compras
 - ✅ Navegación SPA fluida
 - ✅ Diseño moderno con animaciones
+- ✅ Efecto hover-neon-glow en tarjetas de productos
+- ✅ Sistema de internacionalización (i18n) - Español/Inglés
 - ✅ Integración con Firebase Firestore
 - ✅ Modo de desarrollo con emuladores
 
@@ -85,30 +100,42 @@ Frostware® v2.0 es una Single Page Application (SPA) que ofrece:
 ## 📁 Estructura del Proyecto
 
 ```
-src/
-├── js/
-│   ├── auth.js              # Funciones de autenticación
-│   ├── firebase.js          # Configuración de Firebase
-│   ├── router.js            # Router SPA
-│   ├── main.js              # Punto de entrada principal
-│   └── userProfile.js       # Gestión de perfiles y productos
-├── pages/
-│   └── auth/
-│       ├── login/view.js    # Vista de inicio de sesión
-│       ├── register/view.js # Vista de registro
-│       ├── reset/view.js    # Vista de recuperación
-│       └── account/view.js  # Vista de cuenta de usuario
-├── styles/
-│   ├── styles.css           # Estilos principales
-│   └── firebase-integration.css # Estilos de Firebase
-public/
-├── pages/auth/              # Templates HTML
-│   ├── login.html
-│   ├── register.html
-│   ├── reset.html
-│   └── account.html
-└── css/
-    └── logo.css             # Estilos del logo
+Frostware-Web-v2/
+├── docs/                      # 📚 Documentación del proyecto
+│   ├── README.md
+│   ├── ARQUITECTURA.md
+│   ├── CHANGELOG.md
+│   ├── HOVER-GLOW-FIX.md
+│   └── AUTH-FLICKER-FIX.md
+├── src/
+│   ├── i18n/                  # 🌍 Sistema de internacionalización
+│   │   ├── languages/         # Archivos de traducción
+│   │   ├── flags.js
+│   │   └── index.js
+│   ├── js/                    # 💻 Código JavaScript
+│   │   ├── utils/
+│   │   ├── auth.js
+│   │   ├── firebase.js
+│   │   ├── router.js
+│   │   ├── main.js
+│   │   ├── cart.js
+│   │   ├── homepage-i18n.js
+│   │   └── userProfile.js
+│   ├── pages/                 # 📄 Vistas de la aplicación
+│   │   ├── auth/
+│   │   ├── products/
+│   │   ├── product-detail/
+│   │   └── ...
+│   └── styles/                # 🎨 Estilos CSS
+│       ├── styles.css
+│       └── firebase-integration.css
+├── public/                    # 📦 Assets estáticos
+│   ├── css/
+│   └── js/
+├── index.html                 # 🏠 Punto de entrada
+└── vite.config.js
+
+Ver [ARQUITECTURA.md](./docs/ARQUITECTURA.md) para más detalles.
 ```
 
 ## 🔧 Scripts Disponibles
@@ -168,13 +195,35 @@ userProducts/{productId}
 
 - **Frontend Framework**: Vanilla JavaScript ES6+
 - **Build Tool**: Vite 7.1.5
-- **Styling**: TailwindCSS (CDN)
+- **Styling**: TailwindCSS (CDN) + CSS personalizado
 - **Backend/Database**: Firebase v10
   - Authentication
   - Firestore
   - Emulators Suite
+- **i18n**: Sistema personalizado de internacionalización
 - **Routing**: Router SPA personalizado
 - **Fonts**: Google Fonts (Inter)
+
+## 🎨 Efectos y Animaciones
+
+### Hover-Neon-Glow
+
+Efecto de glow neón azul en tarjetas de productos con las siguientes características:
+- Transición rápida: 250ms ease-out
+- Glow suave y elegante (Electric Blue #22a7d0)
+- Elevación sutil: -4px, scale(1.01)
+- 3 capas de box-shadow para difusión gradual
+
+Ver [HOVER-GLOW-FIX.md](./docs/HOVER-GLOW-FIX.md) para implementación completa.
+
+### Scroll Animations
+
+Sistema de animaciones al hacer scroll con clases como:
+- `.fade-in-up` - Entrada desde abajo
+- `.fade-in-down` - Entrada desde arriba
+- `.fade-in-scale` - Entrada con escala
+
+Ubicación: [src/js/utils/scrollObserver.js](./src/js/utils/scrollObserver.js)
 
 ## 🎨 Guía de Desarrollo
 

@@ -16,21 +16,40 @@ service cloud.firestore {
 
     // Reglas para productos disponibles (catálogo)
     match /products/{productId} {
-      // Todos los usuarios autenticados pueden leer productos
-      allow read: if request.auth != null;
+      // Cualquier usuario puede ver los productos (incluso anónimos para la home)
+      allow read: if true;
 
-      // Solo administradores pueden escribir productos
-      allow write: if request.auth != null &&
-                     request.auth.uid in ['admin-uid-1', 'admin-uid-2'] ||
-                     request.auth.token.email in ['admin@frostware.com', 'developer@frostware.com'];
+      // Solo administradores o usuario demo pueden escribir productos
+      allow write: if request.auth != null && 
+                     (request.auth.token.email.matches('.*@frostware[.]com') || 
+                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
+    }
+
+    // Reglas para categorías
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if request.auth != null && 
+                     (request.auth.token.email.matches('.*@frostware[.]com') || 
+                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
+    }
+
+    // Reglas para badges
+    match /badges/{badgeId} {
+      allow read: if true;
+      allow write: if request.auth != null && 
+                     (request.auth.token.email.matches('.*@frostware[.]com') || 
+                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
     }
 
     // Reglas para colección de administradores
     match /admins/{adminId} {
       // Solo administradores pueden leer/escribir en esta colección
-      allow read, write: if request.auth != null &&
-                           request.auth.uid in ['admin-uid-1', 'admin-uid-2'] ||
-                           request.auth.token.email in ['admin@frostware.com', 'developer@frostware.com'];
+      allow read, write: if request.auth != null && 
+                           (request.auth.token.email.matches('.*@frostware[.]com') || 
+                            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
 
     // Denegar todo lo demás

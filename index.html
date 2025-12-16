@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frostware® -  2.09</title>
+    <title>Frostware® - 2.09</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,36 +12,33 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/logo.css">
 </head>
+
 <body class="bg-white text-gray-800">
 
     <!-- Header (fallback estático; JS lo hidrata/actualiza) -->
-    <header class="dark-header bg-gray-900/90 backdrop-blur-md sticky top-0 z-50 border-b border-gray-700 text-white">
-      <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
-        <div class="flex items-center">
-          <div class="logo-icon mr-2">
-            <div class="arc-1"></div>
-            <div class="arc-2"></div>
-          </div>
-          <a class="text-white text-xl font-bold" href="#/">Frostware</a>
-        </div>
-        <div class="hidden md:flex items-center space-x-1">
-          <a class="py-2 px-3 text-gray-300 hover:text-white nav-link" href="#/">Inicio</a>
-          <a class="py-2 px-3 text-gray-300 hover:text-white nav-link" href="#/products">Productos</a>
-        </div>
-        <div class="flex items-center space-x-4">
-          <!-- Carrito de compras -->
-          <div class="relative">
-            <button id="cart-button" class="text-gray-300 hover:text-white transition-colors">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l-1 12a2 2 0 01-2 2H8a2 2 0 01-2-2L5 9z"></path>
-              </svg>
-              <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
-            </button>
-          </div>
-          <!-- Fallback a página estática si JS no carga -->
-          <a class="cta-button bg-[#22a7d0] text-white font-bold py-2 px-4 rounded-lg" href="#/auth/login">Iniciar sesión</a>
-        </div>
-      </nav>
+    <header id="main-header" class="dark-header bg-gray-900/90 backdrop-blur-md sticky top-0 z-50 border-b border-gray-700 text-white" style="opacity: 0;">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <div class="flex items-center">
+                <div class="logo-icon mr-2">
+                    <div class="arc-1"></div>
+                    <div class="arc-2"></div>
+                </div>
+                <a class="text-white text-xl font-bold" href="#/">Frostware</a>
+            </div>
+            <div class="hidden md:flex items-center space-x-1">
+                <!-- Placeholder for nav links -->
+                <div class="animate-pulse bg-gray-700 h-6 w-16 rounded mx-2"></div>
+                <div class="animate-pulse bg-gray-700 h-6 w-16 rounded mx-2"></div>
+                <div class="animate-pulse bg-gray-700 h-6 w-16 rounded mx-2"></div>
+                <div class="animate-pulse bg-gray-700 h-6 w-16 rounded mx-2"></div>
+                <div class="animate-pulse bg-gray-700 h-6 w-16 rounded mx-2"></div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <!-- Placeholder for Lang Selector + User/Auth -->
+                <div class="animate-pulse bg-gray-700 h-8 w-16 rounded"></div>
+                <div class="animate-pulse bg-gray-700 h-8 w-32 rounded"></div>
+            </div>
+        </nav>
     </header>
 
     <!-- SPA root (views se renderizan aquí) -->
@@ -49,15 +47,21 @@
     <main id="main-content">
         <section id="inicio" class="hero-bg py-20 md:py-32">
             <div class="container mx-auto px-6 text-center">
-                <h1 class="text-4xl md:text-6xl font-extrabold text-gray-900 leading-tight" data-translate-key="hero_title">
+                <h1 class="text-4xl md:text-6xl font-extrabold text-gray-900 leading-tight fade-in-down"
+                    data-translate-key="hero_title">
                     <span>El software no es el límite.</span> <br class="hidden md:block">
-                    <span class="text-[#22a7d0]">Es el punto de partida.</span>
+                    <span class="text-[#22a7d0] neon-text">Es el punto de partida.</span>
                 </h1>
-                <p class="mt-6 text-lg md:text-xl text-gray-600 max-w-3xl mx-auto" data-translate-key="hero_subtitle">
-                    En Frostware®, creamos herramientas, cursos y simuladores de vanguardia diseñados para eliminar la fricción entre tu visión y su ejecución. Potencia tu creatividad, optimiza tu trabajo y domina nuevas habilidades.
+                <p class="mt-6 text-lg md:text-xl text-gray-600 max-w-3xl mx-auto fade-in-up"
+                    data-translate-key="hero_subtitle">
+                    En Frostware®, creamos herramientas, cursos y simuladores de vanguardia diseñados para eliminar la
+                    fricción entre tu visión y su ejecución. Potencia tu creatividad, optimiza tu trabajo y domina
+                    nuevas habilidades.
                 </p>
                 <div class="mt-10">
-                    <a href="#/products" class="cta-button bg-[#22a7d0] text-white font-bold py-4 px-10 rounded-lg text-lg shadow-lg" data-translate-key="hero_cta">
+                    <a href="#/products"
+                        class="cta-button bg-[#22a7d0] text-white font-bold py-4 px-10 rounded-lg text-lg shadow-lg fade-in-up btn-pulse"
+                        data-translate-key="hero_cta">
                         Explora Nuestras Herramientas
                     </a>
                 </div>
@@ -68,42 +72,49 @@
         <section id="productos-destacados" class="py-20 bg-gray-50">
             <div class="container mx-auto px-6">
                 <div class="text-center mb-12">
-                    <h2 class="text-sm font-bold uppercase text-[#22a7d0]" data-translate-key="featured_products_tagline">Productos Destacados</h2>
-                    <p class="section-title text-3xl md:text-4xl mt-2" data-translate-key="featured_products_title">Nuestros Últimos Productos</p>
+                    <h2 class="text-sm font-bold uppercase text-[#22a7d0]"
+                        data-translate-key="featured_products_tagline">Productos Destacados</h2>
+                    <p class="section-title text-3xl md:text-4xl mt-2" data-translate-key="featured_products_title">
+                        Nuestros Últimos Productos</p>
                     <div class="mt-4">
-                        <span class="inline-block bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-medium" data-translate-key="featured_products_update">
-                            Última actualización: Septiembre 2024
+                        <span
+                            class="inline-block bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-medium"
+                            data-translate-key="featured_products_update">
+                            Última actualización: Diciembre 2024
                         </span>
                     </div>
                 </div>
-                <div id="latest-products" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div id="latest-products" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-4">
                     <!-- Los productos se cargarán dinámicamente aquí -->
                 </div>
-                
+
                 <div class="text-center mt-12">
-                    <a href="#/products" class="inline-flex items-center px-6 py-3 bg-white border border-[#22a7d0] text-[#22a7d0] font-semibold rounded-lg hover:bg-[#22a7d0] hover:text-white transition-colors">
+                    <a href="#/products"
+                        class="inline-flex items-center px-6 py-3 bg-white border border-[#22a7d0] text-[#22a7d0] font-semibold rounded-lg hover:bg-[#22a7d0] hover:text-white transition-colors">
                         Ver Todos los Productos
                         <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
+                            </path>
                         </svg>
                     </a>
-            </div>
+                </div>
         </section>
 
         <!-- Stats Section -->
         <section class="py-20 bg-gray-900">
             <div class="container mx-auto px-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-                    <div>
-                        <p class="text-4xl md:text-5xl font-extrabold text-[#22a7d0]">4</p>
-                        <p class="mt-2 text-lg text-gray-300" data-translate-key="stats_apps">Aplicaciones Disponibles</p>
+                    <div class="fade-in-up">
+                        <p class="text-4xl md:text-5xl font-extrabold text-[#22a7d0] neon-text">4</p>
+                        <p class="mt-2 text-lg text-gray-300" data-translate-key="stats_apps">Aplicaciones Disponibles
+                        </p>
                     </div>
-                    <div>
-                        <p class="text-4xl md:text-5xl font-extrabold text-[#22a7d0]">342</p>
+                    <div class="fade-in-up" style="transition-delay: 0.2s">
+                        <p class="text-4xl md:text-5xl font-extrabold text-[#22a7d0] neon-text">342</p>
                         <p class="mt-2 text-lg text-gray-300" data-translate-key="stats_users">Usuarios Activos</p>
                     </div>
-                    <div>
-                        <p class="text-4xl md:text-5xl font-extrabold text-[#22a7d0]">95%</p>
+                    <div class="fade-in-up" style="transition-delay: 0.4s">
+                        <p class="text-4xl md:text-5xl font-extrabold text-[#22a7d0] neon-text">95%</p>
                         <p class="mt-2 text-lg text-gray-300" data-translate-key="stats_satisfaction">Satisfacción</p>
                     </div>
                 </div>
@@ -114,74 +125,156 @@
         <section id="testimonios" class="py-20">
             <div class="container mx-auto px-6">
                 <div class="text-center mb-12">
-                    <h2 class="text-sm font-bold uppercase text-[#22a7d0]" data-translate-key="testimonials_tagline">Testimonios</h2>
-                    <p class="section-title text-3xl md:text-4xl mt-2" data-translate-key="testimonials_title">Lo que dicen nuestros usuarios</p>
+                    <h2 class="text-sm font-bold uppercase text-[#22a7d0]" data-translate-key="testimonials_tagline">
+                        Testimonios</h2>
+                    <p class="section-title text-3xl md:text-4xl mt-2" data-translate-key="testimonials_title">Lo que
+                        dicen nuestros usuarios</p>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
                     <!-- Testimonial 1 -->
-                    <div class="bg-gray-50 p-8 rounded-lg border border-gray-200 flex flex-col items-center">
-                        <img src="https://randomuser.me/api/portraits/men/32.jpg" class="w-24 h-24 rounded-full mb-4 border-4 border-white shadow-lg" alt="Usuario Carlos Rodríguez">
+                    <div
+                        class="bg-white/80 backdrop-blur-sm p-8 rounded-lg border border-gray-200 flex flex-col items-center hover-neon-glow fade-in-scale">
+                        <img src="https://randomuser.me/api/portraits/men/32.jpg"
+                            class="w-24 h-24 rounded-full mb-4 border-4 border-white shadow-lg"
+                            alt="Usuario Carlos Rodríguez">
                         <div class="flex items-center mb-4 text-amber-500">
                             <!-- Stars -->
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path
+                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path
+                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path
+                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path
+                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path
+                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
                         </div>
-                        <p class="text-gray-600 italic" data-translate-key="testimonial1_content">"FocusFlow ha transformado mi productividad. Es simple, potente y exactamente lo que necesitaba para mantenerme enfocado."</p>
-                        <p class="mt-4 font-bold">- <span data-translate-key="testimonial1_name">Carlos Rodríguez</span></p>
-                        <p class="text-sm text-gray-500" data-translate-key="testimonial1_title">Desarrollador de Software</p>
+                        <p class="text-gray-600 italic" data-translate-key="testimonial1_content">"FocusFlow ha
+                            transformado mi productividad. Es simple, potente y exactamente lo que necesitaba para
+                            mantenerme enfocado."</p>
+                        <p class="mt-4 font-bold">- <span data-translate-key="testimonial1_name">Carlos Rodríguez</span>
+                        </p>
+                        <p class="text-sm text-gray-500" data-translate-key="testimonial1_title">Desarrollador de
+                            Software</p>
                     </div>
                     <!-- Testimonial 2 -->
-                    <div class="bg-gray-50 p-8 rounded-lg border border-gray-200 flex flex-col items-center">
-                        <img src="https://randomuser.me/api/portraits/women/44.jpg" class="w-24 h-24 rounded-full mb-4 border-4 border-white shadow-lg" alt="Usuario Ana Gómez">
+                    <div class="bg-white/80 backdrop-blur-sm p-8 rounded-lg border border-gray-200 flex flex-col items-center hover-neon-glow fade-in-scale"
+                        style="transition-delay: 0.2s">
+                        <img src="https://randomuser.me/api/portraits/women/44.jpg"
+                            class="w-24 h-24 rounded-full mb-4 border-4 border-white shadow-lg" alt="Usuario Ana Gómez">
                         <div class="flex items-center mb-4 text-amber-500">
                             <!-- Stars -->
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path
+                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path
+                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path
+                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path
+                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path
+                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
                         </div>
-                        <p class="text-gray-600 italic" data-translate-key="testimonial2_content">"La Guía de Vuelo Simulado es increíblemente detallada. He aprendido más en una semana que en meses de ver videos."</p>
+                        <p class="text-gray-600 italic" data-translate-key="testimonial2_content">"La Guía de Vuelo
+                            Simulado es increíblemente detallada. He aprendido más en una semana que en meses de ver
+                            videos."</p>
                         <p class="mt-4 font-bold">- <span data-translate-key="testimonial2_name">Ana Gómez</span></p>
                         <p class="text-sm text-gray-500" data-translate-key="testimonial2_title">Piloto Estudiante</p>
                     </div>
                     <!-- Testimonial 3 -->
-                    <div class="bg-gray-50 p-8 rounded-lg border border-gray-200 flex flex-col items-center">
-                        <img src="https://randomuser.me/api/portraits/men/86.jpg" class="w-24 h-24 rounded-full mb-4 border-4 border-white shadow-lg" alt="Usuario David Chen">
+                    <div class="bg-white/80 backdrop-blur-sm p-8 rounded-lg border border-gray-200 flex flex-col items-center hover-neon-glow fade-in-scale"
+                        style="transition-delay: 0.4s">
+                        <img src="https://randomuser.me/api/portraits/men/86.jpg"
+                            class="w-24 h-24 rounded-full mb-4 border-4 border-white shadow-lg"
+                            alt="Usuario David Chen">
                         <div class="flex items-center mb-4 text-amber-500">
                             <!-- Stars -->
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path
+                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path
+                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path
+                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path
+                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path
+                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
                         </div>
-                        <p class="text-gray-600 italic" data-translate-key="testimonial3_content">"CodeSynth AI es el compañero de programación que siempre quise. Me ahorra horas de trabajo cada día."</p>
+                        <p class="text-gray-600 italic" data-translate-key="testimonial3_content">"CodeSynth AI es el
+                            compañero de programación que siempre quise. Me ahorra horas de trabajo cada día."</p>
                         <p class="mt-4 font-bold">- <span data-translate-key="testimonial3_name">David Chen</span></p>
-                        <p class="text-sm text-gray-500" data-translate-key="testimonial3_title">Ingeniero Full-Stack</p>
+                        <p class="text-sm text-gray-500" data-translate-key="testimonial3_title">Ingeniero Full-Stack
+                        </p>
                     </div>
                 </div>
             </div>
         </section>
-        
+
         <section class="bg-[#22a7d0]">
             <div class="container mx-auto px-6 py-20 text-center">
-                <h2 class="text-3xl md:text-4xl font-extrabold text-white" data-translate-key="cta_title">¿Listo para dar el siguiente paso?</h2>
+                <h2 class="text-3xl md:text-4xl font-extrabold text-white" data-translate-key="cta_title">¿Listo para
+                    dar el siguiente paso?</h2>
                 <p class="mt-4 text-lg text-white/90 max-w-2xl mx-auto" data-translate-key="cta_subtitle">
-                    Únete a miles de creadores y profesionales que ya están construyendo el futuro, aprendiendo más rápido y trabajando de forma más inteligente con las herramientas de Frostware®.
+                    Únete a miles de creadores y profesionales que ya están construyendo el futuro, aprendiendo más
+                    rápido y trabajando de forma más inteligente con las herramientas de Frostware®.
                 </p>
                 <div class="mt-8">
-                    <a href="#/products" class="cta-button bg-white text-[#22a7d0] font-bold py-4 px-10 rounded-lg text-lg shadow-lg" data-translate-key="cta_button">
+                    <a href="#/products"
+                        class="cta-button bg-white text-[#22a7d0] font-bold py-4 px-10 rounded-lg text-lg shadow-lg"
+                        data-translate-key="cta_button">
                         Ver Todos los Productos
                     </a>
                 </div>
             </div>
         </section>
     </main>
-    
+
     <footer class="bg-gray-900 text-white"></footer>
 
     <!-- Modal del Carrito -->
@@ -193,8 +286,11 @@
             </div>
             <div id="cart-content" class="p-6 max-h-[50vh] overflow-y-auto">
                 <div id="cart-empty" class="text-center py-8 text-gray-500">
-                    <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m-2.4 8L5 21h14a2 2 0 002-2V9H5m0 4v6a2 2 0 002 2h10a2 2 0 002-2v-6M9 21v-2m6 2v-2"></path>
+                    <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 3h2l.4 2M7 13h10l4-8H5.4m-2.4 8L5 21h14a2 2 0 002-2V9H5m0 4v6a2 2 0 002 2h10a2 2 0 002-2v-6M9 21v-2m6 2v-2">
+                        </path>
                     </svg>
                     <p class="text-lg">Tu carrito está vacío</p>
                 </div>
@@ -205,10 +301,12 @@
                     <span class="text-xl font-bold">Total: $<span id="cart-total">0.00</span></span>
                 </div>
                 <div class="flex space-x-4">
-                    <button id="clear-cart" class="flex-1 bg-gray-500 text-white py-3 px-6 rounded-lg hover:bg-gray-600 transition-colors">
+                    <button id="clear-cart"
+                        class="flex-1 bg-gray-500 text-white py-3 px-6 rounded-lg hover:bg-gray-600 transition-colors">
                         Limpiar Carrito
                     </button>
-                    <button id="process-payment" class="flex-1 bg-[#22a7d0] text-white py-3 px-6 rounded-lg hover:bg-[#1e96bc] transition-colors">
+                    <button id="process-payment"
+                        class="flex-1 bg-[#22a7d0] text-white py-3 px-6 rounded-lg hover:bg-[#1e96bc] transition-colors">
                         Procesar Pago
                     </button>
                 </div>
@@ -227,7 +325,7 @@
         </div>
     </div>
 
-    
+
     <script>
         // Products are now loaded via the i18n system in homepage-i18n.js
 
@@ -302,7 +400,7 @@
                 }
 
                 // Add click event for free products
-                button.addEventListener('click', async function(e) {
+                button.addEventListener('click', async function (e) {
                     // Only process trusted events (real user clicks)
                     if (!e.isTrusted) {
                         console.log('🚫 Ignoring untrusted click event on', productData.id);
@@ -391,13 +489,16 @@
         .line-clamp-3 {
             display: -webkit-box;
             -webkit-line-clamp: 3;
+            line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
         .product-card {
             overflow: hidden;
         }
+
         .product-card img {
             margin: 0;
             padding: 0;
@@ -406,4 +507,5 @@
     </style>
     <script type="module" src="/src/js/main.js"></script>
 </body>
+
 </html>

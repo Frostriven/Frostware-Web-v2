@@ -3,7 +3,7 @@ class I18nManager {
     this.currentLanguage = localStorage.getItem('selectedLanguage') || 'es';
     this.translations = {};
     this.fallbackLanguage = 'es';
-    this.loadTranslations();
+    this.initPromise = this.loadTranslations();
   }
 
   async loadTranslations() {
@@ -19,6 +19,11 @@ class I18nManager {
     } catch (error) {
       console.error('❌ Error loading translations:', error);
     }
+  }
+
+  // Method to wait for initialization
+  async ready() {
+    return this.initPromise;
   }
 
   t(key, params = {}) {

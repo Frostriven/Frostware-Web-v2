@@ -474,23 +474,22 @@ export async function initializeProductsInFirebase() {
   if (!db) return;
 
   try {
-    // Actualizar productos existentes con nuevos campos
+    // 1. Inicializar Productos
     for (const product of products) {
       const productRef = doc(db, 'products', product.id);
       const productDoc = await getDoc(productRef);
 
       if (productDoc.exists()) {
-        // Si existe, actualizar con los nuevos campos (detailedFeatures y descripciones multilingües)
         const existingData = productDoc.data();
+        // Criterios para actualizar
         const needsUpdate =
           !existingData.detailedFeatures ||
           existingData.detailedFeatures.length !== product.detailedFeatures?.length ||
-          typeof existingData.description === 'string' || // Old format
-          typeof existingData.longDescription === 'string' || // Old format
-          (existingData.detailedFeatures && existingData.detailedFeatures.length > 0 && typeof existingData.detailedFeatures[0].title === 'string'); // Force update if detailedFeatures titles are still strings
+          typeof existingData.description === 'string' ||
+          typeof existingData.longDescription === 'string';
 
         if (needsUpdate) {
-          console.log(`🔄 Updating product ${product.id} with new multilingual structure...`);
+          console.log(`🔄 Updating product ${product.id}...`);
           await updateDoc(productRef, {
             name: product.name,
             description: product.description,
@@ -498,21 +497,67 @@ export async function initializeProductsInFirebase() {
             detailedFeatures: product.detailedFeatures || [],
             updatedAt: serverTimestamp()
           });
-          console.log(`Producto ${product.id} actualizado con estructura multilingüe`);
         }
       } else {
-        // Si no existe, crear nuevo
         const productWithTimestamps = {
           ...product,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         };
         await setDoc(productRef, productWithTimestamps);
-        console.log(`Producto ${product.id} creado en Firebase con estructura multilingüe`);
+        console.log(`✅ Producto ${product.id} inicializado`);
       }
     }
+
+    // 2. Inicializar Categorías por defecto
+    await initializeCategoriesInFirebase();
+
+    // 3. Inicializar Badges por defecto
+    await initializeBadgesInFirebase();
+
   } catch (error) {
-    console.error('Error inicializando productos en Firebase:', error);
+    console.error('Error inicializando datos en Firebase:', error);
+  }
+}
+
+async function initializeCategoriesInFirebase() {
+  const defaultCategories = [
+    { id: 'aviation', name: 'Aviación', color: '#3B82F6' },
+    { id: 'development', name: 'Desarrollo', color: '#10B981' },
+    { id: 'education', name: 'Educación', color: '#F59E0B' },
+    { id: 'ai', name: 'Inteligencia Artificial', color: '#8B5CF6' },
+    { id: 'technology', name: 'Tecnología', color: '#EF4444' },
+    { id: 'design', name: 'Diseño', color: '#EC4899' },
+    { id: 'business', name: 'Negocios', color: '#6B7280' }
+  ];
+
+  for (const cat of defaultCategories) {
+    const catRef = doc(db, 'categories', cat.id);
+    const catDoc = await getDoc(catRef);
+    if (!catDoc.exists()) {
+      await setDoc(catRef, cat);
+      console.log(`✅ Categoría ${cat.name} inicializada`);
+    }
+  }
+}
+
+async function initializeBadgesInFirebase() {
+  const defaultBadges = [
+    { id: 'New', name: 'Nuevo', color: '#3B82F6' },
+    { id: 'Popular', name: 'Popular', color: '#10B981' },
+    { id: 'Bestseller', name: 'Bestseller', color: '#F59E0B' },
+    { id: 'Premium', name: 'Premium', color: '#8B5CF6' },
+    { id: 'Professional', name: 'Professional', color: '#EC4899' },
+    { id: 'Enterprise', name: 'Enterprise', color: '#6366F1' }
+  ];
+
+  for (const badge of defaultBadges) {
+    const badgeRef = doc(db, 'badges', badge.id);
+    const badgeDoc = await getDoc(badgeRef);
+    if (!badgeDoc.exists()) {
+      await setDoc(badgeRef, badge);
+      console.log(`✅ Badge ${badge.name} inicializada`);
+    }
   }
 }
 

@@ -59,7 +59,7 @@ export async function renderProductDetailView(productId) {
         </div>
 
         <!-- Hero Section with Dynamic Gradient -->
-        <section class="text-white py-20" style="${gradientStyle}">
+        <section class="text-white py-20 fade-in-down transition-all duration-700" style="${gradientStyle}">
           <div class="container mx-auto px-6">
             <div class="max-w-6xl mx-auto">
               <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -73,9 +73,9 @@ export async function renderProductDetailView(productId) {
                     </h1>
                     <p class="text-xl text-blue-100 mb-8">
                       ${(() => {
-                        const desc = product.longDescription || product.description;
-                        return typeof desc === 'object' ? desc[i18n.currentLanguage] || desc.es || desc : desc;
-                      })()}
+        const desc = product.longDescription || product.description;
+        return typeof desc === 'object' ? desc[i18n.currentLanguage] || desc.es || desc : desc;
+      })()}
                     </p>
                   </div>
 
@@ -135,7 +135,7 @@ export async function renderProductDetailView(productId) {
         </section>
 
         <!-- Features Section -->
-        <section id="features" class="py-20 bg-gray-50">
+        <section id="features" class="py-20 bg-gray-50 fade-in-scale transition-all duration-700 delay-200">
           <div class="container mx-auto px-6">
             <div class="max-w-6xl mx-auto">
               <div class="text-center mb-16">
@@ -143,35 +143,35 @@ export async function renderProductDetailView(productId) {
                 <h3 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">${t('productDetail.everythingYouNeed')}</h3>
                 <p class="text-xl text-gray-600 max-w-3xl mx-auto">
                   ${(() => {
-                    const desc = product.longDescription || product.description;
-                    return typeof desc === 'object' ? desc[i18n.currentLanguage] || desc.es || desc : desc;
-                  })()}
+        const desc = product.longDescription || product.description;
+        return typeof desc === 'object' ? desc[i18n.currentLanguage] || desc.es || desc : desc;
+      })()}
                 </p>
               </div>
 
               ${product.detailedFeatures && product.detailedFeatures.length > 0 ? `
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
                   ${product.detailedFeatures.map((feature, index) => {
-                    const colors = ['blue', 'green', 'orange', 'red', 'purple', 'indigo'];
-                    const color = colors[index % colors.length];
+        const colors = ['blue', 'green', 'orange', 'red', 'purple', 'indigo'];
+        const color = colors[index % colors.length];
 
-                    // Map icon names to SVG paths
-                    const iconPaths = {
-                      'radio': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path>',
-                      'map': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>',
-                      'cloud': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path>',
-                      'warning': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>',
-                      'certificate': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>',
-                      'lightning': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>',
-                      'code': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>',
-                      'database': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>',
-                      'shield': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016zM12 9v2m0 4h.01"></path>',
-                      'default': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
-                    };
+        // Map icon names to SVG paths
+        const iconPaths = {
+          'radio': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path>',
+          'map': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>',
+          'cloud': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path>',
+          'warning': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>',
+          'certificate': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>',
+          'lightning': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>',
+          'code': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>',
+          'database': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>',
+          'shield': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016zM12 9v2m0 4h.01"></path>',
+          'default': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
+        };
 
-                    const iconPath = iconPaths[feature.icon] || iconPaths['default'];
+        const iconPath = iconPaths[feature.icon] || iconPaths['default'];
 
-                    return `
+        return `
                       <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
                         <div class="w-12 h-12 bg-${color}-100 rounded-lg flex items-center justify-center mb-6">
                           <svg class="w-6 h-6 text-${color}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,16 +182,16 @@ export async function renderProductDetailView(productId) {
                         <p class="text-gray-600">${typeof feature.description === 'object' ? feature.description[i18n.currentLanguage] || feature.description.es || feature.description : feature.description}</p>
                       </div>
                     `;
-                  }).join('')}
+      }).join('')}
                 </div>
               ` : product.features && product.features.length > 0 ? `
                 <!-- Fallback to simple features if detailedFeatures not available -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
                   ${product.features.map((feature, index) => {
-                    const colors = ['blue', 'green', 'orange', 'red', 'purple', 'indigo'];
-                    const color = colors[index % colors.length];
+        const colors = ['blue', 'green', 'orange', 'red', 'purple', 'indigo'];
+        const color = colors[index % colors.length];
 
-                    return `
+        return `
                       <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
                         <div class="w-12 h-12 bg-${color}-100 rounded-lg flex items-center justify-center mb-6">
                           <svg class="w-6 h-6 text-${color}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,7 +202,7 @@ export async function renderProductDetailView(productId) {
                         <p class="text-gray-600">${t('productDetail.fallbackFeature')}</p>
                       </div>
                     `;
-                  }).join('')}
+      }).join('')}
                 </div>
               ` : ''}
             </div>
@@ -210,7 +210,7 @@ export async function renderProductDetailView(productId) {
         </section>
 
         <!-- Statistics Section -->
-        <section class="py-20 bg-white">
+        <section class="py-20 bg-white fade-in-up transition-all duration-700">
           <div class="container mx-auto px-6">
             <div class="max-w-6xl mx-auto">
               <div class="text-center mb-16">
@@ -241,15 +241,15 @@ export async function renderProductDetailView(productId) {
         </section>
 
         <!-- CTA Section -->
-        <section class="py-20" style="${gradientStyle}">
+        <section class="py-20 fade-in-up transition-all duration-700" style="${gradientStyle}">
           <div class="container mx-auto px-6">
             <div class="max-w-4xl mx-auto text-center text-white">
               <h2 class="text-3xl md:text-4xl font-extrabold mb-4">${t('productDetail.getFullAccess')}</h2>
               <p class="text-xl mb-8 text-blue-100">
                 ${(() => {
-                  const desc = product.longDescription || product.description;
-                  return typeof desc === 'object' ? desc[i18n.currentLanguage] || desc.es || desc : desc;
-                })()}
+        const desc = product.longDescription || product.description;
+        return typeof desc === 'object' ? desc[i18n.currentLanguage] || desc.es || desc : desc;
+      })()}
               </p>
 
               ${hasPurchased ? `
@@ -323,6 +323,13 @@ export async function renderProductDetailView(productId) {
         window.productDetailLanguageListener = null;
       }
     };
+
+    // Refresh scroll observer to animate new elements
+    if (window.scrollObserver) {
+      setTimeout(() => {
+        window.scrollObserver.refresh();
+      }, 100);
+    }
 
   } catch (error) {
     console.error('Error rendering product detail:', error);

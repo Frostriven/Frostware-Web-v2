@@ -17,6 +17,7 @@ import { renderContactView } from '../pages/contact/view.js';
 import { watchAuthState, logout } from './auth.js';
 import { initializeProductsInFirebase, isUserAdmin, isAdminEmail } from './userProfile.js';
 import { isDevelopment, AUTO_DEMO_LOGIN } from './config.js';
+import { initScrollObserver } from './utils/scrollObserver.js';
 import './cart.js';
 // i18n system
 import { i18n, t } from '../i18n/index.js';
@@ -27,13 +28,22 @@ import { updateHomepageTranslations } from './homepage-i18n.js';
 window.pageLoadTime = Date.now();
 
 // Función principal de inicialización
-const initializeApp = () => {
+const initializeApp = async () => {
+  // Wait for translations to be ready to prevent flickering keys
+  await i18n.ready();
+
   // Add loading state to prevent auth flash
   let authInitialized = false;
 
   // Render header content in Spanish into existing <header>
   const header = document.querySelector('header');
-  const renderHeader = async (user, loading = false) => {
+
+
+
+  // NOTE: Initial loading state is now handled by index.html to prevent flickering.
+  // We only update the header once we have the authentication state or meaningful data.
+
+  const renderHeader = async (user) => {
     if (!header) return;
     const currentHash = window.location.hash || '#/';
 
@@ -41,6 +51,10 @@ const initializeApp = () => {
     if (user) {
       isAdmin = await isUserAdmin(user.uid) || isAdminEmail(user.email);
     }
+
+    // Make header visible with smooth fade-in
+    header.style.transition = 'opacity 0.3s ease-in-out';
+    header.style.opacity = '1';
 
     header.innerHTML = `
       <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
@@ -94,9 +108,7 @@ const initializeApp = () => {
               </button>
             </div>
           ` : ''}
-          ${loading ? `
-            <div class="animate-pulse bg-gray-600 h-8 w-20 rounded"></div>
-          ` : user ? `
+          ${user ? `
             <!-- User Menu with Greeting Stacked -->
             <div class="relative flex flex-col items-center" id="user-menu-container">
               <button id="user-menu-button" class="flex items-center gap-1 text-gray-300 hover:text-white transition-colors focus:outline-none">
@@ -225,11 +237,12 @@ const initializeApp = () => {
   };
 
   let currentUser = null;
-  renderHeader(null, true); // Show loading state initially
+  // Don't render header until auth state is determined to prevent flicker
+  // The index.html already has skeleton placeholders that will show while loading
   watchAuthState(async (user) => {
     currentUser = user;
     authInitialized = true;
-    await renderHeader(user, false); // Remove loading state
+    await renderHeader(user, false); // Render header with actual auth state
 
     // Auto-login demo user in development if enabled and no user is logged in
     if (!user && isDevelopment() && AUTO_DEMO_LOGIN) {
@@ -483,13 +496,26 @@ const initializeApp = () => {
     }
   });
 
+  // Initialize scroll animations
+  const scrollObserver = initScrollObserver();
+  // Expose observer to window for dynamic content updates
+  window.scrollObserver = scrollObserver;
+
   // Update homepage translations if starting on homepage
-  setTimeout(() => {
+  setTimeout(async () => {
     const currentHash = window.location.hash || '#/';
     if (currentHash === '#/' || currentHash === '') {
+      await i18n.ready(); // Ensure translations are loaded
       updateHomepageTranslations();
     }
   }, 300);
+
+  // Re-observe when DOM likely changes (e.g., route change)
+  window.addEventListener('hashchange', () => {
+    setTimeout(() => {
+      scrollObserver.refresh();
+    }, 500); // Wait for new content to render
+  });
 };
 
 // Verificar si el DOM ya está cargado o esperar
