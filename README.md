@@ -1,307 +1,123 @@
-# Frostware® Website v2.0
+# Frostware® - Plataforma de Productos Digitales
 
-🚀 **Sitio web oficial de Frostware** - Una aplicación web moderna construida con tecnologías de vanguardia para ofrecer herramientas, cursos y simuladores de alta calidad.
+[![Vite](https://img.shields.io/badge/Vite-7.1.5-646CFF?logo=vite)](https://vitejs.dev/)
+[![Firebase](https://img.shields.io/badge/Firebase-10.x-FFCA28?logo=firebase)](https://firebase.google.com/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.x-06B6D4?logo=tailwindcss)](https://tailwindcss.com/)
 
-![Frostware](https://img.shields.io/badge/Frostware-v2.09-blue)
-![Vite](https://img.shields.io/badge/Vite-7.1.5-green)
-![Firebase](https://img.shields.io/badge/Firebase-10.x-orange)
-![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.x-blue)
+Plataforma web moderna de productos digitales con autenticación Firebase, carrito de compras, sistema multilingüe (ES/EN) y gestión de productos en tiempo real.
 
-## 📋 Descripción
-
-Frostware® v2.0 es una Single Page Application (SPA) que ofrece:
-
-- **🛠️ Herramientas especializadas** - Calculadoras de rendimiento de vuelo, procedimientos NOPAC, GOLD Datalink
-- **📚 Cursos y guías** - Contenido educativo interactivo
-- **👤 Gestión de usuarios** - Perfiles personalizables y seguimiento de productos
-- **🔒 Autenticación segura** - Firebase Auth con Google Sign-in
-- **📱 Diseño responsive** - Optimizado para todos los dispositivos
-
-## 📚 Documentación
-
-La documentación completa del proyecto está disponible en la carpeta [docs/](./docs/):
-
-- **[Arquitectura del Proyecto](./docs/ARQUITECTURA.md)** - Estructura completa y patrones técnicos
-- **[Changelog](./docs/CHANGELOG.md)** - Registro de cambios y mejoras
-- **[Sistema i18n](./docs/I18N_DOCUMENTATION.md)** - Documentación del sistema de traducciones
-- **[Guía de Desarrollo](./docs/DEVELOPMENT.md)** - Flujo de desarrollo y arquitectura
-- **[Roadmap](./docs/ROADMAP.md)** - Plan de desarrollo y fases completadas
-- **[Guía de Contribución](./docs/CONTRIBUTING.md)** - Cómo contribuir al proyecto
-- **[Demo Setup](./docs/DEMO_SETUP.md)** - Configuración del usuario demo
-- **[Guía de Migración](./docs/MIGRATION_GUIDE.md)** - Mejoras de arquitectura Firebase
-
-## ✨ Características
-
-### 🎯 Funcionalidades Principales
-- ✅ Sistema de autenticación completo (Email/Password + Google)
-- ✅ Perfiles de usuario editables con datos personales
-- ✅ Sistema de productos y compras
-- ✅ Navegación SPA fluida
-- ✅ Diseño moderno con animaciones
-- ✅ Efecto hover-neon-glow en tarjetas de productos
-- ✅ Sistema de internacionalización (i18n) - Español/Inglés
-- ✅ Integración con Firebase Firestore
-- ✅ Modo de desarrollo con emuladores
-
-### 🛡️ Seguridad
-- Autenticación Firebase Auth
-- Validación de formularios
-- Manejo seguro de datos personales
-- Emuladores para desarrollo local
-
-### 🎨 UI/UX
-- Diseño responsive con TailwindCSS
-- Animaciones fluidas con burbujas
-- Interfaz intuitiva
-- Feedback visual en tiempo real
+---
 
 ## 🚀 Inicio Rápido
 
-### Prerrequisitos
+```bash
+# 1. Instalar dependencias
+npm install
 
-- Node.js 18+
-- npm o yarn
-- Firebase CLI (para emuladores)
+# 2. Configurar Firebase (.env)
+cp .env.example .env
+# Edita .env con tus credenciales
 
-### Instalación
+# 3. Iniciar servidor
+npm run dev
 
-1. **Clonar el repositorio**
-   ```bash
-   git clone https://github.com/Frostriven/Frostware-Web-v2.git
-   cd Frostware-Web-v2
-   ```
+# 4. Abrir http://localhost:5173
+# 5. Inicializar productos en consola (F12):
+await initFirebaseProducts()
+```
 
-2. **Instalar dependencias**
-   ```bash
-   npm install
-   ```
+---
 
-3. **Configurar variables de entorno**
-   ```bash
-   cp .env.example .env
-   # Edita .env con tus credenciales de Firebase
-   ```
+## 📚 Documentación
 
-4. **Iniciar emuladores de Firebase** (en otra terminal)
-   ```bash
-   firebase emulators:start
-   ```
+Toda la documentación está en la carpeta **[`/docs`](./docs)**:
 
-5. **Iniciar servidor de desarrollo**
-   ```bash
-   npm run dev
-   ```
+- **[Guía Completa](./docs/GUIA-COMPLETA.md)** - Setup detallado, Firebase, comandos útiles
+- **[Documentación Técnica](./docs/README.md)** - Índice de todas las guías
+- **[Arquitectura](./docs/ARQUITECTURA.md)** - Estructura del proyecto
+- **[Sistema i18n](./docs/I18N_DOCUMENTATION.md)** - Internacionalización
+- **[Desarrollo](./docs/DEVELOPMENT.md)** - Mejores prácticas
+- **[Changelog](./docs/CHANGELOG.md)** - Historial de cambios
 
-6. **Abrir en el navegador**
-   ```
-   http://localhost:5173
-   ```
+---
 
-## 📁 Estructura del Proyecto
+## 🔥 Estructura Firebase
+
+### Productos (`products`)
+```javascript
+{
+  title: { es: "...", en: "..." },
+  shortDescription: { es: "...", en: "..." },
+  imageURL: "https://...",
+  price: 99,
+  detailGradientColors: ["#...", "#...", "#..."],
+  // ... más campos
+}
+```
+
+Ver estructura completa en [Guía Completa](./docs/GUIA-COMPLETA.md#-firebase---estructura-de-datos)
+
+---
+
+## 🛠️ Comandos de Consola
+
+```javascript
+await checkFirebaseProducts()      // Ver productos
+await initFirebaseProducts()       // Inicializar/actualizar
+await showFirebaseSummary()        // Ver estadísticas
+await cleanDuplicateProducts()     // Detectar duplicados
+await deleteProductById("id")      // Eliminar producto
+```
+
+---
+
+## 🎨 Stack Tecnológico
+
+- **Vite 7.1.5** - Build tool
+- **Firebase 10.x** - Backend (Auth + Firestore)
+- **TailwindCSS 3.x** - Estilos
+- **Vanilla JS ES6+** - Frontend
+- **Custom i18n** - Español/Inglés
+- **SPA Router** - Navegación sin recargas
+
+---
+
+## 📁 Estructura
 
 ```
 Frostware-Web-v2/
-├── docs/                      # 📚 Documentación del proyecto
-│   ├── README.md
-│   ├── ARQUITECTURA.md
-│   ├── CHANGELOG.md
-│   ├── HOVER-GLOW-FIX.md
-│   └── AUTH-FLICKER-FIX.md
+├── docs/              # 📚 Documentación completa
 ├── src/
-│   ├── i18n/                  # 🌍 Sistema de internacionalización
-│   │   ├── languages/         # Archivos de traducción
-│   │   ├── flags.js
-│   │   └── index.js
-│   ├── js/                    # 💻 Código JavaScript
-│   │   ├── utils/
-│   │   ├── auth.js
-│   │   ├── firebase.js
-│   │   ├── router.js
-│   │   ├── main.js
-│   │   ├── cart.js
-│   │   ├── homepage-i18n.js
-│   │   └── userProfile.js
-│   ├── pages/                 # 📄 Vistas de la aplicación
-│   │   ├── auth/
-│   │   ├── products/
-│   │   ├── product-detail/
-│   │   └── ...
-│   └── styles/                # 🎨 Estilos CSS
-│       ├── styles.css
-│       └── firebase-integration.css
-├── public/                    # 📦 Assets estáticos
-│   ├── css/
-│   └── js/
-├── index.html                 # 🏠 Punto de entrada
-└── vite.config.js
-
-Ver [ARQUITECTURA.md](./docs/ARQUITECTURA.md) para más detalles.
+│   ├── i18n/         # 🌍 Traducciones (ES/EN)
+│   ├── js/           # 💻 Lógica principal
+│   ├── pages/        # 📄 Vistas de la app
+│   └── utils/        # 🛠️ Funciones helper
+├── public/           # 📦 Assets estáticos
+└── index.html        # 🏠 Punto de entrada
 ```
 
-## 🔧 Scripts Disponibles
+---
 
-- `npm run dev` - Servidor de desarrollo
-- `npm run build` - Construcción para producción
-- `npm run preview` - Vista previa de la construcción
+## 🐛 Solución Rápida
 
-## 🌐 Variables de Entorno
-
-Crea un archivo `.env` basado en `.env.example`:
-
-```env
-# Configuración de Firebase
-VITE_FIREBASE_API_KEY=tu_api_key
-VITE_FIREBASE_AUTH_DOMAIN=tu_proyecto.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=tu_proyecto_id
-VITE_FIREBASE_STORAGE_BUCKET=tu_proyecto.firebasestorage.app
-VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
-VITE_FIREBASE_APP_ID=1:123456789:web:abcdef123456
-VITE_FIREBASE_MEASUREMENT_ID=G-XXXXXXXXXX
-
-# Emuladores (para desarrollo)
-VITE_USE_FIREBASE_EMULATORS=true
-VITE_EMULATOR_AUTH_HOST=127.0.0.1
-VITE_EMULATOR_AUTH_PORT=9099
-VITE_EMULATOR_FIRESTORE_HOST=127.0.0.1
-VITE_EMULATOR_FIRESTORE_PORT=8080
+**Productos no se ven:**
+```javascript
+await checkFirebaseProducts()  // Ver cuántos hay
+await initFirebaseProducts()   // Inicializar si es 0
 ```
 
-## 📊 Base de Datos
+**Error de permisos Firebase:**
+- Ve a Firebase Console → Firestore → Rules
+- Actualiza reglas (ver [Guía Completa](./docs/GUIA-COMPLETA.md#3-configurar-reglas-de-firestore))
 
-### Estructura de Firestore
-
-```
-users/{userId}
-├── name: string
-├── phone: string
-├── country: string
-├── company: string
-├── bio: string
-├── createdAt: timestamp
-└── updatedAt: timestamp
-
-userProducts/{productId}
-├── userId: string
-├── productId: string
-├── productName: string
-├── productDescription: string
-├── productPrice: number
-├── productImage: string
-├── purchaseDate: timestamp
-└── status: string
-```
-
-## 🛠️ Tecnologías Utilizadas
-
-- **Frontend Framework**: Vanilla JavaScript ES6+
-- **Build Tool**: Vite 7.1.5
-- **Styling**: TailwindCSS (CDN) + CSS personalizado
-- **Backend/Database**: Firebase v10
-  - Authentication
-  - Firestore
-  - Emulators Suite
-- **i18n**: Sistema personalizado de internacionalización
-- **Routing**: Router SPA personalizado
-- **Fonts**: Google Fonts (Inter)
-
-## 🎨 Efectos y Animaciones
-
-### Hover-Neon-Glow
-
-Efecto de glow neón azul en tarjetas de productos con las siguientes características:
-- Transición rápida: 250ms ease-out
-- Glow suave y elegante (Electric Blue #22a7d0)
-- Elevación sutil: -4px, scale(1.01)
-- 3 capas de box-shadow para difusión gradual
-
-Ver [HOVER-GLOW-FIX.md](./docs/HOVER-GLOW-FIX.md) para implementación completa.
-
-### Scroll Animations
-
-Sistema de animaciones al hacer scroll con clases como:
-- `.fade-in-up` - Entrada desde abajo
-- `.fade-in-down` - Entrada desde arriba
-- `.fade-in-scale` - Entrada con escala
-
-Ubicación: [src/js/utils/scrollObserver.js](./src/js/utils/scrollObserver.js)
-
-## 🎨 Guía de Desarrollo
-
-### Agregar Nueva Página
-
-1. Crear HTML en `public/pages/`
-2. Crear view.js en `src/pages/`
-3. Registrar ruta en `src/js/main.js`
-
-### Agregar Nueva Funcionalidad de Firebase
-
-1. Importar funciones necesarias en el archivo correspondiente
-2. Manejar errores apropiadamente
-3. Actualizar interfaces de usuario
-
-### Estilo y Diseño
-
-- Usar clases de TailwindCSS
-- Mantener consistencia con la paleta de colores
-- Color principal: `#22a7d0`
-
-## 🚀 Deployment
-
-### Preparar para Producción
-
-1. **Construir el proyecto**
-   ```bash
-   npm run build
-   ```
-
-2. **Configurar Firebase Hosting** (opcional)
-   ```bash
-   firebase init hosting
-   firebase deploy
-   ```
-
-3. **Variables de entorno para producción**
-   - Configurar `VITE_USE_FIREBASE_EMULATORS=false`
-   - Usar credenciales de Firebase de producción
-
-## 🐛 Debugging
-
-### Problemas Comunes
-
-1. **Firebase no inicializado**
-   - Verificar archivo `.env`
-   - Asegurar que los emuladores estén ejecutándose
-
-2. **Navegación SPA no funciona**
-   - Verificar que el router esté inicializado
-   - Comprobar rutas registradas
-
-3. **Estilos no cargan**
-   - Verificar conexión a TailwindCSS CDN
-   - Comprobar archivos CSS locales
-
-## 🤝 Contribución
-
-1. Fork el proyecto
-2. Crear branch para feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit cambios (`git commit -m 'Agrega nueva funcionalidad'`)
-4. Push al branch (`git push origin feature/nueva-funcionalidad`)
-5. Abrir Pull Request
+---
 
 ## 📄 Licencia
 
 © 2025 Frostware. Todos los derechos reservados.
 
-## 👨‍💻 Autor
-
-**Frostriven** - [GitHub](https://github.com/Frostriven)
-
-## 📞 Soporte
-
-Para soporte técnico o preguntas:
-- Crear un issue en GitHub
-- Contactar a través del sitio web oficial
+**Autor:** Frostriven
 
 ---
 
-⭐ **¡Dale una estrella al proyecto si te resulta útil!**
+💡 **Para más información, consulta la [documentación completa](./docs)**

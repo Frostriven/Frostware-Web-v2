@@ -175,14 +175,14 @@ async function loadProductsWithTranslations() {
         purple: 'text-purple-600 bg-purple-100'
       };
 
-      // Get translated name and description
-      const name = typeof product.name === 'object'
-        ? (product.name[currentLang] || product.name['en'] || product.name)
-        : product.name;
+      // Get translated name and description using Firebase field names
+      const name = typeof product.title === 'object'
+        ? (product.title[currentLang] || product.title['en'] || product.title)
+        : product.title;
 
-      const description = typeof product.description === 'object'
-        ? (product.description[currentLang] || product.description['en'] || product.description)
-        : product.description;
+      const description = typeof product.shortDescription === 'object'
+        ? (product.shortDescription[currentLang] || product.shortDescription['en'] || product.shortDescription)
+        : product.shortDescription;
 
       // Use product's badge or default
       const badge = product.badge || 'New';
@@ -199,7 +199,7 @@ async function loadProductsWithTranslations() {
           <!-- Inner container for content -->
           <div class="w-full h-full flex flex-col" style="border-radius: 14px; overflow: hidden;">
               <div class="w-full h-1/2 overflow-hidden">
-              <img src="${product.image || 'https://placehold.co/600x400/1a202c/FFFFFF?text=' + encodeURIComponent(name) + '&font=inter'}"
+              <img src="${product.imageURL || 'https://placehold.co/600x400/1a202c/FFFFFF?text=' + encodeURIComponent(name) + '&font=inter'}"
                    class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                    alt="${name}">
               </div>

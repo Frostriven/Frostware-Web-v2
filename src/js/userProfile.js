@@ -181,15 +181,17 @@ export async function removeUserProduct(userId, productId) {
   return { success: true };
 }
 
-// Productos disponibles en la tienda
-export const products = [
+// Productos iniciales para poblar Firebase (solo usados en initializeProductsInFirebase)
+// IMPORTANTE: Estos productos solo se usan para inicializar la base de datos
+// La aplicación siempre carga productos desde Firebase usando getProductsFromFirebase()
+const initialProducts = [
   {
     id: 'north-atlantic-ops',
-    name: {
+    title: {
       es: 'Procedimientos Operacionales del Atlántico Norte',
       en: 'North Atlantic Operational Procedures'
     },
-    description: {
+    shortDescription: {
       es: 'Un banco de preguntas completo para pilotos transoceánicos que operan en el espacio aéreo del Atlántico Norte. Basado en documentos oficiales de OACI con referencias y justificaciones.',
       en: 'A comprehensive question bank for transoceanic pilots operating in North Atlantic airspace. Based on official ICAO documents with references and justifications.'
     },
@@ -199,9 +201,10 @@ export const products = [
     },
     price: 99,
     originalPrice: 150,
-    image: 'https://placehold.co/600x400/1a202c/FFFFFF?text=NAT+OPS&font=inter',
+    imageURL: 'https://placehold.co/600x400/1a202c/FFFFFF?text=NAT+OPS&font=inter',
     category: 'aviation',
-    colors: ['#1b1b25', '#190d36', '#1b1b25'],
+    detailGradientColors: ['#1b1b25', '#190d36', '#1b1b25'],
+    cardBgColor: '#1b1b25',
     badge: 'Disponible',
     badgeColor: 'blue',
     rating: 5.0,
@@ -281,11 +284,11 @@ export const products = [
 
   {
     id: 'p2',
-    name: {
+    title: {
       es: 'Calculadora de Rendimiento P2',
       en: 'P2 Performance Calculator'
     },
-    description: {
+    shortDescription: {
       es: 'Herramienta avanzada de cálculo de rendimiento para operaciones de vuelo. Incluye análisis de peso y balance, consumo de combustible y optimización de rutas.',
       en: 'Advanced flight performance calculation tool. Includes weight and balance analysis, fuel consumption and route optimization.'
     },
@@ -295,9 +298,10 @@ export const products = [
     },
     price: 99,
     originalPrice: 150,
-    image: 'https://static.vecteezy.com/system/resources/previews/001/194/635/non_2x/snowflake-png.png',
+    imageURL: 'https://static.vecteezy.com/system/resources/previews/001/194/635/non_2x/snowflake-png.png',
     category: 'aviation',
-    colors: ['#d4d8dfff', '#39c815ff', '#51023cff'],
+    detailGradientColors: ['#d4d8dfff', '#39c815ff', '#51023cff'],
+    cardBgColor: '#d4d8dfff',
     badge: 'Disponible',
     badgeColor: 'blue',
     rating: 5.0,
@@ -441,12 +445,15 @@ export async function getProductsFromFirebase() {
     const firebaseProducts = [];
 
     querySnapshot.forEach((doc) => {
+      const data = doc.data();
+
+      // Usar los campos directamente de Firebase sin mapeo
       firebaseProducts.push({
         id: doc.id,
-        ...doc.data(),
+        ...data,
         // Asegurar que los timestamps son objetos Date para compatibilidad
-        createdAt: doc.data().createdAt?.toDate?.() || doc.data().createdAt,
-        updatedAt: doc.data().updatedAt?.toDate?.() || doc.data().updatedAt
+        createdAt: data.createdAt?.toDate?.() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.() || data.updatedAt
       });
     });
 
@@ -475,37 +482,69 @@ export async function initializeProductsInFirebase() {
 
   try {
     // 1. Inicializar Productos
-    for (const product of products) {
+    for (const product of initialProducts) {
       const productRef = doc(db, 'products', product.id);
       const productDoc = await getDoc(productRef);
 
       if (productDoc.exists()) {
         const existingData = productDoc.data();
-        // Criterios para actualizar
+        // Criterios para actualizar - verificar si faltan campos importantes
         const needsUpdate =
           !existingData.detailedFeatures ||
+          !existingData.rating ||
+          !existingData.reviews ||
+          !existingData.detailGradientColors ||
+          !existingData.cardBgColor ||
+          !existingData.badge ||
+          !existingData.features ||
           existingData.detailedFeatures.length !== product.detailedFeatures?.length ||
-          typeof existingData.description === 'string' ||
-          typeof existingData.longDescription === 'string';
+          typeof existingData.shortDescription === 'string' ||
+          typeof existingData.longDescription === 'string' ||
+          typeof existingData.title === 'string';
 
         if (needsUpdate) {
-          console.log(`🔄 Updating product ${product.id}...`);
+          console.log(`🔄 Updating product ${product.id} with all fields...`);
+          // Actualizar con TODOS los campos del producto usando nombres de Firebase
           await updateDoc(productRef, {
-            name: product.name,
-            description: product.description,
+            title: product.title,
+            shortDescription: product.shortDescription,
             longDescription: product.longDescription,
+            price: product.price,
+            originalPrice: product.originalPrice,
+            imageURL: product.imageURL,
+            category: product.category,
+            detailGradientColors: product.detailGradientColors || [],
+            cardBgColor: product.cardBgColor,
+            badge: product.badge,
+            badgeColor: product.badgeColor,
+            rating: product.rating || 4.5,
+            reviews: product.reviews || 0,
+            features: product.features || [],
             detailedFeatures: product.detailedFeatures || [],
+            tags: product.tags || [],
+            appUrl: product.appUrl || null,
             updatedAt: serverTimestamp()
           });
+          console.log(`✅ Product ${product.id} updated with all fields`);
         }
       } else {
+        // Crear producto nuevo con todos los campos
         const productWithTimestamps = {
           ...product,
+          // Asegurar valores por defecto para campos opcionales
+          rating: product.rating || 4.5,
+          reviews: product.reviews || 0,
+          detailGradientColors: product.detailGradientColors || [],
+          cardBgColor: product.cardBgColor,
+          features: product.features || [],
+          detailedFeatures: product.detailedFeatures || [],
+          tags: product.tags || [],
+          appUrl: product.appUrl || null,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         };
         await setDoc(productRef, productWithTimestamps);
-        console.log(`✅ Producto ${product.id} inicializado`);
+        console.log(`✅ Producto ${product.id} inicializado con todos los campos`);
       }
     }
 
@@ -605,8 +644,9 @@ export function isAdminEmail(email) {
   return ADMIN_EMAILS.includes(email?.toLowerCase());
 }
 
-// Alias para compatibilidad
-export const sampleProducts = products;
+// NOTA: Para compatibilidad con código legacy, se exporta initialProducts
+// Sin embargo, SIEMPRE debes usar getProductsFromFirebase() para obtener productos
+export const sampleProducts = initialProducts;
 
 /*
 =======================================================================================
@@ -730,7 +770,7 @@ window.recreateFirebaseProducts = async () => {
     // Recreate products with new structure
     const { serverTimestamp } = await import('firebase/firestore');
 
-    for (const product of products) {
+    for (const product of initialProducts) {
       const productRef = doc(db, 'products', product.id);
       const productWithTimestamps = {
         ...product,

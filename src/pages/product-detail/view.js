@@ -41,8 +41,8 @@ export async function renderProductDetailView(productId) {
     // If no user is logged in, cart status should always be false
     // The cart should only be relevant for logged-in users
 
-    // Create dynamic gradient from product colors
-    const colors = product.colors || ['#1e293b', '#0f172a', '#334155'];
+    // Create dynamic gradient from product colors using Firebase field names
+    const colors = product.detailGradientColors || ['#1e293b', '#0f172a', '#334155'];
     const gradientClass = `bg-gradient-to-br`;
     const gradientStyle = `background: linear-gradient(to bottom right, ${colors[0]}, ${colors[1] || colors[0]}, ${colors[2] || colors[0]})`;
 
@@ -69,11 +69,11 @@ export async function renderProductDetailView(productId) {
                       ${product.category === 'aviation' ? t('productDetail.category.aviation') : t('productDetail.category.premium')}
                     </span>
                     <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
-                      ${typeof product.name === 'object' ? product.name[i18n.currentLanguage] || product.name.es || product.name : product.name}
+                      ${typeof product.title === 'object' ? product.title[i18n.currentLanguage] || product.title.es || product.title : product.title}
                     </h1>
                     <p class="text-xl text-blue-100 mb-8">
                       ${(() => {
-        const desc = product.longDescription || product.description;
+        const desc = product.longDescription || product.shortDescription;
         return typeof desc === 'object' ? desc[i18n.currentLanguage] || desc.es || desc : desc;
       })()}
                     </p>
@@ -118,8 +118,8 @@ export async function renderProductDetailView(productId) {
 
                 <div class="relative">
                   <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-                    <img src="${product.image}"
-                         alt="${product.name}"
+                    <img src="${product.imageURL}"
+                         alt="${typeof product.title === 'object' ? product.title[i18n.currentLanguage] || product.title.es : product.title}"
                          class="rounded-lg shadow-2xl w-full">
 
                     ${product.badge ? `
@@ -143,7 +143,7 @@ export async function renderProductDetailView(productId) {
                 <h3 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">${t('productDetail.everythingYouNeed')}</h3>
                 <p class="text-xl text-gray-600 max-w-3xl mx-auto">
                   ${(() => {
-        const desc = product.longDescription || product.description;
+        const desc = product.longDescription || product.shortDescription;
         return typeof desc === 'object' ? desc[i18n.currentLanguage] || desc.es || desc : desc;
       })()}
                 </p>
@@ -247,7 +247,7 @@ export async function renderProductDetailView(productId) {
               <h2 class="text-3xl md:text-4xl font-extrabold mb-4">${t('productDetail.getFullAccess')}</h2>
               <p class="text-xl mb-8 text-blue-100">
                 ${(() => {
-        const desc = product.longDescription || product.description;
+        const desc = product.longDescription || product.shortDescription;
         return typeof desc === 'object' ? desc[i18n.currentLanguage] || desc.es || desc : desc;
       })()}
               </p>

@@ -15,7 +15,7 @@ import { renderTermsView } from '../pages/terms/view.js';
 import { renderPrivacyView } from '../pages/privacy/view.js';
 import { renderContactView } from '../pages/contact/view.js';
 import { watchAuthState, logout } from './auth.js';
-import { initializeProductsInFirebase, isUserAdmin, isAdminEmail } from './userProfile.js';
+import { isUserAdmin, isAdminEmail } from './userProfile.js';
 import { isDevelopment, AUTO_DEMO_LOGIN } from './config.js';
 import { initScrollObserver } from './utils/scrollObserver.js';
 import './cart.js';
@@ -23,6 +23,8 @@ import './cart.js';
 import { i18n, t } from '../i18n/index.js';
 import { getFlagSVG } from '../i18n/flags.js';
 import { updateHomepageTranslations } from './homepage-i18n.js';
+// Firebase helpers (disponibles en consola para debugging)
+import '../utils/firebase-init-helper.js';
 
 // Track page load time to prevent automatic actions during page load
 window.pageLoadTime = Date.now();
@@ -257,7 +259,9 @@ const initializeApp = async () => {
     }
 
     // Initialize products in Firebase when auth is ready
-    initializeProductsInFirebase();
+    // NOTA: Comentado para evitar inicialización automática en cada recarga
+    // Ejecuta manualmente desde la consola: await initFirebaseProducts()
+    // initializeProductsInFirebase();
 
     // Add cart modal to the page if not present
     if (!document.getElementById('cart-modal')) {

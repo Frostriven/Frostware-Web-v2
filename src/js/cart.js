@@ -166,13 +166,13 @@ class ShoppingCart {
             return false;
         }
 
-        // Agregar al carrito
+        // Agregar al carrito usando Firebase field names
         this.cart.push({
             id: product.id,
-            name: product.name,
+            title: product.title,
             price: product.price || 0,
-            image: product.image,
-            description: product.description
+            imageURL: product.imageURL,
+            shortDescription: product.shortDescription
         });
 
         this.saveCart();
@@ -314,25 +314,25 @@ class ShoppingCart {
         itemsDiv.innerHTML = this.cart.map(item => {
             const currentLang = i18n.getCurrentLanguage();
 
-            // Handle name that might be an object or string
+            // Handle title that might be an object or string (Firebase field name)
             let name = '';
-            if (typeof item.name === 'object' && item.name !== null) {
-                name = item.name[currentLang] || item.name['en'] || item.name['es'] || '';
+            if (typeof item.title === 'object' && item.title !== null) {
+                name = item.title[currentLang] || item.title['en'] || item.title['es'] || '';
             } else {
-                name = item.name || '';
+                name = item.title || '';
             }
 
-            // Handle description that might be an object or string
+            // Handle shortDescription that might be an object or string (Firebase field name)
             let description = '';
-            if (typeof item.description === 'object' && item.description !== null) {
-                description = item.description[currentLang] || item.description['en'] || item.description['es'] || '';
+            if (typeof item.shortDescription === 'object' && item.shortDescription !== null) {
+                description = item.shortDescription[currentLang] || item.shortDescription['en'] || item.shortDescription['es'] || '';
             } else {
-                description = item.description || '';
+                description = item.shortDescription || '';
             }
 
             return `
             <div class="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                <img src="${item.image || 'https://placehold.co/80x80/e5e7eb/9ca3af?text=No+Image'}"
+                <img src="${item.imageURL || 'https://placehold.co/80x80/e5e7eb/9ca3af?text=No+Image'}"
                      alt="${name}"
                      class="w-16 h-16 rounded-lg object-cover">
                 <div class="flex-grow">
@@ -487,10 +487,10 @@ class ShoppingCart {
             for (const item of this.cart) {
                 await addUserProduct(auth.currentUser.uid, {
                     id: item.id,
-                    name: item.name,
-                    description: item.description,
+                    title: item.title,
+                    shortDescription: item.shortDescription,
                     price: item.price,
-                    image: item.image,
+                    imageURL: item.imageURL,
                     category: 'purchased',
                     purchaseDate: new Date().toISOString()
                 });
