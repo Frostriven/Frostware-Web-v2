@@ -1,5 +1,42 @@
-import { auth } from '../../js/firebase.js';
+import { auth, db } from '../../js/firebase.js';
 import { verifyUserAppAccess, getProductsFromFirebase, getUserProducts } from '../../js/userProfile.js';
+import { collection, getDocs, query } from 'firebase/firestore';
+
+// Helper function to get categories with colors from Firebase
+async function getCategoriesFromFirebase() {
+  try {
+    const categoriesQuery = query(collection(db, 'categories'));
+    const querySnapshot = await getDocs(categoriesQuery);
+    const categories = {};
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      categories[doc.id] = {
+        id: doc.id,
+        name: data.name || doc.id,
+        color: data.color || '#3B82F6'
+      };
+    });
+
+    // Return default categories if Firebase is empty
+    if (Object.keys(categories).length === 0) {
+      return {
+        'aviation': { id: 'aviation', name: 'Aviación', color: '#3B82F6' },
+        'development': { id: 'development', name: 'Desarrollo', color: '#10B981' },
+        'education': { id: 'education', name: 'Educación', color: '#F59E0B' },
+        'ai': { id: 'ai', name: 'Inteligencia Artificial', color: '#8B5CF6' }
+      };
+    }
+
+    return categories;
+  } catch (error) {
+    console.error('Error loading categories:', error);
+    return {
+      'aviation': { id: 'aviation', name: 'Aviación', color: '#3B82F6' },
+      'development': { id: 'development', name: 'Desarrollo', color: '#10B981' }
+    };
+  }
+}
 
 export async function renderDashboardView(productId) {
   const spaRoot = document.getElementById('spa-root');
@@ -37,11 +74,13 @@ export async function renderDashboardView(productId) {
   let product = null;
   let allProducts = [];
   let userPurchasedProducts = [];
+  let categories = {};
 
   try {
     allProducts = await getProductsFromFirebase();
     product = allProducts.find(p => p.id === productId);
     userPurchasedProducts = await getUserProducts(auth.currentUser.uid);
+    categories = await getCategoriesFromFirebase();
 
     if (!product) {
       throw new Error('Producto no encontrado');
@@ -190,8 +229,8 @@ export async function renderDashboardView(productId) {
                           <div class="text-right ml-4">
                             ${isPurchased
                               ? `<div class="flex items-center space-x-2">
-                                   <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full border border-green-200">
-                                     <span class="w-2 h-2 bg-green-500 rounded-full inline-block mr-1 animate-pulse"></span>
+                                   <span class="px-3 py-1 text-xs font-medium rounded-full border" style="background-color: ${(categories[prod.category]?.color || '#10B981')}20; color: ${categories[prod.category]?.color || '#10B981'}; border-color: ${categories[prod.category]?.color || '#10B981'}40;">
+                                     <span class="w-2 h-2 rounded-full inline-block mr-1 animate-pulse" style="background-color: ${categories[prod.category]?.color || '#10B981'};"></span>
                                      Activo
                                    </span>
                                  </div>`
