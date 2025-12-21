@@ -101,11 +101,15 @@ src/
 │   ├── userProfile.js       # Gestión de perfiles y productos
 │   ├── router.js            # Enrutamiento SPA
 │   └── main.js              # Entrada principal y configuración
-├── pages/auth/
-│   ├── login/view.js        # Lógica de vista de login
-│   ├── register/view.js     # Lógica de vista de registro
-│   ├── reset/view.js        # Lógica de recuperación de contraseña
-│   └── account/view.js      # Lógica de cuenta de usuario
+├── pages/
+│   ├── auth/
+│   │   ├── login/view.js    # Lógica de vista de login
+│   │   ├── register/view.js # Lógica de vista de registro
+│   │   ├── reset/view.js    # Lógica de recuperación de contraseña
+│   │   └── account/view.js  # Lógica de cuenta de usuario
+│   ├── admin/view.js        # Panel de administración completo
+│   ├── dashboard/view.js    # Dashboard de productos comprados
+│   └── products/view.js     # Vista de productos disponibles
 ├── styles/
 │   ├── styles.css           # Estilos principales
 │   └── firebase-integration.css # Estilos específicos de Firebase
@@ -186,6 +190,67 @@ export async function addUserProduct(userId, productData)
   productImage: string,   // URL de imagen
   purchaseDate: timestamp, // Fecha de compra
   status: string         // Estado (active, inactive)
+}
+```
+
+### Colección: products/{productId}
+```javascript
+{
+  id: string,            // ID único del producto
+  name: string,          // Nombre del producto
+  price: number,         // Precio actual
+  originalPrice: number, // Precio original (opcional)
+  rating: number,        // Rating (1-5)
+  category: string,      // ID de categoría
+  badge: string,         // ID de badge (opcional)
+  offerId: string,       // ID de oferta activa (opcional)
+  description: string,   // Descripción del producto
+  image: string,         // URL de imagen
+  appUrl: string,        // URL de acceso al producto
+  reviews: number,       // Número de reviews
+  features: array,       // Características del producto
+  tags: array,           // Tags para búsqueda
+  createdAt: timestamp,  // Fecha de creación
+  updatedAt: timestamp   // Última actualización
+}
+```
+
+### Colección: categories/{categoryId}
+```javascript
+{
+  id: string,            // ID único de la categoría
+  name: string,          // Nombre de la categoría
+  color: string,         // Color hex (#RRGGBB)
+  createdAt: timestamp,  // Fecha de creación
+  updatedAt: timestamp   // Última actualización
+}
+```
+
+### Colección: badges/{badgeId}
+```javascript
+{
+  id: string,            // ID único del badge
+  name: string,          // Nombre del badge
+  color: string,         // Color hex (#RRGGBB)
+  createdAt: timestamp,  // Fecha de creación
+  updatedAt: timestamp   // Última actualización
+}
+```
+
+### Colección: offers/{offerId}
+```javascript
+{
+  id: string,            // ID único de la oferta
+  productId: string,     // ID del producto
+  originalPrice: number, // Precio original
+  discountPrice: number, // Precio con descuento (0 = gratis)
+  startDate: timestamp,  // Fecha de inicio
+  endDate: timestamp,    // Fecha de fin
+  indefinite: boolean,   // Si es por tiempo indefinido
+  description: string,   // Descripción de la oferta
+  active: boolean,       // Si está activa
+  createdAt: timestamp,  // Fecha de creación
+  updatedAt: timestamp   // Última actualización
 }
 ```
 
@@ -313,6 +378,62 @@ refactor: reorganizar estructura de archivos
 
 ---
 
+## 🛠️ Panel de Administración
+
+### Características Principales
+- **Gestión de Productos**: CRUD completo de productos con soporte para imágenes, categorías, badges y ofertas
+- **Gestión de Categorías**: Crear, editar y eliminar categorías con colores personalizados
+- **Gestión de Badges**: Crear, editar y eliminar badges para destacar productos
+- **Sistema de Ofertas**: Crear ofertas con descuentos o productos gratis, con fechas de inicio/fin
+
+### Event Delegation System
+El panel de administración utiliza un sistema centralizado de event delegation para manejar todas las interacciones:
+
+```javascript
+// Handler global que captura todos los clicks
+function handleAdminPanelClick(e) {
+  const button = e.target.closest('[data-action]');
+  if (!button) return;
+
+  const action = button.dataset.action;
+  // Maneja edit-product, delete-product, edit-category, etc.
+}
+
+// Se registra una sola vez en la fase de captura
+document.addEventListener('click', handleAdminPanelClick, true);
+```
+
+### Modales Dinámicos
+Los modales se manejan de forma especial para garantizar visibilidad:
+
+1. **Remoción de clase `hidden`** de Tailwind antes de mostrar
+2. **Movimiento a `document.body`** para evitar conflictos de z-index
+3. **Aplicación de estilos inline** con flexbox para centrado
+4. **Restauración de overflow** del body al cerrar
+
+```javascript
+// Patrón para mostrar modales
+modal.classList.remove('hidden');
+if (modal.parentElement !== document.body) {
+  document.body.appendChild(modal);
+}
+modal.style.display = 'flex';
+modal.style.position = 'fixed';
+modal.style.inset = '0';
+document.body.style.overflow = 'hidden';
+```
+
+### Confirmación Personalizada
+Sistema de confirmación para operaciones destructivas (eliminación):
+
+```javascript
+function showCustomConfirm(title, details, onConfirm) {
+  // Muestra modal con detalles específicos
+  // Incluye lista de impactos (ej: productos afectados)
+  // Botones de confirmar/cancelar
+}
+```
+
 ## 🆘 Troubleshooting
 
 ### Problema: Firebase no inicializa
@@ -326,3 +447,10 @@ refactor: reorganizar estructura de archivos
 
 ### Problema: Templates no se cargan
 **Solución:** Verificar que los archivos HTML estén en `public/pages/`
+
+### Problema: Modales no aparecen en admin panel
+**Solución:**
+- Verificar que la clase `hidden` se elimine antes de mostrar
+- Comprobar que el modal se mueva a `document.body` si está dentro de otro contenedor
+- Asegurar que `z-index` sea suficientemente alto (9999+)
+- Revisar que no haya CSS conflictivo con `!important`
