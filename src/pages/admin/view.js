@@ -194,6 +194,14 @@ export async function renderAdminView() {
                     </div>
 
                     <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Oferta</label>
+                      <select id="product-offer" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#22a7d0] focus:border-[#22a7d0]">
+                        <option value="">Sin oferta</option>
+                      </select>
+                      <p class="text-xs text-gray-500 mt-1">Solo se mostrarán ofertas creadas para este producto</p>
+                    </div>
+
+                    <div>
                       <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
                       <textarea id="product-description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#22a7d0] focus:border-[#22a7d0]" required></textarea>
                     </div>
@@ -207,17 +215,6 @@ export async function renderAdminView() {
                       <label class="block text-sm font-medium text-gray-700 mb-2">URL de la App/Guía (para acceso post-compra)</label>
                       <input type="url" id="product-app-url" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#22a7d0] focus:border-[#22a7d0]" placeholder="https://apps.frostware.com/mi-guia/">
                       <p class="text-xs text-gray-500 mt-1">URL donde el usuario accederá después de comprar el producto</p>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Oferta (inicio)</label>
-                        <input type="datetime-local" id="offer-start" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#22a7d0] focus:border-[#22a7d0]">
-                      </div>
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Oferta (fin)</label>
-                        <input type="datetime-local" id="offer-end" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#22a7d0] focus:border-[#22a7d0]">
-                      </div>
                     </div>
 
                     <div class="flex justify-end space-x-3">
@@ -284,11 +281,11 @@ export async function renderAdminView() {
                           ` : '-'}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                          <button onclick="editProduct('${product.id}')"
+                          <button data-product-id="${product.id}" data-action="edit-product"
                                   class="text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 px-3 py-1 rounded transition-colors">
                             Editar
                           </button>
-                          <button onclick="deleteProduct('${product.id}')"
+                          <button data-product-id="${product.id}" data-action="delete-product"
                                   class="text-red-600 hover:text-red-900 hover:bg-red-50 px-3 py-1 rounded transition-colors">
                             Eliminar
                           </button>
@@ -309,6 +306,52 @@ export async function renderAdminView() {
                 </button>
               </div>
 
+              <!-- Category Form Modal (hidden by default) -->
+              <div id="category-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
+                  <div class="flex justify-between items-center mb-4">
+                    <h3 id="category-modal-title" class="text-lg font-bold text-gray-900">Agregar Categoría</h3>
+                    <button id="close-category-modal" class="text-gray-400 hover:text-gray-600">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                    </button>
+                  </div>
+
+                  <form id="category-form" class="space-y-4">
+                    <input type="hidden" id="category-editing-id">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">ID de la Categoría</label>
+                      <input type="text" id="category-id" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#22a7d0] focus:border-[#22a7d0]" placeholder="Ej: question-guide" required>
+                      <p class="text-xs text-gray-500 mt-1">Usar minúsculas, sin espacios, con guiones</p>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Nombre de la Categoría</label>
+                      <input type="text" id="category-name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#22a7d0] focus:border-[#22a7d0]" placeholder="Ej: Question Guide App" required>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Color (formato hex)</label>
+                      <div class="flex gap-2">
+                        <input type="color" id="category-color-picker" class="w-16 h-10 border border-gray-300 rounded-md cursor-pointer">
+                        <input type="text" id="category-color" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-[#22a7d0] focus:border-[#22a7d0]" placeholder="#3B82F6" pattern="^#([A-Fa-f0-9]{6})$" required>
+                      </div>
+                      <p class="text-xs text-gray-500 mt-1">Selecciona un color para identificar la categoría</p>
+                    </div>
+
+                    <div class="flex justify-end space-x-3">
+                      <button type="button" id="cancel-category" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        Cancelar
+                      </button>
+                      <button type="submit" id="submit-category" class="bg-[#22a7d0] text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                        Guardar Categoría
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
               <div id="categories-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <!-- Categories will be loaded here -->
               </div>
@@ -321,6 +364,52 @@ export async function renderAdminView() {
                 <button id="btn-add-badge" class="bg-[#22a7d0] text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
                   + Agregar Badge
                 </button>
+              </div>
+
+              <!-- Badge Form Modal (hidden by default) -->
+              <div id="badge-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
+                  <div class="flex justify-between items-center mb-4">
+                    <h3 id="badge-modal-title" class="text-lg font-bold text-gray-900">Agregar Badge</h3>
+                    <button id="close-badge-modal" class="text-gray-400 hover:text-gray-600">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                    </button>
+                  </div>
+
+                  <form id="badge-form" class="space-y-4">
+                    <input type="hidden" id="badge-editing-id">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">ID del Badge</label>
+                      <input type="text" id="badge-id" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#22a7d0] focus:border-[#22a7d0]" placeholder="Ej: New" required>
+                      <p class="text-xs text-gray-500 mt-1">Identificador único del badge</p>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del Badge</label>
+                      <input type="text" id="badge-name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#22a7d0] focus:border-[#22a7d0]" placeholder="Ej: Nuevo" required>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Color (formato hex)</label>
+                      <div class="flex gap-2">
+                        <input type="color" id="badge-color-picker" class="w-16 h-10 border border-gray-300 rounded-md cursor-pointer">
+                        <input type="text" id="badge-color" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-[#22a7d0] focus:border-[#22a7d0]" placeholder="#3B82F6" pattern="^#([A-Fa-f0-9]{6})$" required>
+                      </div>
+                      <p class="text-xs text-gray-500 mt-1">Color del badge para visualización</p>
+                    </div>
+
+                    <div class="flex justify-end space-x-3">
+                      <button type="button" id="cancel-badge" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        Cancelar
+                      </button>
+                      <button type="submit" id="submit-badge" class="bg-[#22a7d0] text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                        Guardar Badge
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
 
               <div id="badges-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -337,9 +426,111 @@ export async function renderAdminView() {
                 </button>
               </div>
 
-              <div id="offers-list">
+              <!-- Offer Form Modal (hidden by default) -->
+              <div id="offer-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 shadow-lg rounded-md bg-white">
+                  <div class="flex justify-between items-center mb-4">
+                    <h3 id="offer-modal-title" class="text-lg font-bold text-gray-900">Crear Oferta</h3>
+                    <button id="close-offer-modal" class="text-gray-400 hover:text-gray-600">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                    </button>
+                  </div>
+
+                  <form id="offer-form" class="space-y-4">
+                    <input type="hidden" id="offer-editing-id">
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Producto</label>
+                      <select id="offer-product" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#22a7d0] focus:border-[#22a7d0]" required>
+                        <option value="">Seleccionar producto</option>
+                      </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Precio Original</label>
+                        <input type="number" id="offer-original-price" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#22a7d0] focus:border-[#22a7d0] bg-gray-100" placeholder="99.99" step="0.01" readonly required>
+                        <p class="text-xs text-gray-500 mt-1">Se carga automáticamente del producto</p>
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Precio con Descuento</label>
+                        <div class="flex gap-2">
+                          <input type="number" id="offer-discount-price" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-[#22a7d0] focus:border-[#22a7d0]" placeholder="49.99" step="0.01" required>
+                          <button type="button" id="set-free-btn" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors">
+                            Gratis
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Inicio</label>
+                        <input type="date" id="offer-start-date" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#22a7d0] focus:border-[#22a7d0]" required>
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Fin</label>
+                        <input type="date" id="offer-end-date" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#22a7d0] focus:border-[#22a7d0]" required>
+                        <div class="flex items-center mt-2">
+                          <input type="checkbox" id="offer-indefinite" class="w-4 h-4 text-[#22a7d0] border-gray-300 rounded focus:ring-[#22a7d0]">
+                          <label for="offer-indefinite" class="ml-2 block text-sm text-gray-700">Por tiempo indefinido</label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Descripción (opcional)</label>
+                      <textarea id="offer-description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#22a7d0] focus:border-[#22a7d0]" placeholder="Oferta especial de temporada"></textarea>
+                    </div>
+
+                    <div class="flex items-center">
+                      <input type="checkbox" id="offer-active" class="w-4 h-4 text-[#22a7d0] border-gray-300 rounded focus:ring-[#22a7d0]">
+                      <label for="offer-active" class="ml-2 block text-sm text-gray-700">Activar oferta inmediatamente</label>
+                    </div>
+
+                    <div class="flex justify-end space-x-3">
+                      <button type="button" id="cancel-offer" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        Cancelar
+                      </button>
+                      <button type="submit" id="submit-offer" class="bg-[#22a7d0] text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                        Guardar Oferta
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <div id="offers-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <!-- Offers will be loaded here -->
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom Confirmation Modal -->
+      <div id="custom-confirm-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full z-[60] flex items-center justify-center">
+        <div class="relative mx-auto p-8 border w-11/12 md:w-2/3 lg:w-1/2 max-w-2xl shadow-2xl rounded-xl bg-white transform transition-all">
+          <div class="text-center">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+              <svg class="h-10 w-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+            </div>
+            <h3 id="confirm-modal-title" class="text-2xl font-bold text-gray-900 mb-3"></h3>
+            <div id="confirm-modal-message" class="text-gray-600 text-left bg-gray-50 rounded-lg p-4 mb-6 space-y-2"></div>
+            <div class="flex justify-center space-x-4">
+              <button id="confirm-cancel-btn" class="px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition-colors duration-200 min-w-[120px]">
+                Cancelar
+              </button>
+              <button id="confirm-delete-btn" class="px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors duration-200 min-w-[120px] flex items-center justify-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                Eliminar
+              </button>
             </div>
           </div>
         </div>
@@ -358,17 +549,118 @@ export async function renderAdminView() {
 }
 
 function initializeAdminPage() {
+  console.log('🚀 Initializing admin page...');
+
   // Initialize tabs
   initializeTabs();
 
   // Initialize modals
   initializeModals();
 
+  // Initialize global event listeners for admin panel (only once)
+  console.log('📌 About to call initializeCategoryBadgeListeners...');
+  initializeCategoryBadgeListeners();
+
   // Load dynamic data
   loadCategoriesAndBadges();
+  loadOffers();
 
   // Initialize product form
   initializeProductForm();
+
+  // Initialize category form
+  initializeCategoryForm();
+
+  // Initialize badge form
+  initializeBadgeForm();
+
+  // Initialize offer modal and form
+  initializeOfferModal();
+  initializeOfferForm();
+
+  console.log('✅ Admin page initialization complete');
+}
+
+// Global click handler for admin panel
+function handleAdminPanelClick(e) {
+  console.log('🖱️ Click detected on:', e.target);
+  console.log('🖱️ Click target tagName:', e.target.tagName);
+  console.log('🖱️ Click target has data-action?', e.target.hasAttribute('data-action'));
+
+  const button = e.target.closest('[data-action]');
+  console.log('🔍 Closest button with data-action:', button);
+
+  if (!button) {
+    console.log('⚠️ No button with data-action found');
+    return;
+  }
+
+  const action = button.dataset.action;
+  console.log('🔘 Admin button clicked:', action, button.dataset);
+
+  // Product actions
+  if (action === 'edit-product') {
+    e.preventDefault();
+    e.stopPropagation();
+    const productId = button.dataset.productId;
+    window.editProduct(productId);
+  } else if (action === 'delete-product') {
+    e.preventDefault();
+    e.stopPropagation();
+    const productId = button.dataset.productId;
+    window.deleteProduct(productId);
+  }
+  // Category actions
+  else if (action === 'edit-category') {
+    e.preventDefault();
+    e.stopPropagation();
+    const categoryId = button.dataset.categoryId;
+    window.editCategory(categoryId);
+  } else if (action === 'delete-category') {
+    e.preventDefault();
+    e.stopPropagation();
+    const categoryId = button.dataset.categoryId;
+    const productCount = parseInt(button.dataset.productCount) || 0;
+    window.deleteCategory(categoryId, productCount);
+  }
+  // Badge actions
+  else if (action === 'edit-badge') {
+    e.preventDefault();
+    e.stopPropagation();
+    const badgeId = button.dataset.badgeId;
+    window.editBadge(badgeId);
+  } else if (action === 'delete-badge') {
+    e.preventDefault();
+    e.stopPropagation();
+    const badgeId = button.dataset.badgeId;
+    const productCount = parseInt(button.dataset.productCount) || 0;
+    window.deleteBadge(badgeId, productCount);
+  }
+  // Offer actions
+  else if (action === 'edit-offer') {
+    e.preventDefault();
+    e.stopPropagation();
+    const offerId = button.dataset.offerId;
+    window.editOffer(offerId);
+  } else if (action === 'delete-offer') {
+    e.preventDefault();
+    e.stopPropagation();
+    const offerId = button.dataset.offerId;
+    window.deleteOffer(offerId);
+  }
+}
+
+// Initialize event listeners - attach once to document
+let adminListenerAttached = false;
+
+function initializeCategoryBadgeListeners() {
+  if (adminListenerAttached) return;
+
+  // Attach a single listener to document that handles all admin panel clicks
+  // Use capture phase to intercept events before other handlers
+  document.addEventListener('click', handleAdminPanelClick, true);
+  adminListenerAttached = true;
+  console.log('✅ Admin panel listeners attached to document with capture=true');
 }
 
 function initializeTabs() {
@@ -401,6 +693,7 @@ function initializeTabs() {
 }
 
 function initializeModals() {
+  // Product Modal
   const modal = document.getElementById('product-modal');
   const btnAdd = document.getElementById('btn-add-product');
   const btnClose = document.getElementById('close-modal');
@@ -418,6 +711,8 @@ function initializeModals() {
   // Close modal
   const closeModal = () => {
     modal.classList.add('hidden');
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
   };
 
   btnClose?.addEventListener('click', closeModal);
@@ -429,6 +724,98 @@ function initializeModals() {
       closeModal();
     }
   });
+
+  // Category Modal
+  const categoryModal = document.getElementById('category-modal');
+  const btnAddCategory = document.getElementById('btn-add-category');
+  const btnCloseCategory = document.getElementById('close-category-modal');
+  const btnCancelCategory = document.getElementById('cancel-category');
+
+  btnAddCategory?.addEventListener('click', () => {
+    document.getElementById('category-modal-title').textContent = 'Agregar Categoría';
+    document.getElementById('category-editing-id').value = '';
+    document.getElementById('category-form').reset();
+    document.getElementById('category-id').disabled = false;
+    document.getElementById('category-color').value = '#3B82F6';
+    document.getElementById('category-color-picker').value = '#3B82F6';
+    categoryModal.classList.remove('hidden');
+  });
+
+  const closeCategoryModal = () => {
+    categoryModal.classList.add('hidden');
+    document.getElementById('category-editing-id').value = '';
+    document.getElementById('category-id').disabled = false;
+  };
+
+  btnCloseCategory?.addEventListener('click', closeCategoryModal);
+  btnCancelCategory?.addEventListener('click', closeCategoryModal);
+
+  categoryModal?.addEventListener('click', (e) => {
+    if (e.target === categoryModal) {
+      closeCategoryModal();
+    }
+  });
+
+  // Sync color picker with text input for categories
+  const categoryColorPicker = document.getElementById('category-color-picker');
+  const categoryColorInput = document.getElementById('category-color');
+
+  categoryColorPicker?.addEventListener('input', (e) => {
+    categoryColorInput.value = e.target.value.toUpperCase();
+  });
+
+  categoryColorInput?.addEventListener('input', (e) => {
+    const color = e.target.value;
+    if (/^#[0-9A-Fa-f]{6}$/.test(color)) {
+      categoryColorPicker.value = color;
+    }
+  });
+
+  // Badge Modal
+  const badgeModal = document.getElementById('badge-modal');
+  const btnAddBadge = document.getElementById('btn-add-badge');
+  const btnCloseBadge = document.getElementById('close-badge-modal');
+  const btnCancelBadge = document.getElementById('cancel-badge');
+
+  btnAddBadge?.addEventListener('click', () => {
+    document.getElementById('badge-modal-title').textContent = 'Agregar Badge';
+    document.getElementById('badge-editing-id').value = '';
+    document.getElementById('badge-form').reset();
+    document.getElementById('badge-id').disabled = false;
+    document.getElementById('badge-color').value = '#3B82F6';
+    document.getElementById('badge-color-picker').value = '#3B82F6';
+    badgeModal.classList.remove('hidden');
+  });
+
+  const closeBadgeModal = () => {
+    badgeModal.classList.add('hidden');
+    document.getElementById('badge-editing-id').value = '';
+    document.getElementById('badge-id').disabled = false;
+  };
+
+  btnCloseBadge?.addEventListener('click', closeBadgeModal);
+  btnCancelBadge?.addEventListener('click', closeBadgeModal);
+
+  badgeModal?.addEventListener('click', (e) => {
+    if (e.target === badgeModal) {
+      closeBadgeModal();
+    }
+  });
+
+  // Sync color picker with text input for badges
+  const badgeColorPicker = document.getElementById('badge-color-picker');
+  const badgeColorInput = document.getElementById('badge-color');
+
+  badgeColorPicker?.addEventListener('input', (e) => {
+    badgeColorInput.value = e.target.value.toUpperCase();
+  });
+
+  badgeColorInput?.addEventListener('input', (e) => {
+    const color = e.target.value;
+    if (/^#[0-9A-Fa-f]{6}$/.test(color)) {
+      badgeColorPicker.value = color;
+    }
+  });
 }
 
 async function loadCategoriesAndBadges() {
@@ -436,6 +823,7 @@ async function loadCategoriesAndBadges() {
     // Load categories from Firebase or use defaults
     const categories = await getCategoriesFromFirebase();
     const badges = await getBadgesFromFirebase();
+    const products = await getProductsFromFirebase();
 
     // Populate category select
     const categorySelect = document.getElementById('product-category');
@@ -455,9 +843,9 @@ async function loadCategoriesAndBadges() {
       });
     }
 
-    // Load categories list
-    loadCategoriesList(categories);
-    loadBadgesList(badges);
+    // Load categories list with product counts
+    loadCategoriesList(categories, products);
+    loadBadgesList(badges, products);
 
   } catch (error) {
     console.error('Error loading categories and badges:', error);
@@ -496,11 +884,10 @@ function initializeProductForm() {
         rating: parseFloat(document.getElementById('product-rating').value) || 4.5,
         category: document.getElementById('product-category').value,
         badge: document.getElementById('product-badge').value,
+        offerId: document.getElementById('product-offer').value || null,
         description: document.getElementById('product-description').value,
         image: document.getElementById('product-image').value,
         appUrl: document.getElementById('product-app-url').value,
-        offerStart: document.getElementById('offer-start').value ? new Date(document.getElementById('offer-start').value) : null,
-        offerEnd: document.getElementById('offer-end').value ? new Date(document.getElementById('offer-end').value) : null,
         reviews: Math.floor(Math.random() * 400) + 50,
         features: [],
         tags: [document.getElementById('product-category').value],
@@ -540,22 +927,149 @@ function initializeProductForm() {
       // Re-enable submit button
       const submitBtn = document.getElementById('submit-product');
       submitBtn.disabled = false;
-      submitBtn.textContent = originalText;
+      submitBtn.textContent = 'Guardar Producto';
+    }
+  });
+}
+
+function initializeCategoryForm() {
+  const categoryForm = document.getElementById('category-form');
+
+  categoryForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    try {
+      if (!auth?.currentUser) {
+        showAdminToast('Debes iniciar sesión para realizar esta acción', 'error');
+        return;
+      }
+
+      const userIsAdmin = await isUserAdmin(auth.currentUser.uid) || isAdminEmail(auth.currentUser.email);
+      if (!userIsAdmin) {
+        showAdminToast('No tienes permisos para realizar esta acción.', 'error');
+        return;
+      }
+
+      const submitBtn = document.getElementById('submit-category');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Guardando...';
+
+      const editingId = document.getElementById('category-editing-id').value;
+      const isEditing = editingId !== '';
+
+      const categoryId = isEditing ? editingId : document.getElementById('category-id').value;
+      const categoryData = {
+        id: categoryId,
+        name: document.getElementById('category-name').value,
+        color: document.getElementById('category-color').value,
+        updatedAt: new Date()
+      };
+
+      // Solo agregar createdAt si es nuevo
+      if (!isEditing) {
+        categoryData.createdAt = new Date();
+      }
+
+      await setDoc(doc(db, 'categories', categoryId), categoryData, { merge: true });
+      showAdminToast(isEditing ? 'Categoría actualizada exitosamente' : 'Categoría creada exitosamente', 'success');
+
+      document.getElementById('category-modal').classList.add('hidden');
+      document.getElementById('category-editing-id').value = '';
+      document.getElementById('category-id').disabled = false;
+
+      // Re-enable submit button
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Guardar Categoría';
+
+      await loadCategoriesAndBadges();
+
+    } catch (error) {
+      console.error('Error saving category:', error);
+      showAdminToast('Error al guardar categoría: ' + error.message, 'error');
+
+      const submitBtn = document.getElementById('submit-category');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Guardar Categoría';
+    }
+  });
+}
+
+function initializeBadgeForm() {
+  const badgeForm = document.getElementById('badge-form');
+
+  badgeForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    try {
+      if (!auth?.currentUser) {
+        showAdminToast('Debes iniciar sesión para realizar esta acción', 'error');
+        return;
+      }
+
+      const userIsAdmin = await isUserAdmin(auth.currentUser.uid) || isAdminEmail(auth.currentUser.email);
+      if (!userIsAdmin) {
+        showAdminToast('No tienes permisos para realizar esta acción.', 'error');
+        return;
+      }
+
+      const submitBtn = document.getElementById('submit-badge');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Guardando...';
+
+      const editingId = document.getElementById('badge-editing-id').value;
+      const isEditing = editingId !== '';
+
+      const badgeId = isEditing ? editingId : document.getElementById('badge-id').value;
+      const badgeData = {
+        id: badgeId,
+        name: document.getElementById('badge-name').value,
+        color: document.getElementById('badge-color').value,
+        updatedAt: new Date()
+      };
+
+      // Solo agregar createdAt si es nuevo
+      if (!isEditing) {
+        badgeData.createdAt = new Date();
+      }
+
+      await setDoc(doc(db, 'badges', badgeId), badgeData, { merge: true });
+      showAdminToast(isEditing ? 'Badge actualizado exitosamente' : 'Badge creado exitosamente', 'success');
+
+      document.getElementById('badge-modal').classList.add('hidden');
+      document.getElementById('badge-editing-id').value = '';
+      document.getElementById('badge-id').disabled = false;
+
+      // Re-enable submit button
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Guardar Badge';
+
+      await loadCategoriesAndBadges();
+
+    } catch (error) {
+      console.error('Error saving badge:', error);
+      showAdminToast('Error al guardar badge: ' + error.message, 'error');
+
+      const submitBtn = document.getElementById('submit-badge');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Guardar Badge';
     }
   });
 }
 
 // Global function to edit products
 window.editProduct = async function(productId) {
+  console.log('📝 editProduct called with ID:', productId);
   try {
     // Get product data
     const productDoc = await getDoc(doc(db, 'products', productId));
     if (!productDoc.exists()) {
+      console.error('❌ Product not found:', productId);
       showAdminToast('Producto no encontrado', 'error');
       return;
     }
 
     const product = productDoc.data();
+    console.log('✅ Product loaded:', product);
 
     // Populate form with product data
     document.getElementById('modal-title').textContent = 'Editar Producto';
@@ -570,21 +1084,61 @@ window.editProduct = async function(productId) {
     document.getElementById('product-image').value = product.image || '';
     document.getElementById('product-app-url').value = product.appUrl || '';
 
-    // Handle dates
-    if (product.offerStart) {
-      const offerStart = product.offerStart.toDate ? product.offerStart.toDate() : new Date(product.offerStart);
-      document.getElementById('offer-start').value = offerStart.toISOString().slice(0, 16);
-    }
-    if (product.offerEnd) {
-      const offerEnd = product.offerEnd.toDate ? product.offerEnd.toDate() : new Date(product.offerEnd);
-      document.getElementById('offer-end').value = offerEnd.toISOString().slice(0, 16);
-    }
+    // Load offers for this product
+    const offers = await getOffersFromFirebase();
+    const productOffers = offers.filter(offer => offer.productId === productId);
+    const offerSelect = document.getElementById('product-offer');
+    offerSelect.innerHTML = '<option value="">Sin oferta</option>';
+    productOffers.forEach(offer => {
+      const discount = offer.discountPrice === 0
+        ? 'GRATIS'
+        : `$${offer.discountPrice.toFixed(2)} (${Math.round(((offer.originalPrice - offer.discountPrice) / offer.originalPrice) * 100)}% OFF)`;
+      const selected = product.offerId === offer.id ? 'selected' : '';
+      offerSelect.innerHTML += `<option value="${offer.id}" ${selected}>${discount} - ${offer.description || 'Sin descripción'}</option>`;
+    });
 
     // Show modal
-    document.getElementById('product-modal').classList.remove('hidden');
+    const modal = document.getElementById('product-modal');
+    console.log('🎭 Modal element:', modal);
+    console.log('🎭 Modal classes before:', modal?.className);
+    console.log('🎭 Modal current display:', modal?.style.display);
+    console.log('🎭 Modal computed styles:', window.getComputedStyle(modal));
+
+    if (modal) {
+      console.log('🎭 BEFORE - Modal parent:', modal.parentElement?.tagName);
+      console.log('🎭 BEFORE - Has hidden class:', modal.classList.contains('hidden'));
+
+      // Step 1: Remove the 'hidden' class explicitly
+      modal.classList.remove('hidden');
+      console.log('🎭 STEP 1 - Removed hidden class');
+
+      // Step 2: Move to body if not already there
+      if (modal.parentElement !== document.body) {
+        console.log('🎭 STEP 2 - Moving from', modal.parentElement?.tagName, 'to BODY');
+        document.body.appendChild(modal);
+      }
+
+      // Step 3: Apply flex to make it visible
+      modal.style.display = 'flex';
+      modal.style.position = 'fixed';
+      modal.style.inset = '0';
+      modal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+      modal.style.zIndex = '9999';
+      modal.style.alignItems = 'center';
+      modal.style.justifyContent = 'center';
+      modal.style.overflow = 'auto';
+
+      document.body.style.overflow = 'hidden';
+
+      console.log('🎭 AFTER - offsetWidth:', modal.offsetWidth, 'offsetHeight:', modal.offsetHeight);
+      console.log('🎭 AFTER - display:', modal.style.display);
+      console.log('✅ Modal should now be visible');
+    } else {
+      console.error('❌ Modal element not found!');
+    }
 
   } catch (error) {
-    console.error('Error loading product for edit:', error);
+    console.error('❌ Error loading product for edit:', error);
     showAdminToast('Error al cargar producto para editar', 'error');
   }
 };
@@ -605,16 +1159,36 @@ window.deleteProduct = async function(productId) {
       return;
     }
 
-    const confirmed = confirm('¿Estás seguro de que deseas eliminar este producto?');
-    if (!confirmed) return;
+    const messageHTML = `
+      <p class="text-base mb-3">¿Estás seguro de que deseas eliminar este producto?</p>
+      <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-3">
+        <div class="flex items-start">
+          <svg class="w-5 h-5 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+          </svg>
+          <div>
+            <p class="font-semibold text-yellow-800">¡Advertencia!</p>
+            <p class="text-yellow-700 text-sm">Esta acción eliminará permanentemente el producto.</p>
+          </div>
+        </div>
+      </div>
+      <p class="text-sm text-gray-500 italic">⚠️ Esta acción no se puede deshacer.</p>
+    `;
 
-    await deleteDoc(doc(db, 'products', productId));
+    showCustomConfirm('Eliminar Producto', messageHTML, async () => {
+      try {
+        await deleteDoc(doc(db, 'products', productId));
 
-    // Show success message
-    showAdminToast('Producto eliminado exitosamente', 'success');
+        // Show success message
+        showAdminToast('Producto eliminado exitosamente', 'success');
 
-    // Reload admin view instead of full page reload
-    await renderAdminView();
+        // Reload admin view instead of full page reload
+        await renderAdminView();
+      } catch (error) {
+        console.error('Error eliminando producto:', error);
+        showAdminToast('Error al eliminar producto: ' + error.message, 'error');
+      }
+    });
 
   } catch (error) {
     console.error('Error eliminando producto:', error);
@@ -661,6 +1235,48 @@ function showAdminToast(message, type = 'success') {
       }
     }, 300);
   }, 3000);
+}
+
+// Custom confirmation modal
+function showCustomConfirm(title, message, onConfirm) {
+  const modal = document.getElementById('custom-confirm-modal');
+  const titleElement = document.getElementById('confirm-modal-title');
+  const messageElement = document.getElementById('confirm-modal-message');
+  const cancelBtn = document.getElementById('confirm-cancel-btn');
+  const deleteBtn = document.getElementById('confirm-delete-btn');
+
+  // Set content
+  titleElement.textContent = title;
+  messageElement.innerHTML = message;
+
+  // Show modal
+  modal.classList.remove('hidden');
+
+  // Handle cancel
+  const handleCancel = () => {
+    modal.classList.add('hidden');
+    cancelBtn.removeEventListener('click', handleCancel);
+    deleteBtn.removeEventListener('click', handleConfirm);
+  };
+
+  // Handle confirm
+  const handleConfirm = () => {
+    modal.classList.add('hidden');
+    cancelBtn.removeEventListener('click', handleCancel);
+    deleteBtn.removeEventListener('click', handleConfirm);
+    onConfirm();
+  };
+
+  // Add event listeners
+  cancelBtn.addEventListener('click', handleCancel);
+  deleteBtn.addEventListener('click', handleConfirm);
+
+  // Close on outside click
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      handleCancel();
+    }
+  });
 }
 
 // Helper functions for categories and badges
@@ -729,45 +1345,586 @@ async function getBadgesFromFirebase() {
   }
 }
 
-function loadCategoriesList(categories) {
+function loadCategoriesList(categories, products) {
+  console.log('📋 Loading categories list. Categories count:', categories.length);
   const categoriesList = document.getElementById('categories-list');
-  if (!categoriesList) return;
+  if (!categoriesList) {
+    console.error('❌ categories-list element not found!');
+    return;
+  }
 
-  categoriesList.innerHTML = categories.map(category => `
+  if (categories.length === 0) {
+    console.warn('⚠️ No categories to display');
+    categoriesList.innerHTML = '<p class="text-gray-500 text-center col-span-full">No hay categorías creadas aún.</p>';
+    return;
+  }
+
+  const html = categories.map(category => {
+    const productCount = products.filter(p => p.category === category.id).length;
+
+    return `
     <div class="bg-white p-4 rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
-      <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center">
-          <div class="w-4 h-4 rounded-full mr-2" style="background-color: ${category.color}"></div>
-          <h3 class="font-semibold text-gray-900">${category.name}</h3>
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center flex-1">
+          <div class="w-4 h-4 rounded-full mr-2 flex-shrink-0" style="background-color: ${category.color}"></div>
+          <h3 class="font-semibold text-gray-900 truncate">${category.name}</h3>
         </div>
-        <button onclick="deleteCategory('${category.id}')" class="text-red-500 hover:text-red-700">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-          </svg>
-        </button>
+        <div class="flex items-center space-x-2">
+          <button data-category-id="${category.id}" data-action="edit-category" class="text-blue-500 hover:text-blue-700 p-1 rounded hover:bg-blue-50 transition-colors" title="Editar categoría">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+          </button>
+          <button data-category-id="${category.id}" data-product-count="${productCount}" data-action="delete-category" class="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors" title="Eliminar categoría">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+          </button>
+        </div>
       </div>
-      <p class="text-sm text-gray-600">ID: ${category.id}</p>
+      <div class="space-y-1">
+        <p class="text-sm text-gray-600">ID: <span class="font-mono text-xs">${category.id}</span></p>
+        <p class="text-sm ${productCount > 0 ? 'text-blue-600' : 'text-gray-500'}">
+          <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+          </svg>
+          ${productCount} ${productCount === 1 ? 'producto' : 'productos'}
+        </p>
+      </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
+
+  categoriesList.innerHTML = html;
+  console.log('✅ Categories list rendered with', categories.length, 'items');
 }
 
-function loadBadgesList(badges) {
+function loadBadgesList(badges, products) {
   const badgesList = document.getElementById('badges-list');
   if (!badgesList) return;
 
-  badgesList.innerHTML = badges.map(badge => `
+  badgesList.innerHTML = badges.map(badge => {
+    const productCount = products.filter(p => p.badge === badge.id).length;
+
+    return `
     <div class="bg-white p-4 rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
-      <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center flex-1">
           <span class="px-2 py-1 text-xs font-medium rounded-full mr-2" style="background-color: ${badge.color}20; color: ${badge.color}">${badge.name}</span>
         </div>
-        <button onclick="deleteBadge('${badge.id}')" class="text-red-500 hover:text-red-700">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-          </svg>
-        </button>
+        <div class="flex items-center space-x-2">
+          <button data-badge-id="${badge.id}" data-action="edit-badge" class="text-blue-500 hover:text-blue-700 p-1 rounded hover:bg-blue-50 transition-colors" title="Editar badge">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+          </button>
+          <button data-badge-id="${badge.id}" data-product-count="${productCount}" data-action="delete-badge" class="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors" title="Eliminar badge">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+          </button>
+        </div>
       </div>
-      <p class="text-sm text-gray-600">ID: ${badge.id}</p>
+      <div class="space-y-1">
+        <p class="text-sm text-gray-600">ID: <span class="font-mono text-xs">${badge.id}</span></p>
+        <p class="text-sm ${productCount > 0 ? 'text-blue-600' : 'text-gray-500'}">
+          <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+          </svg>
+          ${productCount} ${productCount === 1 ? 'producto' : 'productos'}
+        </p>
+      </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
+
+// Global function to edit categories
+window.editCategory = async function(categoryId) {
+  try {
+    const categoryDoc = await getDoc(doc(db, 'categories', categoryId));
+    if (!categoryDoc.exists()) {
+      showAdminToast('Categoría no encontrada', 'error');
+      return;
+    }
+
+    const category = categoryDoc.data();
+
+    // Populate form with category data
+    document.getElementById('category-modal-title').textContent = 'Editar Categoría';
+    document.getElementById('category-editing-id').value = categoryId;
+    document.getElementById('category-id').value = category.id || categoryId;
+    document.getElementById('category-id').disabled = true; // No permitir cambiar el ID al editar
+    document.getElementById('category-name').value = category.name || '';
+    document.getElementById('category-color').value = category.color || '#3B82F6';
+    document.getElementById('category-color-picker').value = category.color || '#3B82F6';
+
+    // Show modal
+    document.getElementById('category-modal').classList.remove('hidden');
+
+  } catch (error) {
+    console.error('Error loading category for edit:', error);
+    showAdminToast('Error al cargar categoría para editar', 'error');
+  }
+};
+
+// Global function to delete categories
+window.deleteCategory = async function(categoryId, productCount = 0) {
+  try {
+    if (!auth?.currentUser) {
+      showAdminToast('Debes iniciar sesión para realizar esta acción', 'error');
+      window.location.hash = '#/auth';
+      return;
+    }
+
+    const userIsAdmin = await isUserAdmin(auth.currentUser.uid) || isAdminEmail(auth.currentUser.email);
+    if (!userIsAdmin) {
+      showAdminToast('No tienes permisos para eliminar categorías.', 'error');
+      return;
+    }
+
+    // Crear mensaje de confirmación con información de productos
+    let messageHTML = '<p class="text-base mb-3">¿Estás seguro de que deseas eliminar esta categoría?</p>';
+    if (productCount > 0) {
+      messageHTML += `
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-3">
+          <div class="flex items-start">
+            <svg class="w-5 h-5 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+            <div>
+              <p class="font-semibold text-yellow-800">¡Advertencia!</p>
+              <p class="text-yellow-700 text-sm">Esta categoría está siendo usada por <strong>${productCount}</strong> ${productCount === 1 ? 'producto' : 'productos'}.</p>
+              <p class="text-yellow-700 text-sm mt-1">Al eliminarla, estos productos quedarán sin categoría asignada.</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    messageHTML += '<p class="text-sm text-gray-500 italic">⚠️ Esta acción no se puede deshacer.</p>';
+
+    showCustomConfirm('Eliminar Categoría', messageHTML, async () => {
+      try {
+        await deleteDoc(doc(db, 'categories', categoryId));
+        showAdminToast('Categoría eliminada exitosamente', 'success');
+        await loadCategoriesAndBadges();
+      } catch (error) {
+        console.error('Error eliminando categoría:', error);
+        showAdminToast('Error al eliminar categoría: ' + error.message, 'error');
+      }
+    });
+
+  } catch (error) {
+    console.error('Error en deleteCategory:', error);
+    showAdminToast('Error: ' + error.message, 'error');
+  }
+};
+
+// Global function to edit badges
+window.editBadge = async function(badgeId) {
+  try {
+    const badgeDoc = await getDoc(doc(db, 'badges', badgeId));
+    if (!badgeDoc.exists()) {
+      showAdminToast('Badge no encontrado', 'error');
+      return;
+    }
+
+    const badge = badgeDoc.data();
+
+    // Populate form with badge data
+    document.getElementById('badge-modal-title').textContent = 'Editar Badge';
+    document.getElementById('badge-editing-id').value = badgeId;
+    document.getElementById('badge-id').value = badge.id || badgeId;
+    document.getElementById('badge-id').disabled = true; // No permitir cambiar el ID al editar
+    document.getElementById('badge-name').value = badge.name || '';
+    document.getElementById('badge-color').value = badge.color || '#3B82F6';
+    document.getElementById('badge-color-picker').value = badge.color || '#3B82F6';
+
+    // Show modal
+    document.getElementById('badge-modal').classList.remove('hidden');
+
+  } catch (error) {
+    console.error('Error loading badge for edit:', error);
+    showAdminToast('Error al cargar badge para editar', 'error');
+  }
+};
+
+// Global function to delete badges
+window.deleteBadge = async function(badgeId, productCount = 0) {
+  try {
+    if (!auth?.currentUser) {
+      showAdminToast('Debes iniciar sesión para realizar esta acción', 'error');
+      window.location.hash = '#/auth';
+      return;
+    }
+
+    const userIsAdmin = await isUserAdmin(auth.currentUser.uid) || isAdminEmail(auth.currentUser.email);
+    if (!userIsAdmin) {
+      showAdminToast('No tienes permisos para eliminar badges.', 'error');
+      return;
+    }
+
+    // Crear mensaje de confirmación con información de productos
+    let messageHTML = '<p class="text-base mb-3">¿Estás seguro de que deseas eliminar este badge?</p>';
+    if (productCount > 0) {
+      messageHTML += `
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-3">
+          <div class="flex items-start">
+            <svg class="w-5 h-5 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+            <div>
+              <p class="font-semibold text-yellow-800">¡Advertencia!</p>
+              <p class="text-yellow-700 text-sm">Este badge está siendo usado por <strong>${productCount}</strong> ${productCount === 1 ? 'producto' : 'productos'}.</p>
+              <p class="text-yellow-700 text-sm mt-1">Al eliminarlo, estos productos quedarán sin badge asignado.</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    messageHTML += '<p class="text-sm text-gray-500 italic">⚠️ Esta acción no se puede deshacer.</p>';
+
+    showCustomConfirm('Eliminar Badge', messageHTML, async () => {
+      try {
+        await deleteDoc(doc(db, 'badges', badgeId));
+        showAdminToast('Badge eliminado exitosamente', 'success');
+        await loadCategoriesAndBadges();
+      } catch (error) {
+        console.error('Error eliminando badge:', error);
+        showAdminToast('Error al eliminar badge: ' + error.message, 'error');
+      }
+    });
+
+  } catch (error) {
+    console.error('Error en deleteBadge:', error);
+    showAdminToast('Error: ' + error.message, 'error');
+  }
+};
+
+// Offers Management Functions
+async function getOffersFromFirebase() {
+  try {
+    const offersQuery = query(collection(db, 'offers'));
+    const querySnapshot = await getDocs(offersQuery);
+    const offers = [];
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      offers.push({
+        id: doc.id,
+        ...data
+      });
+    });
+
+    return offers;
+  } catch (error) {
+    console.error('Error loading offers:', error);
+    return [];
+  }
+}
+
+function initializeOfferModal() {
+  const offerModal = document.getElementById('offer-modal');
+  const btnAddOffer = document.getElementById('btn-add-offer');
+  const btnCloseOffer = document.getElementById('close-offer-modal');
+  const btnCancelOffer = document.getElementById('cancel-offer');
+  const setFreeBtn = document.getElementById('set-free-btn');
+  const indefiniteCheckbox = document.getElementById('offer-indefinite');
+  const endDateInput = document.getElementById('offer-end-date');
+  const productSelect = document.getElementById('offer-product');
+  const originalPriceInput = document.getElementById('offer-original-price');
+  const discountPriceInput = document.getElementById('offer-discount-price');
+  const startDateInput = document.getElementById('offer-start-date');
+
+  // Handle "Gratis" button
+  setFreeBtn?.addEventListener('click', () => {
+    discountPriceInput.value = '0';
+  });
+
+  // Handle "Por tiempo indefinido" checkbox
+  indefiniteCheckbox?.addEventListener('change', (e) => {
+    if (e.target.checked) {
+      endDateInput.disabled = true;
+      endDateInput.required = false;
+      endDateInput.value = '';
+      endDateInput.classList.add('bg-gray-100');
+    } else {
+      endDateInput.disabled = false;
+      endDateInput.required = true;
+      endDateInput.classList.remove('bg-gray-100');
+    }
+  });
+
+  // Handle product selection to load price
+  productSelect?.addEventListener('change', async (e) => {
+    const productId = e.target.value;
+    if (!productId) {
+      originalPriceInput.value = '';
+      return;
+    }
+
+    try {
+      const productDoc = await getDoc(doc(db, 'products', productId));
+      if (productDoc.exists()) {
+        const product = productDoc.data();
+        originalPriceInput.value = product.price || '';
+      }
+    } catch (error) {
+      console.error('Error loading product price:', error);
+    }
+  });
+
+  btnAddOffer?.addEventListener('click', async () => {
+    document.getElementById('offer-modal-title').textContent = 'Crear Oferta';
+    document.getElementById('offer-editing-id').value = '';
+    document.getElementById('offer-form').reset();
+    document.getElementById('offer-active').checked = true;
+
+    // Set today's date as default
+    const today = new Date().toISOString().split('T')[0];
+    startDateInput.value = today;
+
+    // Load products into select
+    const products = await getProductsFromFirebase();
+    productSelect.innerHTML = '<option value="">Seleccionar producto</option>';
+    products.forEach(product => {
+      productSelect.innerHTML += `<option value="${product.id}">${product.name}</option>`;
+    });
+
+    // Reset indefinite checkbox
+    indefiniteCheckbox.checked = false;
+    endDateInput.disabled = false;
+    endDateInput.required = true;
+    endDateInput.classList.remove('bg-gray-100');
+
+    offerModal.classList.remove('hidden');
+  });
+
+  const closeOfferModal = () => {
+    offerModal.classList.add('hidden');
+    document.getElementById('offer-editing-id').value = '';
+  };
+
+  btnCloseOffer?.addEventListener('click', closeOfferModal);
+  btnCancelOffer?.addEventListener('click', closeOfferModal);
+
+  offerModal?.addEventListener('click', (e) => {
+    if (e.target === offerModal) {
+      closeOfferModal();
+    }
+  });
+}
+
+function initializeOfferForm() {
+  const offerForm = document.getElementById('offer-form');
+
+  offerForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    try {
+      if (!auth?.currentUser) {
+        showAdminToast('Debes iniciar sesión para realizar esta acción', 'error');
+        return;
+      }
+
+      const userIsAdmin = await isUserAdmin(auth.currentUser.uid) || isAdminEmail(auth.currentUser.email);
+      if (!userIsAdmin) {
+        showAdminToast('No tienes permisos para realizar esta acción.', 'error');
+        return;
+      }
+
+      const submitBtn = document.getElementById('submit-offer');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Guardando...';
+
+      const editingId = document.getElementById('offer-editing-id').value;
+      const isEditing = editingId !== '';
+
+      const isIndefinite = document.getElementById('offer-indefinite').checked;
+      const endDateValue = document.getElementById('offer-end-date').value;
+
+      // Si es indefinido, establecer una fecha muy lejana en el futuro (año 2099)
+      const endDate = isIndefinite
+        ? new Date('2099-12-31')
+        : new Date(endDateValue);
+
+      const offerData = {
+        productId: document.getElementById('offer-product').value,
+        originalPrice: parseFloat(document.getElementById('offer-original-price').value),
+        discountPrice: parseFloat(document.getElementById('offer-discount-price').value),
+        startDate: new Date(document.getElementById('offer-start-date').value),
+        endDate: endDate,
+        indefinite: isIndefinite,
+        description: document.getElementById('offer-description').value || '',
+        active: document.getElementById('offer-active').checked,
+        updatedAt: new Date()
+      };
+
+      if (!isEditing) {
+        offerData.createdAt = new Date();
+      }
+
+      const offerId = isEditing ? editingId : `offer-${Date.now()}`;
+      await setDoc(doc(db, 'offers', offerId), offerData, { merge: true });
+      showAdminToast(isEditing ? 'Oferta actualizada exitosamente' : 'Oferta creada exitosamente', 'success');
+
+      document.getElementById('offer-modal').classList.add('hidden');
+      document.getElementById('offer-editing-id').value = '';
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Guardar Oferta';
+
+      await loadOffers();
+
+    } catch (error) {
+      console.error('Error saving offer:', error);
+      showAdminToast('Error al guardar oferta: ' + error.message, 'error');
+
+      const submitBtn = document.getElementById('submit-offer');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Guardar Oferta';
+    }
+  });
+}
+
+async function loadOffers() {
+  try {
+    const offers = await getOffersFromFirebase();
+    const products = await getProductsFromFirebase();
+    const offersList = document.getElementById('offers-list');
+
+    if (!offersList) return;
+
+    if (offers.length === 0) {
+      offersList.innerHTML = '<p class="text-gray-500 text-center col-span-full">No hay ofertas creadas aún.</p>';
+      return;
+    }
+
+    offersList.innerHTML = offers.map(offer => {
+      const product = products.find(p => p.id === offer.productId);
+      const discount = Math.round(((offer.originalPrice - offer.discountPrice) / offer.originalPrice) * 100);
+      const isActive = offer.active && new Date() >= offer.startDate.toDate() && new Date() <= offer.endDate.toDate();
+
+      return `
+      <div class="bg-white p-4 rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex-1">
+            <h3 class="font-semibold text-gray-900">${product?.name || 'Producto no encontrado'}</h3>
+            <span class="inline-block px-2 py-1 text-xs font-medium rounded-full ${isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'} mt-1">
+              ${isActive ? 'Activa' : 'Inactiva'}
+            </span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button data-offer-id="${offer.id}" data-action="edit-offer" class="text-blue-500 hover:text-blue-700 p-1 rounded hover:bg-blue-50 transition-colors" title="Editar oferta">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+            </button>
+            <button data-offer-id="${offer.id}" data-action="delete-offer" class="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors" title="Eliminar oferta">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="space-y-2">
+          <div class="flex items-baseline space-x-2">
+            <span class="text-2xl font-bold text-[#22a7d0]">$${offer.discountPrice.toFixed(2)}</span>
+            <span class="text-sm text-gray-500 line-through">$${offer.originalPrice.toFixed(2)}</span>
+            <span class="text-sm font-medium text-green-600">${discount}% OFF</span>
+          </div>
+          <p class="text-xs text-gray-600">
+            ${offer.startDate.toDate().toLocaleDateString()} - ${offer.endDate.toDate().toLocaleDateString()}
+          </p>
+          ${offer.description ? `<p class="text-sm text-gray-600">${offer.description}</p>` : ''}
+        </div>
+      </div>
+      `;
+    }).join('');
+
+  } catch (error) {
+    console.error('Error loading offers:', error);
+  }
+}
+
+window.editOffer = async function(offerId) {
+  try {
+    const offerDoc = await getDoc(doc(db, 'offers', offerId));
+    if (!offerDoc.exists()) {
+      showAdminToast('Oferta no encontrada', 'error');
+      return;
+    }
+
+    const offer = offerDoc.data();
+
+    // Load products
+    const products = await getProductsFromFirebase();
+    const productSelect = document.getElementById('offer-product');
+    productSelect.innerHTML = '<option value="">Seleccionar producto</option>';
+    products.forEach(product => {
+      productSelect.innerHTML += `<option value="${product.id}" ${product.id === offer.productId ? 'selected' : ''}>${product.name}</option>`;
+    });
+
+    document.getElementById('offer-modal-title').textContent = 'Editar Oferta';
+    document.getElementById('offer-editing-id').value = offerId;
+    document.getElementById('offer-original-price').value = offer.originalPrice;
+    document.getElementById('offer-discount-price').value = offer.discountPrice;
+    document.getElementById('offer-start-date').value = offer.startDate.toDate().toISOString().split('T')[0];
+    document.getElementById('offer-end-date').value = offer.endDate.toDate().toISOString().split('T')[0];
+    document.getElementById('offer-description').value = offer.description || '';
+    document.getElementById('offer-active').checked = offer.active;
+
+    document.getElementById('offer-modal').classList.remove('hidden');
+
+  } catch (error) {
+    console.error('Error loading offer for edit:', error);
+    showAdminToast('Error al cargar oferta para editar', 'error');
+  }
+};
+
+window.deleteOffer = async function(offerId) {
+  try {
+    if (!auth?.currentUser) {
+      showAdminToast('Debes iniciar sesión para realizar esta acción', 'error');
+      window.location.hash = '#/auth';
+      return;
+    }
+
+    const userIsAdmin = await isUserAdmin(auth.currentUser.uid) || isAdminEmail(auth.currentUser.email);
+    if (!userIsAdmin) {
+      showAdminToast('No tienes permisos para eliminar ofertas.', 'error');
+      return;
+    }
+
+    const messageHTML = `
+      <p class="text-base mb-3">¿Estás seguro de que deseas eliminar esta oferta?</p>
+      <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-3">
+        <div class="flex items-start">
+          <svg class="w-5 h-5 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+          </svg>
+          <div>
+            <p class="font-semibold text-yellow-800">¡Advertencia!</p>
+            <p class="text-yellow-700 text-sm">Esta oferta será eliminada permanentemente.</p>
+          </div>
+        </div>
+      </div>
+      <p class="text-sm text-gray-500 italic">⚠️ Esta acción no se puede deshacer.</p>
+    `;
+
+    showCustomConfirm('Eliminar Oferta', messageHTML, async () => {
+      try {
+        await deleteDoc(doc(db, 'offers', offerId));
+        showAdminToast('Oferta eliminada exitosamente', 'success');
+        await loadOffers();
+      } catch (error) {
+        console.error('Error eliminando oferta:', error);
+        showAdminToast('Error al eliminar oferta: ' + error.message, 'error');
+      }
+    });
+
+  } catch (error) {
+    console.error('Error en deleteOffer:', error);
+    showAdminToast('Error: ' + error.message, 'error');
+  }
+};
