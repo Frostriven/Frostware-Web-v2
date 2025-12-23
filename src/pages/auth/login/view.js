@@ -70,9 +70,11 @@ export async function renderLoginView() {
           saveCredentials(email, rememberCheckbox?.checked || false);
 
           loadingToast.success('¡Sesión iniciada exitosamente!');
-          setTimeout(() => {
-            window.location.hash = '#/account';
-          }, 1500);
+
+          // Wait for auth state to propagate, then navigate
+          // This ensures watchAuthState fires before hashchange
+          await new Promise(resolve => setTimeout(resolve, 100));
+          window.location.hash = '#/account';
         } catch (e) {
           console.error('Error en login:', e);
           const errorMessage = getLoginErrorMessage(e.code || e.message);
@@ -99,9 +101,10 @@ export async function renderLoginView() {
                 }
 
                 loadingToast.success('¡Sesión iniciada con Google exitosamente!');
-                setTimeout(() => {
-                    window.location.hash = '#/account';
-                }, 1500);
+
+                // Wait for auth state to propagate, then navigate
+                await new Promise(resolve => setTimeout(resolve, 100));
+                window.location.hash = '#/account';
             } catch (e) {
                 console.error('Error con Google:', e);
                 const errorMessage = getLoginErrorMessage(e.code || e.message);
@@ -127,9 +130,10 @@ export async function renderLoginView() {
                 const user = await quickDemoLogin();
 
                 loadingToast.success('¡Sesión demo iniciada exitosamente!');
-                setTimeout(() => {
-                    window.location.hash = '#/products';
-                }, 1500);
+
+                // Wait for auth state to propagate, then navigate
+                await new Promise(resolve => setTimeout(resolve, 100));
+                window.location.hash = '#/products';
             } catch (e) {
                 console.error('Error en demo login:', e);
                 loadingToast.error('Error al crear/acceder usuario demo. Revisa la consola.');

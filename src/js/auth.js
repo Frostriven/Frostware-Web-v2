@@ -67,22 +67,27 @@ export async function updateUserDisplayName(newName) {
 export async function logout() {
   if (!auth) throw new Error('Firebase no inicializado');
 
-  // Clear cart when logging out
-  if (window.cart && window.cart.clearCart) {
-    window.cart.clearCart();
-  }
-
-  // Also clear localStorage cart
-  localStorage.removeItem('cart');
+  // Don't clear cart on logout - let user keep their items for when they return
 
   await signOut(auth);
 }
 
-export function watchAuthState(cb) {
+export async function watchAuthState(cb) {
+  // Wait for Firebase to initialize before watching auth state
   if (!auth) {
-    console.warn('[auth] Firebase no inicializado');
-    cb(null);
-    return () => {};
+    console.log('[auth] Waiting for Firebase to initialize...');
+    const { initializeFirebase, auth: authModule } = await import('./firebase.js');
+    await initializeFirebase();
+
+    // Import auth again after initialization
+    const firebase = await import('./firebase.js');
+    if (!firebase.auth) {
+      console.warn('[auth] Firebase auth still not available');
+      cb(null);
+      return () => {};
+    }
+
+    return onAuthStateChanged(firebase.auth, cb);
   }
   return onAuthStateChanged(auth, cb);
 }

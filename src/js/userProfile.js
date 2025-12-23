@@ -181,206 +181,8 @@ export async function removeUserProduct(userId, productId) {
   return { success: true };
 }
 
-// Productos iniciales para poblar Firebase (solo usados en initializeProductsInFirebase)
-// IMPORTANTE: Estos productos solo se usan para inicializar la base de datos
-// La aplicación siempre carga productos desde Firebase usando getProductsFromFirebase()
-const initialProducts = [
-  {
-    id: 'north-atlantic-ops',
-    title: {
-      es: 'Procedimientos Operacionales del Atlántico Norte',
-      en: 'North Atlantic Operational Procedures'
-    },
-    shortDescription: {
-      es: 'Un banco de preguntas completo para pilotos transoceánicos que operan en el espacio aéreo del Atlántico Norte. Basado en documentos oficiales de OACI con referencias y justificaciones.',
-      en: 'A comprehensive question bank for transoceanic pilots operating in North Atlantic airspace. Based on official ICAO documents with references and justifications.'
-    },
-    longDescription: {
-      es: 'El banco de preguntas más completo para pilotos transoceánicos. Estudia procedimientos oficiales de OACI, practica con escenarios reales y aprueba tu certificación de operaciones NAT con confianza.',
-      en: 'The most comprehensive question bank for transoceanic pilots. Study official ICAO procedures, practice with real scenarios, and pass your NAT operations certification with confidence.'
-    },
-    price: 99,
-    originalPrice: 150,
-    imageURL: 'https://placehold.co/600x400/1a202c/FFFFFF?text=NAT+OPS&font=inter',
-    category: 'aviation',
-    detailGradientColors: ['#1b1b25', '#190d36', '#1b1b25'],
-    cardBgColor: '#1b1b25',
-    badge: 'Disponible',
-    badgeColor: 'blue',
-    rating: 5.0,
-    reviews: 342,
-    features: ['Banco de preguntas interactivo', 'Documentos ICAO oficiales', 'Referencias y justificaciones', 'Acceso completo'],
-    detailedFeatures: [
-      {
-        icon: 'radio',
-        title: {
-          es: 'Procedimientos de Comunicación',
-          en: 'Communications Procedures'
-        },
-        description: {
-          es: 'Domina protocolos de radio HF, operaciones SELCAL y requisitos de reporte de posición para vuelos oceánicos.',
-          en: 'Master HF radio protocols, SELCAL operations, and position reporting requirements for oceanic flight.'
-        }
-      },
-      {
-        icon: 'map',
-        title: {
-          es: 'Sistemas de Navegación y Rutas',
-          en: 'Navigation & Track Systems'
-        },
-        description: {
-          es: 'Aprende sistemas de rutas NAT, procedimientos de waypoints y requisitos RNAV para navegación oceánica segura.',
-          en: 'Learn NAT track systems, waypoint procedures, and RNAV requirements for safe oceanic navigation.'
-        }
-      },
-      {
-        icon: 'cloud',
-        title: {
-          es: 'Meteorología y Ambiente',
-          en: 'Weather & Environmental'
-        },
-        description: {
-          es: 'Comprende cartas SIGWX, reporte de turbulencias y cómo el clima afecta las operaciones NAT.',
-          en: 'Understand SIGWX charts, turbulence reporting, and how weather affects NAT operations.'
-        }
-      },
-      {
-        icon: 'warning',
-        title: {
-          es: 'Procedimientos de Emergencia',
-          en: 'Emergency Procedures'
-        },
-        description: {
-          es: 'Practica procedimientos de contingencia, desvíos y requisitos ETOPS para operaciones seguras.',
-          en: 'Practice contingency procedures, diversions, and ETOPS requirements for safe operations.'
-        }
-      },
-      {
-        icon: 'certificate',
-        title: {
-          es: 'Listo para Certificación',
-          en: 'Certification Ready'
-        },
-        description: {
-          es: 'Preguntas diseñadas para coincidir con exámenes de certificación reales con explicaciones detalladas y referencias.',
-          en: 'Questions designed to match real certification exams with detailed explanations and references.'
-        }
-      },
-      {
-        icon: 'lightning',
-        title: {
-          es: 'Aprendizaje Interactivo',
-          en: 'Interactive Learning'
-        },
-        description: {
-          es: 'Pistas, explicaciones detalladas y seguimiento de progreso para optimizar tus sesiones de estudio.',
-          en: 'Hints, detailed explanations, and progress tracking to optimize your study sessions.'
-        }
-      }
-    ],
-    tags: ['aviation', 'NAT', 'oceanic', 'procedures'],
-    appUrl: '/apps/north-atlantic-procedures/guide.html'
-  },
-
-  {
-    id: 'p2',
-    title: {
-      es: 'Calculadora de Rendimiento P2',
-      en: 'P2 Performance Calculator'
-    },
-    shortDescription: {
-      es: 'Herramienta avanzada de cálculo de rendimiento para operaciones de vuelo. Incluye análisis de peso y balance, consumo de combustible y optimización de rutas.',
-      en: 'Advanced flight performance calculation tool. Includes weight and balance analysis, fuel consumption and route optimization.'
-    },
-    longDescription: {
-      es: 'El banco de preguntas más completo para pilotos transoceánicos. Estudia procedimientos oficiales de OACI, practica con escenarios reales y aprueba tu certificación de operaciones NAT con confianza.',
-      en: 'The most comprehensive question bank for transoceanic pilots. Study official ICAO procedures, practice with real scenarios, and pass your NAT operations certification with confidence.'
-    },
-    price: 99,
-    originalPrice: 150,
-    imageURL: 'https://static.vecteezy.com/system/resources/previews/001/194/635/non_2x/snowflake-png.png',
-    category: 'aviation',
-    detailGradientColors: ['#d4d8dfff', '#39c815ff', '#51023cff'],
-    cardBgColor: '#d4d8dfff',
-    badge: 'Disponible',
-    badgeColor: 'blue',
-    rating: 5.0,
-    reviews: 342,
-    features: ['Banco de preguntas interactivo', 'Documentos ICAO oficiales', 'Referencias y justificaciones', 'Acceso completo'],
-    detailedFeatures: [
-      {
-        icon: 'radio',
-        title: {
-          es: 'Procedimientos de Comunicación',
-          en: 'Communications Procedures'
-        },
-        description: {
-          es: 'Domina protocolos de radio HF, operaciones SELCAL y requisitos de reporte de posición para vuelos oceánicos.',
-          en: 'Master HF radio protocols, SELCAL operations, and position reporting requirements for oceanic flight.'
-        }
-      },
-      {
-        icon: 'map',
-        title: {
-          es: 'Sistemas de Navegación y Rutas',
-          en: 'Navigation & Track Systems'
-        },
-        description: {
-          es: 'Aprende sistemas de rutas NAT, procedimientos de waypoints y requisitos RNAV para navegación oceánica segura.',
-          en: 'Learn NAT track systems, waypoint procedures, and RNAV requirements for safe oceanic navigation.'
-        }
-      },
-      {
-        icon: 'cloud',
-        title: {
-          es: 'Meteorología y Ambiente',
-          en: 'Weather & Environmental'
-        },
-        description: {
-          es: 'Comprende cartas SIGWX, reporte de turbulencias y cómo el clima afecta las operaciones NAT.',
-          en: 'Understand SIGWX charts, turbulence reporting, and how weather affects NAT operations.'
-        }
-      },
-      {
-        icon: 'warning',
-        title: {
-          es: 'Procedimientos de Emergencia',
-          en: 'Emergency Procedures'
-        },
-        description: {
-          es: 'Practica procedimientos de contingencia, desvíos y requisitos ETOPS para operaciones seguras.',
-          en: 'Practice contingency procedures, diversions, and ETOPS requirements for safe operations.'
-        }
-      },
-      {
-        icon: 'certificate',
-        title: {
-          es: 'Listo para Certificación',
-          en: 'Certification Ready'
-        },
-        description: {
-          es: 'Preguntas diseñadas para coincidir con exámenes de certificación reales con explicaciones detalladas y referencias.',
-          en: 'Questions designed to match real certification exams with detailed explanations and references.'
-        }
-      },
-      {
-        icon: 'lightning',
-        title: {
-          es: 'Aprendizaje Interactivo',
-          en: 'Interactive Learning'
-        },
-        description: {
-          es: 'Pistas, explicaciones detalladas y seguimiento de progreso para optimizar tus sesiones de estudio.',
-          en: 'Hints, detailed explanations, and progress tracking to optimize your study sessions.'
-        }
-      }
-    ],
-    tags: ['aviation', 'NAT', 'oceanic', 'procedures'],
-    appUrl: '/apps/north-atlantic-procedures/guide.html'
-  },
-
-
-];
+// NOTA: Los productos se gestionan exclusivamente desde el panel de administración (#/admin)
+// No hay productos hardcodeados - todos vienen de Firebase
 
 // Crear usuario demo para desarrollo
 export async function createDemoUser() {
@@ -435,8 +237,16 @@ export async function quickDemoLogin() {
 
 // Cargar productos desde Firebase (única fuente de verdad)
 export async function getProductsFromFirebase() {
+  // Wait for Firebase to initialize if not ready
   if (!db) {
-    throw new Error('Firestore no inicializado - Firebase es requerido para la aplicación');
+    const { initializeFirebase } = await import('./firebase.js');
+    await initializeFirebase();
+
+    // Import db again after initialization
+    const firebase = await import('./firebase.js');
+    if (!firebase.db) {
+      throw new Error('Firestore no inicializado - Firebase es requerido para la aplicación');
+    }
   }
 
   try {
@@ -476,83 +286,20 @@ export async function getProductsFromFirebase() {
   }
 }
 
-// Guardar productos estáticos en Firebase (función de inicialización)
+// Inicializar categorías y badges en Firebase (solo metadata, NO productos)
 export async function initializeProductsInFirebase() {
   if (!db) return;
 
   try {
-    // 1. Inicializar Productos
-    for (const product of initialProducts) {
-      const productRef = doc(db, 'products', product.id);
-      const productDoc = await getDoc(productRef);
+    console.log('🚀 Inicializando categorías y badges en Firebase...');
 
-      if (productDoc.exists()) {
-        const existingData = productDoc.data();
-        // Criterios para actualizar - verificar si faltan campos importantes
-        const needsUpdate =
-          !existingData.detailedFeatures ||
-          !existingData.rating ||
-          !existingData.reviews ||
-          !existingData.detailGradientColors ||
-          !existingData.cardBgColor ||
-          !existingData.badge ||
-          !existingData.features ||
-          existingData.detailedFeatures.length !== product.detailedFeatures?.length ||
-          typeof existingData.shortDescription === 'string' ||
-          typeof existingData.longDescription === 'string' ||
-          typeof existingData.title === 'string';
-
-        if (needsUpdate) {
-          console.log(`🔄 Updating product ${product.id} with all fields...`);
-          // Actualizar con TODOS los campos del producto usando nombres de Firebase
-          await updateDoc(productRef, {
-            title: product.title,
-            shortDescription: product.shortDescription,
-            longDescription: product.longDescription,
-            price: product.price,
-            originalPrice: product.originalPrice,
-            imageURL: product.imageURL,
-            category: product.category,
-            detailGradientColors: product.detailGradientColors || [],
-            cardBgColor: product.cardBgColor,
-            badge: product.badge,
-            badgeColor: product.badgeColor,
-            rating: product.rating || 4.5,
-            reviews: product.reviews || 0,
-            features: product.features || [],
-            detailedFeatures: product.detailedFeatures || [],
-            tags: product.tags || [],
-            appUrl: product.appUrl || null,
-            updatedAt: serverTimestamp()
-          });
-          console.log(`✅ Product ${product.id} updated with all fields`);
-        }
-      } else {
-        // Crear producto nuevo con todos los campos
-        const productWithTimestamps = {
-          ...product,
-          // Asegurar valores por defecto para campos opcionales
-          rating: product.rating || 4.5,
-          reviews: product.reviews || 0,
-          detailGradientColors: product.detailGradientColors || [],
-          cardBgColor: product.cardBgColor,
-          features: product.features || [],
-          detailedFeatures: product.detailedFeatures || [],
-          tags: product.tags || [],
-          appUrl: product.appUrl || null,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        };
-        await setDoc(productRef, productWithTimestamps);
-        console.log(`✅ Producto ${product.id} inicializado con todos los campos`);
-      }
-    }
-
-    // 2. Inicializar Categorías por defecto
+    // 1. Inicializar Categorías por defecto
     await initializeCategoriesInFirebase();
 
-    // 3. Inicializar Badges por defecto
+    // 2. Inicializar Badges por defecto
     await initializeBadgesInFirebase();
+
+    console.log('✅ Categorías y badges inicializados. Usa el panel de administración para crear productos.');
 
   } catch (error) {
     console.error('Error inicializando datos en Firebase:', error);
@@ -644,9 +391,8 @@ export function isAdminEmail(email) {
   return ADMIN_EMAILS.includes(email?.toLowerCase());
 }
 
-// NOTA: Para compatibilidad con código legacy, se exporta initialProducts
-// Sin embargo, SIEMPRE debes usar getProductsFromFirebase() para obtener productos
-export const sampleProducts = initialProducts;
+// NOTA: sampleProducts ha sido eliminado - usar getProductsFromFirebase() para obtener productos
+export const sampleProducts = [];
 
 /*
 =======================================================================================
@@ -745,14 +491,15 @@ window.forceUpdateFirebaseProducts = async () => {
   console.log('✅ Firebase products force updated');
 };
 
-// Completely recreate Firebase products (nuclear option)
+// Completely delete all Firebase products (use with caution!)
 window.recreateFirebaseProducts = async () => {
   if (!db) {
     console.error('❌ Firestore not initialized');
     return;
   }
 
-  console.log('💥 Completely recreating Firebase products...');
+  console.log('💥 ELIMINANDO TODOS LOS PRODUCTOS de Firebase...');
+  console.warn('⚠️ Esta acción NO puede deshacerse. Los productos deben recrearse desde el panel de administración.');
 
   try {
     // Delete all existing products
@@ -765,23 +512,8 @@ window.recreateFirebaseProducts = async () => {
     });
 
     await Promise.all(deletePromises);
-    console.log('🗑️ Deleted all existing products');
-
-    // Recreate products with new structure
-    const { serverTimestamp } = await import('firebase/firestore');
-
-    for (const product of initialProducts) {
-      const productRef = doc(db, 'products', product.id);
-      const productWithTimestamps = {
-        ...product,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      };
-      await setDoc(productRef, productWithTimestamps);
-      console.log(`✅ Recreated product ${product.id} with new structure`);
-    }
-
-    console.log('🎉 All products recreated successfully!');
+    console.log('🗑️ Todos los productos eliminados');
+    console.log('💡 Usa el panel de administración (#/admin) para crear nuevos productos');
 
     // Reload the page to get fresh data
     setTimeout(() => {
@@ -789,6 +521,6 @@ window.recreateFirebaseProducts = async () => {
     }, 1000);
 
   } catch (error) {
-    console.error('❌ Error recreating products:', error);
+    console.error('❌ Error eliminando productos:', error);
   }
 };

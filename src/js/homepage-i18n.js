@@ -131,23 +131,43 @@ export function updateHomepageTranslations() {
 
   // Load products with translations
   loadProductsWithTranslations();
-
-  console.log('✅ Homepage translations updated');
 }
 
 async function loadProductsWithTranslations() {
   const container = document.getElementById('latest-products');
-  if (!container) return;
+  if (!container) {
+    return;
+  }
 
   // Show loading
   container.innerHTML = '<div class="col-span-3 text-center py-8"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#22a7d0] mx-auto"></div></div>';
 
   try {
+    // Wait for Firebase to initialize
+    const { initializeFirebase } = await import('./firebase.js');
+    await initializeFirebase();
+
     // Load products from Firebase
     const allProducts = await getProductsFromFirebase();
 
-    // Take only the first 3 products
-    const latestProducts = allProducts.slice(0, 3);
+    // Filter products that should show on homepage
+    let homepageProducts = allProducts.filter(product => product.showOnHomepage === true);
+
+    // Fallback: if no products are marked for homepage, show the last 3 added
+    if (homepageProducts.length === 0) {
+      // Sort by createdAt descending (newest first) and take 3
+      homepageProducts = allProducts
+        .sort((a, b) => {
+          const dateA = a.createdAt?.toDate?.() || a.createdAt || new Date(0);
+          const dateB = b.createdAt?.toDate?.() || b.createdAt || new Date(0);
+          return dateB - dateA;
+        })
+        .slice(0, 3);
+    } else {
+      homepageProducts = homepageProducts.slice(0, 3);
+    }
+
+    const latestProducts = homepageProducts;
 
     // Clear loading
     container.innerHTML = '';

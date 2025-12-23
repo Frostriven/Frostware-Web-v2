@@ -33,6 +33,7 @@ await initFirebaseProducts()
 Toda la documentación está en la carpeta **[`/docs`](./docs)**:
 
 - **[Guía Completa](./docs/GUIA-COMPLETA.md)** - Setup detallado, Firebase, comandos útiles
+- **[Panel de Administración](./docs/ADMIN_PANEL.md)** - Gestión de productos y comandos de consola
 - **[Documentación Técnica](./docs/README.md)** - Índice de todas las guías
 - **[Arquitectura](./docs/ARQUITECTURA.md)** - Estructura del proyecto
 - **[Sistema i18n](./docs/I18N_DOCUMENTATION.md)** - Internacionalización
@@ -63,11 +64,16 @@ Ver estructura completa en [Guía Completa](./docs/GUIA-COMPLETA.md#-firebase---
 
 ```javascript
 await checkFirebaseProducts()      // Ver productos
-await initFirebaseProducts()       // Inicializar/actualizar
+await initFirebaseProducts()       // Inicializar categorías y badges
+await createTestProduct()          // Crear producto de prueba temporal
 await showFirebaseSummary()        // Ver estadísticas
 await cleanDuplicateProducts()     // Detectar duplicados
 await deleteProductById("id")      // Eliminar producto
+await syncProductFields()          // Sincronizar campos name/title, etc.
+await markProductsForHomepage("id") // Marcar producto para homepage
 ```
+
+Ver todos los comandos en [Panel de Administración](./docs/ADMIN_PANEL.md#-comandos-de-consola-para-desarrollo)
 
 ---
 

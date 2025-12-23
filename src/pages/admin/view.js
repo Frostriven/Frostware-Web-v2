@@ -217,6 +217,12 @@ export async function renderAdminView() {
                       <p class="text-xs text-gray-500 mt-1">URL donde el usuario accederá después de comprar el producto</p>
                     </div>
 
+                    <div class="flex items-center">
+                      <input type="checkbox" id="product-show-on-homepage" class="w-4 h-4 text-[#22a7d0] border-gray-300 rounded focus:ring-[#22a7d0]">
+                      <label for="product-show-on-homepage" class="ml-2 block text-sm font-medium text-gray-700">Mostrar en página principal</label>
+                      <p class="ml-2 text-xs text-gray-500">(Los productos marcados aparecerán en la sección de productos destacados)</p>
+                    </div>
+
                     <div class="flex justify-end space-x-3">
                       <button type="button" id="cancel-product" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
                         Cancelar
@@ -877,17 +883,27 @@ function initializeProductForm() {
       submitBtn.textContent = 'Guardando...';
 
       // Get form data
+      const productName = document.getElementById('product-name').value;
+      const productDescription = document.getElementById('product-description').value;
+
       const productData = {
-        name: document.getElementById('product-name').value,
+        // Primary fields (used by products page)
+        name: productName,
+        description: productDescription,
+        // Alias fields (used by homepage)
+        title: productName,
+        shortDescription: productDescription,
+        // Other fields
         price: parseFloat(document.getElementById('product-price').value) || 0,
         originalPrice: parseFloat(document.getElementById('product-original-price').value) || null,
         rating: parseFloat(document.getElementById('product-rating').value) || 4.5,
         category: document.getElementById('product-category').value,
         badge: document.getElementById('product-badge').value,
         offerId: document.getElementById('product-offer').value || null,
-        description: document.getElementById('product-description').value,
         image: document.getElementById('product-image').value,
+        imageURL: document.getElementById('product-image').value, // Alias for homepage
         appUrl: document.getElementById('product-app-url').value,
+        showOnHomepage: document.getElementById('product-show-on-homepage').checked,
         reviews: Math.floor(Math.random() * 400) + 50,
         features: [],
         tags: [document.getElementById('product-category').value],
@@ -917,7 +933,10 @@ function initializeProductForm() {
       }
 
       // Close modal and reload
-      document.getElementById('product-modal').classList.add('hidden');
+      const modal = document.getElementById('product-modal');
+      modal.classList.add('hidden');
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
       await renderAdminView();
 
     } catch (error) {
@@ -1083,6 +1102,7 @@ window.editProduct = async function(productId) {
     document.getElementById('product-description').value = product.description || '';
     document.getElementById('product-image').value = product.image || '';
     document.getElementById('product-app-url').value = product.appUrl || '';
+    document.getElementById('product-show-on-homepage').checked = product.showOnHomepage || false;
 
     // Load offers for this product
     const offers = await getOffersFromFirebase();

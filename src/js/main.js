@@ -36,6 +36,7 @@ const initializeApp = async () => {
 
   // Add loading state to prevent auth flash
   let authInitialized = false;
+  let isInitialRender = true;
 
   // Render header content in Spanish into existing <header>
   const header = document.querySelector('header');
@@ -45,7 +46,7 @@ const initializeApp = async () => {
   // NOTE: Initial loading state is now handled by index.html to prevent flickering.
   // We only update the header once we have the authentication state or meaningful data.
 
-  const renderHeader = async (user) => {
+  const renderHeader = async (user, skipAnimation = false) => {
     if (!header) return;
     const currentHash = window.location.hash || '#/';
 
@@ -54,9 +55,17 @@ const initializeApp = async () => {
       isAdmin = await isUserAdmin(user.uid) || isAdminEmail(user.email);
     }
 
-    // Make header visible with smooth fade-in
-    header.style.transition = 'opacity 0.3s ease-in-out';
-    header.style.opacity = '1';
+    // Make header visible with smooth fade-in only on first render
+    // Skip animation on subsequent updates to prevent flashing
+    if (isInitialRender && !skipAnimation) {
+      header.style.transition = 'opacity 0.3s ease-in-out';
+      header.style.opacity = '1';
+      isInitialRender = false;
+    } else if (!skipAnimation) {
+      // For updates after initial render, use instant transition
+      header.style.transition = 'none';
+      header.style.opacity = '1';
+    }
 
     header.innerHTML = `
       <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
@@ -171,7 +180,14 @@ const initializeApp = async () => {
     if (btnLogout) {
       btnLogout.addEventListener('click', async () => {
         await logout();
-        window.location.hash = '#/auth/login';
+
+        // Show logout success toast
+        if (window.cart && window.cart.showToast) {
+          window.cart.showToast(t('auth.logoutSuccess') || 'Sesión cerrada exitosamente', 'success');
+        }
+
+        // Redirect to homepage
+        window.location.hash = '#/';
       });
     }
 
@@ -242,9 +258,18 @@ const initializeApp = async () => {
   // Don't render header until auth state is determined to prevent flicker
   // The index.html already has skeleton placeholders that will show while loading
   watchAuthState(async (user) => {
+    console.log('[watchAuthState] Auth state changed:', user ? `User: ${user.email}` : 'No user');
     currentUser = user;
-    authInitialized = true;
-    await renderHeader(user, false); // Render header with actual auth state
+
+    // Render header on every auth state change
+    // First render gets smooth animation, subsequent renders are instant
+    const skipAnimation = authInitialized;
+    if (!authInitialized) {
+      authInitialized = true;
+      console.log('[watchAuthState] First auth initialization');
+    }
+    console.log('[watchAuthState] Rendering header with user:', user ? user.email : 'null');
+    await renderHeader(user, skipAnimation);
 
     // Auto-login demo user in development if enabled and no user is logged in
     if (!user && isDevelopment() && AUTO_DEMO_LOGIN) {
@@ -313,7 +338,16 @@ const initializeApp = async () => {
 
   // Update header when hash changes
   window.addEventListener('hashchange', async () => {
-    await renderHeader(currentUser);
+    console.log('[hashchange] Hash changed to:', window.location.hash);
+    // Get current auth state directly from Firebase instead of using cached currentUser
+    // This prevents race conditions where navigation happens before watchAuthState updates
+    const { auth } = await import('./firebase.js');
+    const user = auth?.currentUser || null;
+    console.log('[hashchange] Firebase auth.currentUser:', user ? user.email : 'null');
+    console.log('[hashchange] Cached currentUser:', currentUser ? currentUser.email : 'null');
+    currentUser = user; // Keep currentUser in sync
+
+    await renderHeader(user, true); // Skip animation on navigation
     // Re-bind cart events and reload purchased products after header update
     setTimeout(async () => {
       if (window.cart) {
@@ -358,6 +392,7 @@ const initializeApp = async () => {
     const spa = document.getElementById('spa-root');
     if (spa) spa.innerHTML = '';
     setMainVisible(true);
+
     // Update homepage translations when showing homepage
     setTimeout(updateHomepageTranslations, 100);
   });
@@ -435,9 +470,16 @@ const initializeApp = async () => {
 
   initRouter();
 
+  // watchAuthState handles all header updates based on auth state
+  // No need for additional timeouts - it fires on every auth state change
+
   // Listen for language changes and update header
   window.addEventListener('languageChanged', async () => {
-    await renderHeader(currentUser);
+    // Get current auth state directly from Firebase
+    const { auth } = await import('./firebase.js');
+    const user = auth?.currentUser || null;
+
+    await renderHeader(user);
     console.log('✅ Header updated after language change');
 
     // Update cart modal content if it exists - but don't interfere with page navigation

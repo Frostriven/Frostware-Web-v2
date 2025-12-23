@@ -511,6 +511,11 @@ export const en = {
       q4: "Are you available for partnerships?",
       a4: "Yes, we're always open to collaborations and partnerships. Contact us with your proposal and we'll evaluate it."
     }
+  },
+
+  // Authentication messages
+  auth: {
+    logoutSuccess: "Successfully logged out"
   }
 };
 

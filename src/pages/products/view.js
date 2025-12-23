@@ -18,9 +18,15 @@ export async function renderProductsView() {
     root.innerHTML = `<div class="bg-gray-50 min-h-screen">${html}</div>`;
 
     // Animate product cards with smooth fade-in
-    setTimeout(() => {
-      const productCards = root.querySelectorAll('.product-card');
+    const productCards = root.querySelectorAll('.product-card');
 
+    // Set initial state for animation (JS-controlled for robustness)
+    productCards.forEach(card => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(20px)';
+    });
+
+    setTimeout(() => {
       // Trigger staggered animation
       productCards.forEach((card, index) => {
         setTimeout(() => {
@@ -109,7 +115,7 @@ function generateProductsHTML(products) {
       <div class="product-card hover-neon-glow cursor-pointer relative bg-white shadow-lg border border-gray-200"
            data-category="${product.category}"
            data-product-id="${product.id}"
-           style="border-radius: 14px; height: 720px; opacity: 0; transform: translateY(20px); z-index: 1;">
+           style="border-radius: 14px; height: 720px; z-index: 1;">
 
         <!-- Inner container for content -->
         <div class="w-full h-full flex flex-col" style="border-radius: 14px; overflow: hidden;">
@@ -403,20 +409,20 @@ function showToast(message, type = 'success') {
 
   const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
   const icon = type === 'success' ? `
-    < svg class="w-6 h-6" fill = "none" stroke = "currentColor" viewBox = "0 0 24 24" >
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-    </svg >
+    </svg>
     ` : `
-    < svg class="w-6 h-6" fill = "none" stroke = "currentColor" viewBox = "0 0 24 24" >
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-    </svg >
+    </svg>
     `;
 
   toast.innerHTML = `
-    < div class="${bgColor} text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2" >
+    <div class="${bgColor} text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2">
       ${icon}
-  <span class="font-medium">${message}</span>
-    </div >
+      <span class="font-medium">${message}</span>
+    </div>
     `;
 
   document.body.appendChild(toast);
@@ -447,7 +453,7 @@ function showPurchaseToastWithApp(appUrl) {
   toast.className = 'fixed top-4 right-4 z-50 transform transition-all duration-500 translate-x-full';
 
   toast.innerHTML = `
-    < div class="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg min-w-80" >
+    <div class="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg min-w-80">
       <div class="flex items-start space-x-3">
         <svg class="w-6 h-6 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -472,7 +478,7 @@ function showPurchaseToastWithApp(appUrl) {
           </svg>
         </button>
       </div>
-    </div >
+    </div>
     `;
 
   document.body.appendChild(toast);
@@ -510,48 +516,48 @@ if (!document.querySelector('#products-animation-style')) {
     }
   }
 
-    .product - card {
+    .product-card {
     transition: all 0.3s ease;
-    height: 100 %;
+    height: 100%;
     overflow: hidden;
   }
 
-    .product - card img {
+    .product-card img {
     margin: 0;
     padding: 0;
     display: block;
   }
 
-    .cta - button {
+    .cta-button {
+    transition: all 0.3s ease;
+    }
+
+    .filter-btn {
     transition: all 0.3s ease;
   }
 
-    .filter - btn {
-    transition: all 0.3s ease;
-  }
-
-    .filter - btn:hover {
+    .filter-btn:hover {
     transform: translateY(-1px);
   }
 
     /* Line clamp utilities for consistent text heights */
-    .line - clamp - 2 {
-    display: -webkit - box;
-    -webkit - line - clamp: 2;
-    -webkit - box - orient: vertical;
+    .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
-    .line - clamp - 3 {
-    display: -webkit - box;
-    -webkit - line - clamp: 3;
-    -webkit - box - orient: vertical;
+    .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
     /* Ensure grid items stretch to same height */
-    .grid.items - stretch > .product - card {
-    align - self: stretch;
+    .grid.items-stretch > .product-card {
+    align-self: stretch;
   }
   `;
   document.head.appendChild(style);

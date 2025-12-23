@@ -6,11 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Frostware®</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/logo.css">
+    <script type="module" src="/src/main.js"></script>
 </head>
 
 <body class="bg-white text-gray-800">
@@ -327,34 +327,8 @@
 
 
     <script>
-        // Products are now loaded via the i18n system in homepage-i18n.js
-
-        // Inicializar carrito cuando el DOM esté listo
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Importar y inicializar el carrito
-            try {
-                await import('./src/js/cart.js');
-                // Inicializar botones de productos después de un breve delay
-                setTimeout(initializeHomeProductButtons, 500);
-
-                // Fallback para el botón del carrito en caso de que no se inicialice
-                setTimeout(() => {
-                    const cartButton = document.getElementById('cart-button');
-                    if (cartButton && !cartButton.onclick) {
-                        cartButton.addEventListener('click', () => {
-                            if (window.cart) {
-                                window.cart.openCart();
-                            }
-                        });
-                        console.log('Fallback cart button event added');
-                    }
-                }, 1000);
-            } catch (error) {
-                console.error('Error loading cart:', error);
-            }
-        });
-
         // Función para inicializar botones de productos en la página de inicio
+        // Esta función es llamada desde homepage-i18n.js después de cargar productos
         window.initializeHomeProductButtons = async function initializeHomeProductButtons() {
             // Mark that we're initializing to prevent automatic actions
             window.isPageInitializing = true;
@@ -505,7 +479,6 @@
             display: block;
         }
     </style>
-    <script type="module" src="/src/js/main.js"></script>
 </body>
 
 </html>

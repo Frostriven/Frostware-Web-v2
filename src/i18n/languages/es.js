@@ -554,6 +554,11 @@ export const es = {
       q4: "¿Están disponibles para colaboraciones?",
       a4: "Sí, siempre estamos abiertos a colaboraciones y asociaciones. Contáctanos con tu propuesta y la evaluaremos."
     }
+  },
+
+  // Authentication messages
+  auth: {
+    logoutSuccess: "Sesión cerrada exitosamente"
   }
 };
 
