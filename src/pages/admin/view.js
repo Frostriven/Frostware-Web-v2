@@ -1,6 +1,6 @@
 import { getProductsFromFirebase, initializeProductsInFirebase, isUserAdmin, isAdminEmail } from '../../js/userProfile.js';
 import { auth, db } from '../../js/firebase.js';
-import { doc, setDoc, deleteDoc, collection, addDoc, getDoc, getDocs, query } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, deleteDoc, collection, addDoc, getDoc, getDocs, query } from 'firebase/firestore';
 
 export async function renderAdminView() {
   const root = document.getElementById('spa-root');
@@ -53,6 +53,19 @@ export async function renderAdminView() {
 
   try {
     const products = await getProductsFromFirebase();
+    const categories = await getCategoriesFromFirebase();
+    const badges = await getBadgesFromFirebase();
+
+    // Create lookup maps for colors
+    const categoryColorMap = {};
+    categories.forEach(cat => {
+      categoryColorMap[cat.id] = cat.color;
+    });
+
+    const badgeColorMap = {};
+    badges.forEach(badge => {
+      badgeColorMap[badge.id] = badge.color;
+    });
 
     root.innerHTML = `
       <div class="min-h-screen bg-gray-50">
@@ -244,12 +257,20 @@ export async function renderAdminView() {
                       <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
                       <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
                       <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ofertas</th>
                       <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Badge</th>
                       <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-gray-200" id="products-table-body">
-                    ${products.map(product => `
+                    ${products.map(product => {
+                      // Calcular descuento si hay oferta activa
+                      const hasOffer = product.hasActiveOffer && product.originalPrice && product.originalPrice > product.price;
+                      const discountPercent = hasOffer
+                        ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+                        : 0;
+
+                      return `
                       <tr>
                         <td class="px-6 py-4 whitespace-nowrap">
                           <div class="flex items-center">
@@ -272,19 +293,51 @@ export async function renderAdminView() {
                           </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                          <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
-                            ${product.category}
-                          </span>
+                          ${(() => {
+                            const categoryColor = categoryColorMap[product.category] || '#6B7280';
+                            return `
+                              <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color: ${categoryColor}20; color: ${categoryColor}">
+                                ${product.category}
+                              </span>
+                            `;
+                          })()}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          $${product.price || 99}
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                          ${hasOffer ? `
+                            <div class="flex items-center space-x-2">
+                              <span class="font-bold text-green-600">$${product.price}</span>
+                              <span class="text-gray-500 line-through text-xs">$${product.originalPrice}</span>
+                            </div>
+                          ` : `
+                            <span class="text-gray-900">$${product.price || 99}</span>
+                          `}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                          ${hasOffer ? `
+                            <div class="flex flex-col space-y-1">
+                              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fill-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z" clip-rule="evenodd"></path>
+                                </svg>
+                                -${discountPercent}% OFF
+                              </span>
+                              <span class="text-xs text-green-700 font-medium">
+                                Ahorro: $${(product.originalPrice - product.price).toFixed(2)}
+                              </span>
+                            </div>
+                          ` : `
+                            <span class="text-xs text-gray-500">Sin oferta</span>
+                          `}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                          ${product.badge ? `
-                            <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                              ${product.badge}
-                            </span>
-                          ` : '-'}
+                          ${product.badge ? (() => {
+                            const badgeColor = badgeColorMap[product.badge] || '#3B82F6';
+                            return `
+                              <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color: ${badgeColor}20; color: ${badgeColor}">
+                                ${product.badge}
+                              </span>
+                            `;
+                          })() : '-'}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                           <button data-product-id="${product.id}" data-action="edit-product"
@@ -296,8 +349,8 @@ export async function renderAdminView() {
                             Eliminar
                           </button>
                         </td>
-                      </tr>
-                    `).join('')}
+                      </tr>`;
+                    }).join('')}
                   </tbody>
                 </table>
               </div>
@@ -667,6 +720,99 @@ function initializeCategoryBadgeListeners() {
   document.addEventListener('click', handleAdminPanelClick, true);
   adminListenerAttached = true;
   console.log('✅ Admin panel listeners attached to document with capture=true');
+
+  // Add listeners for category and badge select changes to update colors
+  initializeColorPreviewListeners();
+}
+
+async function initializeColorPreviewListeners() {
+  console.log('🎨 Initializing color preview listeners...');
+  const categorySelect = document.getElementById('product-category');
+  const badgeSelect = document.getElementById('product-badge');
+
+  if (categorySelect) {
+    console.log('✅ Category select found, adding listener');
+    categorySelect.addEventListener('change', async (e) => {
+      console.log('🔄 Category changed to:', e.target.value);
+      const categories = await getCategoriesFromFirebase();
+      console.log('📋 Categories loaded:', categories);
+      const selectedCategory = categories.find(c => c.id === e.target.value);
+      console.log('🎯 Selected category:', selectedCategory);
+
+      // Update category color in the select or add a color preview
+      if (selectedCategory && selectedCategory.color) {
+        console.log('🎨 Applying color:', selectedCategory.color);
+        categorySelect.style.borderLeftColor = selectedCategory.color;
+        categorySelect.style.borderLeftWidth = '4px';
+        categorySelect.style.borderLeftStyle = 'solid';
+      } else {
+        console.log('⚠️ No color found for category');
+        categorySelect.style.borderLeftColor = '';
+        categorySelect.style.borderLeftWidth = '';
+        categorySelect.style.borderLeftStyle = '';
+      }
+    });
+  } else {
+    console.log('❌ Category select not found');
+  }
+
+  if (badgeSelect) {
+    console.log('✅ Badge select found, adding listener');
+    badgeSelect.addEventListener('change', async (e) => {
+      console.log('🔄 Badge changed to:', e.target.value);
+      const badges = await getBadgesFromFirebase();
+      console.log('📋 Badges loaded:', badges);
+      const selectedBadge = badges.find(b => b.id === e.target.value);
+      console.log('🎯 Selected badge:', selectedBadge);
+
+      // Update badge color in the select or add a color preview
+      if (selectedBadge && selectedBadge.color) {
+        console.log('🎨 Applying color:', selectedBadge.color);
+        badgeSelect.style.borderLeftColor = selectedBadge.color;
+        badgeSelect.style.borderLeftWidth = '4px';
+        badgeSelect.style.borderLeftStyle = 'solid';
+      } else {
+        console.log('⚠️ No color found for badge');
+        badgeSelect.style.borderLeftColor = '';
+        badgeSelect.style.borderLeftWidth = '';
+        badgeSelect.style.borderLeftStyle = '';
+      }
+    });
+  } else {
+    console.log('❌ Badge select not found');
+  }
+}
+
+// Helper function to apply colors to selects
+async function applySelectColors(categoryId, badgeId) {
+  console.log('🎨 Applying colors for category:', categoryId, 'badge:', badgeId);
+
+  const categorySelect = document.getElementById('product-category');
+  const badgeSelect = document.getElementById('product-badge');
+
+  // Apply category color
+  if (categoryId && categorySelect) {
+    const categories = await getCategoriesFromFirebase();
+    const selectedCategory = categories.find(c => c.id === categoryId);
+    if (selectedCategory && selectedCategory.color) {
+      console.log('🎨 Applying category color:', selectedCategory.color);
+      categorySelect.style.borderLeftColor = selectedCategory.color;
+      categorySelect.style.borderLeftWidth = '4px';
+      categorySelect.style.borderLeftStyle = 'solid';
+    }
+  }
+
+  // Apply badge color
+  if (badgeId && badgeSelect) {
+    const badges = await getBadgesFromFirebase();
+    const selectedBadge = badges.find(b => b.id === badgeId);
+    if (selectedBadge && selectedBadge.color) {
+      console.log('🎨 Applying badge color:', selectedBadge.color);
+      badgeSelect.style.borderLeftColor = selectedBadge.color;
+      badgeSelect.style.borderLeftWidth = '4px';
+      badgeSelect.style.borderLeftStyle = 'solid';
+    }
+  }
 }
 
 function initializeTabs() {
@@ -1100,6 +1246,9 @@ window.editProduct = async function(productId) {
     document.getElementById('product-category').value = product.category || '';
     document.getElementById('product-badge').value = product.badge || '';
     document.getElementById('product-description').value = product.description || '';
+
+    // Apply category and badge colors
+    await applySelectColors(product.category, product.badge);
     document.getElementById('product-image').value = product.image || '';
     document.getElementById('product-app-url').value = product.appUrl || '';
     document.getElementById('product-show-on-homepage').checked = product.showOnHomepage || false;
@@ -1113,9 +1262,43 @@ window.editProduct = async function(productId) {
       const discount = offer.discountPrice === 0
         ? 'GRATIS'
         : `$${offer.discountPrice.toFixed(2)} (${Math.round(((offer.originalPrice - offer.discountPrice) / offer.originalPrice) * 100)}% OFF)`;
-      const selected = product.offerId === offer.id ? 'selected' : '';
+      // Pre-seleccionar si es la oferta activa del producto
+      const selected = (product.activeOfferId === offer.id || product.offerId === offer.id) ? 'selected' : '';
       offerSelect.innerHTML += `<option value="${offer.id}" ${selected}>${discount} - ${offer.description || 'Sin descripción'}</option>`;
     });
+
+    // Deshabilitar campos de precio si hay oferta activa
+    const priceInput = document.getElementById('product-price');
+    const originalPriceInput = document.getElementById('product-original-price');
+
+    if (product.hasActiveOffer) {
+      priceInput.disabled = true;
+      originalPriceInput.disabled = true;
+      priceInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+      originalPriceInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+
+      // Agregar mensaje informativo
+      const priceContainer = priceInput.parentElement;
+      let warningMsg = priceContainer.querySelector('.offer-warning');
+      if (!warningMsg) {
+        warningMsg = document.createElement('p');
+        warningMsg.className = 'offer-warning text-xs text-orange-600 mt-1 font-medium';
+        warningMsg.innerHTML = '⚠️ Precio controlado por oferta activa';
+        priceContainer.appendChild(warningMsg);
+      }
+    } else {
+      priceInput.disabled = false;
+      originalPriceInput.disabled = false;
+      priceInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
+      originalPriceInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
+
+      // Remover mensaje si existe
+      const priceContainer = priceInput.parentElement;
+      const warningMsg = priceContainer.querySelector('.offer-warning');
+      if (warningMsg) {
+        warningMsg.remove();
+      }
+    }
 
     // Show modal
     const modal = document.getElementById('product-modal');
@@ -1738,10 +1921,22 @@ function initializeOfferModal() {
 function initializeOfferForm() {
   const offerForm = document.getElementById('offer-form');
 
-  offerForm?.addEventListener('submit', async (e) => {
+  console.log('🔧 initializeOfferForm called, form element:', offerForm);
+
+  if (!offerForm) {
+    console.error('❌ FORM NOT FOUND: offer-form element does not exist in DOM');
+    return;
+  }
+
+  console.log('✅ Form found, attaching submit listener...');
+
+  offerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    console.log('🚀 FORM SUBMIT EVENT TRIGGERED');
+
     try {
+      console.log('🔐 Checking auth...');
       if (!auth?.currentUser) {
         showAdminToast('Debes iniciar sesión para realizar esta acción', 'error');
         return;
@@ -1785,16 +1980,82 @@ function initializeOfferForm() {
       }
 
       const offerId = isEditing ? editingId : `offer-${Date.now()}`;
-      await setDoc(doc(db, 'offers', offerId), offerData, { merge: true });
-      showAdminToast(isEditing ? 'Oferta actualizada exitosamente' : 'Oferta creada exitosamente', 'success');
 
+      console.log('💾 Guardando oferta en Firebase...', { offerId, offerData });
+      await setDoc(doc(db, 'offers', offerId), offerData, { merge: true });
+      console.log('✅ Oferta guardada en Firebase exitosamente');
+
+      // Actualizar el precio del producto según el estado de la oferta
+      const productRef = doc(db, 'products', offerData.productId);
+
+      console.log('💰 Oferta guardada, actualizando precio del producto:', {
+        productId: offerData.productId,
+        active: offerData.active,
+        originalPrice: offerData.originalPrice,
+        discountPrice: offerData.discountPrice,
+        startDate: offerData.startDate,
+        endDate: offerData.endDate
+      });
+
+      if (offerData.active) {
+        const now = new Date();
+        const isInDateRange = offerData.startDate <= now && offerData.endDate >= now;
+
+        console.log('📅 Verificando rango de fechas:', {
+          now: now.toISOString(),
+          startDate: offerData.startDate.toISOString(),
+          endDate: offerData.endDate.toISOString(),
+          isInDateRange
+        });
+
+        if (isInDateRange) {
+          console.log('✅ Oferta dentro de rango, actualizando producto...');
+          // Actualizar el producto con el precio de oferta
+          await updateDoc(productRef, {
+            price: offerData.discountPrice,
+            originalPrice: offerData.originalPrice,
+            activeOfferId: offerId,
+            hasActiveOffer: true,
+            updatedAt: new Date()
+          });
+          console.log('✅ Producto actualizado con precio de oferta:', offerData.discountPrice);
+        } else {
+          console.warn('⚠️ Oferta fuera de rango de fechas, NO se actualizará el precio');
+        }
+      } else {
+        console.log('❌ Oferta inactiva, restaurando precio original...');
+        // Si la oferta se desactiva, restaurar el precio original
+        await updateDoc(productRef, {
+          price: offerData.originalPrice,
+          originalPrice: null,
+          activeOfferId: null,
+          hasActiveOffer: false,
+          updatedAt: new Date()
+        });
+        console.log('✅ Precio restaurado a:', offerData.originalPrice);
+      }
+
+      // Cerrar modal
       document.getElementById('offer-modal').classList.add('hidden');
       document.getElementById('offer-editing-id').value = '';
 
       submitBtn.disabled = false;
       submitBtn.textContent = 'Guardar Oferta';
 
-      await loadOffers();
+      showAdminToast(isEditing ? 'Oferta actualizada, recargando productos...' : 'Oferta creada, recargando productos...', 'success');
+
+      // Esperar un momento para que Firebase se actualice completamente
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Recargar solo la vista del admin sin recargar toda la página
+      console.log('🔄 Recargando vista del panel de administración...');
+      await renderAdminView();
+
+      // Cambiar a la pestaña de ofertas después de recargar
+      setTimeout(() => {
+        const offersTab = document.getElementById('tab-offers');
+        if (offersTab) offersTab.click();
+      }, 100);
 
     } catch (error) {
       console.error('Error saving offer:', error);
@@ -1934,9 +2195,36 @@ window.deleteOffer = async function(offerId) {
 
     showCustomConfirm('Eliminar Oferta', messageHTML, async () => {
       try {
+        // Obtener datos de la oferta antes de eliminarla
+        const offerDoc = await getDoc(doc(db, 'offers', offerId));
+        if (offerDoc.exists()) {
+          const offer = offerDoc.data();
+
+          // Restaurar precio original del producto
+          const productRef = doc(db, 'products', offer.productId);
+          await updateDoc(productRef, {
+            price: offer.originalPrice,
+            originalPrice: null,
+            activeOfferId: null,
+            hasActiveOffer: false,
+            updatedAt: new Date()
+          });
+        }
+
         await deleteDoc(doc(db, 'offers', offerId));
-        showAdminToast('Oferta eliminada exitosamente', 'success');
-        await loadOffers();
+        showAdminToast('Oferta eliminada, recargando productos...', 'success');
+
+        // Esperar para que Firebase se actualice
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Recargar solo la vista del admin sin recargar toda la página
+        await renderAdminView();
+
+        // Cambiar a la pestaña de ofertas después de recargar
+        setTimeout(() => {
+          const offersTab = document.getElementById('tab-offers');
+          if (offersTab) offersTab.click();
+        }, 100);
       } catch (error) {
         console.error('Error eliminando oferta:', error);
         showAdminToast('Error al eliminar oferta: ' + error.message, 'error');

@@ -235,6 +235,67 @@ export async function quickDemoLogin() {
   }
 }
 
+// Obtener ofertas activas desde Firebase
+export async function getActiveOffers() {
+  if (!db) {
+    const { initializeFirebase } = await import('./firebase.js');
+    await initializeFirebase();
+
+    const firebase = await import('./firebase.js');
+    if (!firebase.db) {
+      throw new Error('Firestore no inicializado - Firebase es requerido para la aplicación');
+    }
+  }
+
+  try {
+    const offersQuery = query(collection(db, 'offers'));
+    const querySnapshot = await getDocs(offersQuery);
+    const activeOffers = {};
+    const now = new Date();
+
+    console.log(`🔍 Buscando ofertas activas... (Total ofertas en DB: ${querySnapshot.size})`);
+
+    querySnapshot.forEach((doc) => {
+      const offer = doc.data();
+
+      // Convertir timestamps de Firestore a Date si es necesario
+      const startDate = offer.startDate?.toDate?.() || offer.startDate;
+      const endDate = offer.endDate?.toDate?.() || offer.endDate;
+
+      const isActive = offer.active;
+      const isInDateRange = startDate <= now && endDate >= now;
+
+      console.log(`📋 Oferta ${doc.id}:`, {
+        productId: offer.productId,
+        active: isActive,
+        startDate: startDate.toLocaleDateString(),
+        endDate: endDate.toLocaleDateString(),
+        isInDateRange,
+        willBeApplied: isActive && isInDateRange
+      });
+
+      // Verificar si la oferta está activa y dentro del rango de fechas
+      if (isActive && isInDateRange) {
+        console.log(`✅ Oferta activa para producto ${offer.productId}: $${offer.originalPrice} → $${offer.discountPrice}`);
+        activeOffers[offer.productId] = {
+          id: doc.id,
+          originalPrice: offer.originalPrice,
+          discountPrice: offer.discountPrice,
+          startDate: startDate,
+          endDate: endDate,
+          description: offer.description
+        };
+      }
+    });
+
+    console.log(`📦 Total ofertas activas a aplicar: ${Object.keys(activeOffers).length}`);
+    return activeOffers;
+  } catch (error) {
+    console.error('Error cargando ofertas activas:', error);
+    return {};
+  }
+}
+
 // Cargar productos desde Firebase (única fuente de verdad)
 export async function getProductsFromFirebase() {
   // Wait for Firebase to initialize if not ready
@@ -254,18 +315,48 @@ export async function getProductsFromFirebase() {
     const querySnapshot = await getDocs(productsQuery);
     const firebaseProducts = [];
 
+    // Obtener ofertas activas
+    const activeOffers = await getActiveOffers();
+    console.log(`🎁 Ofertas activas encontradas:`, Object.keys(activeOffers).length);
+
     querySnapshot.forEach((doc) => {
       const data = doc.data();
 
-      // Usar los campos directamente de Firebase sin mapeo
-      firebaseProducts.push({
+      // Crear objeto base del producto
+      const product = {
         id: doc.id,
         ...data,
         // Asegurar que los timestamps son objetos Date para compatibilidad
         createdAt: data.createdAt?.toDate?.() || data.createdAt,
         updatedAt: data.updatedAt?.toDate?.() || data.updatedAt
-      });
+      };
+
+      // Aplicar oferta activa si existe (esto sobrescribe los valores de Firebase)
+      if (activeOffers[doc.id]) {
+        const offer = activeOffers[doc.id];
+        console.log(`✨ Aplicando oferta a producto ${doc.id}:`, {
+          precioEnFirebase: data.price,
+          precioConOferta: offer.discountPrice,
+          originalPrice: offer.originalPrice,
+          descuento: `${Math.round(((offer.originalPrice - offer.discountPrice) / offer.originalPrice) * 100)}%`
+        });
+        product.originalPrice = offer.originalPrice;
+        product.price = offer.discountPrice;
+        product.hasActiveOffer = true;
+        product.activeOfferId = offer.id;
+      } else if (data.hasActiveOffer) {
+        // Si Firebase dice que hay oferta activa, mantener esos valores
+        console.log(`📦 Producto ${doc.id} tiene oferta en Firebase:`, {
+          price: data.price,
+          originalPrice: data.originalPrice,
+          hasActiveOffer: data.hasActiveOffer
+        });
+      }
+
+      firebaseProducts.push(product);
     });
+
+    console.log(`✅ ${firebaseProducts.length} productos cargados, ${Object.keys(activeOffers).length} con ofertas activas en tiempo real`);
 
     if (firebaseProducts.length === 0) {
       console.warn('No se encontraron productos en Firebase. Ejecute initializeProductsInFirebase() primero.');

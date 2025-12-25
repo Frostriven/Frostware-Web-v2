@@ -6,6 +6,33 @@ Registro de cambios, fixes y mejoras implementadas en el proyecto Frostware.
 
 ## 🔧 [Fixes - Diciembre 2025]
 
+### ✅ Fix: Colores dinámicos para categorías y badges en el panel de administración
+
+**Problema**: Las etiquetas de categoría y badge en la tabla de productos del panel de administración mostraban colores hardcodeados (gris para categorías, azul para badges) en lugar de usar los colores dinámicos definidos en Firebase.
+
+**Causa raíz**:
+- En `src/pages/admin/view.js`, las etiquetas usaban clases de Tailwind con colores fijos:
+  - Categorías: `bg-gray-100 text-gray-800`
+  - Badges: `bg-blue-100 text-blue-800`
+
+**Solución**:
+1. **Carga de datos**: Modificada función `renderAdminView()` para cargar categorías y badges desde Firebase al inicio
+2. **Mapas de colores**: Creados objetos `categoryColorMap` y `badgeColorMap` para búsqueda rápida de colores por ID
+3. **Estilos inline dinámicos**:
+   - Categorías: `style="background-color: ${color}20; color: ${color}"`
+   - Badges: `style="background-color: ${color}20; color: ${color}"`
+   - Fondo con 20% de opacidad para buena legibilidad
+4. **Consistencia visual**: Mismo patrón de colores usado en la lista de badges del panel
+
+**Archivos modificados**:
+- `src/pages/admin/view.js` (líneas 55-68, 295-304, 332-341)
+
+**Resultado**: Las etiquetas de categoría y badge ahora muestran los colores correctos definidos en Firebase, mejorando la consistencia visual del panel de administración.
+
+**Commits relacionados**: Fix: Dynamic colors for category and badge tags in admin panel
+
+---
+
 ### ✅ Fix: Eliminado parpadeo del botón de login
 
 **Problema**: Cuando el usuario estaba logueado, el botón "Iniciar Sesión" aparecía brevemente antes de cambiar al menú de usuario, causando un parpadeo visual molesto.
