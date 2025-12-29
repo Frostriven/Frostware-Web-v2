@@ -34,6 +34,7 @@ Toda la documentación está en la carpeta **[`/docs`](./docs)**:
 
 - **[Guía Completa](./docs/GUIA-COMPLETA.md)** - Setup detallado, Firebase, comandos útiles
 - **[Panel de Administración](./docs/ADMIN_PANEL.md)** - Gestión de productos y comandos de consola
+- **[Creación de Productos](./src/utils/README-PRODUCTS.md)** - Guía para insertar productos en Firebase
 - **[Documentación Técnica](./docs/README.md)** - Índice de todas las guías
 - **[Arquitectura](./docs/ARQUITECTURA.md)** - Estructura del proyecto
 - **[Sistema i18n](./docs/I18N_DOCUMENTATION.md)** - Internacionalización
@@ -97,8 +98,9 @@ Frostware-Web-v2/
 │   ├── i18n/         # 🌍 Traducciones (ES/EN)
 │   ├── js/           # 💻 Lógica principal
 │   ├── pages/        # 📄 Vistas de la app
-│   └── utils/        # 🛠️ Funciones helper
+│   └── utils/        # 🛠️ Scripts y plantillas de productos
 ├── public/           # 📦 Assets estáticos
+├── firestore.rules   # 🔒 Reglas de seguridad Firestore
 └── index.html        # 🏠 Punto de entrada
 ```
 
