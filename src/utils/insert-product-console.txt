@@ -1,0 +1,291 @@
+/* ============================================================================
+   SCRIPT PARA INSERTAR PRODUCTOS EN FIREBASE DESDE LA CONSOLA DE CHROME
+   ============================================================================
+
+   INSTRUCCIONES:
+   1. Abre la consola de Chrome (F12)
+   2. Asegúrate de estar en tu sitio web
+   3. Copia y pega TODO este código
+   4. Presiona Enter
+   5. Espera a que se complete la inserción
+   6. Recarga la página para ver el producto
+
+   ============================================================================ */
+
+(async function() {
+  console.log('🚀 Iniciando script de inserción de producto...');
+
+  try {
+    // Importar módulos de Firebase
+    const { db } = await import('/src/js/firebase.js');
+    const { doc, setDoc, serverTimestamp } = await import('firebase/firestore');
+
+    if (!db) {
+      console.error('❌ Firebase no está inicializado');
+      return;
+    }
+
+    console.log('✅ Firebase inicializado correctamente');
+
+    // ========================================================================
+    // DATOS DEL PRODUCTO - MODIFICA ESTA SECCIÓN PARA TUS PRODUCTOS
+    // ========================================================================
+
+    const productData = {
+      // ID único del producto (sin espacios, solo letras, números y guiones)
+      id: 'north-atlantic-ops',
+
+      // Nombres del producto (bilingüe: español e inglés)
+      name: {
+        es: 'Procedimientos Operacionales del Atlántico Norte',
+        en: 'North Atlantic Operational Procedures'
+      },
+      title: {
+        es: 'Procedimientos Operacionales del Atlántico Norte',
+        en: 'North Atlantic Operational Procedures'
+      },
+
+      // Descripciones del producto (bilingüe)
+      description: {
+        es: 'Un banco de preguntas completo para pilotos transoceánicos que operan en el espacio aéreo del Atlántico Norte. Basado en documentos oficiales de OACI con referencias y justificaciones.',
+        en: 'A comprehensive question bank for transoceanic pilots operating in North Atlantic airspace. Based on official ICAO documents with references and justifications.'
+      },
+      shortDescription: {
+        es: 'Un banco de preguntas completo para pilotos transoceánicos que operan en el espacio aéreo del Atlántico Norte. Basado en documentos oficiales de OACI con referencias y justificaciones.',
+        en: 'A comprehensive question bank for transoceanic pilots operating in North Atlantic airspace. Based on official ICAO documents with references and justifications.'
+      },
+      longDescription: {
+        es: 'El banco de preguntas más completo para pilotos transoceánicos. Estudia procedimientos oficiales de OACI, practica con escenarios reales y aprueba tu certificación de operaciones NAT con confianza.',
+        en: 'The most comprehensive question bank for transoceanic pilots. Study official ICAO procedures, practice with real scenarios, and pass your NAT operations certification with confidence.'
+      },
+
+      // Precios
+      price: 99,
+      originalPrice: 150,
+
+      // Imágenes
+      image: 'https://placehold.co/600x400/1a202c/FFFFFF?text=NAT+OPS&font=inter',
+      imageURL: 'https://placehold.co/600x400/1a202c/FFFFFF?text=NAT+OPS&font=inter',
+
+      // Categoría y etiquetas
+      category: 'aviation',
+      badge: 'Disponible',
+      badgeColor: 'blue',
+      tags: ['aviation', 'NAT', 'oceanic', 'procedures'],
+
+      // Rating y reseñas
+      rating: 5.0,
+      reviews: 342,
+
+      // Colores para el gradiente en la página de detalles
+      colors: ['#1b1b25', '#190d36', '#1b1b25'],
+      detailGradientColors: ['#1b1b25', '#190d36', '#1b1b25'],
+
+      // Características simples (aparecen en la lista)
+      features: [
+        'Banco de preguntas interactivo',
+        'Documentos ICAO oficiales',
+        'Referencias y justificaciones',
+        'Acceso completo'
+      ],
+
+      // Características detalladas (aparecen en la página de detalles con iconos)
+      detailedFeatures: [
+        {
+          icon: 'radio',
+          title: {
+            es: 'Procedimientos de Comunicación',
+            en: 'Communications Procedures'
+          },
+          description: {
+            es: 'Domina protocolos de radio HF, operaciones SELCAL y requisitos de reporte de posición para vuelos oceánicos.',
+            en: 'Master HF radio protocols, SELCAL operations, and position reporting requirements for oceanic flight.'
+          }
+        },
+        {
+          icon: 'map',
+          title: {
+            es: 'Sistemas de Navegación y Rutas',
+            en: 'Navigation & Track Systems'
+          },
+          description: {
+            es: 'Aprende sistemas de rutas NAT, procedimientos de waypoints y requisitos RNAV para navegación oceánica segura.',
+            en: 'Learn NAT track systems, waypoint procedures, and RNAV requirements for safe oceanic navigation.'
+          }
+        },
+        {
+          icon: 'cloud',
+          title: {
+            es: 'Meteorología y Ambiente',
+            en: 'Weather & Environmental'
+          },
+          description: {
+            es: 'Comprende cartas SIGWX, reporte de turbulencias y cómo el clima afecta las operaciones NAT.',
+            en: 'Understand SIGWX charts, turbulence reporting, and how weather affects NAT operations.'
+          }
+        },
+        {
+          icon: 'warning',
+          title: {
+            es: 'Procedimientos de Emergencia',
+            en: 'Emergency Procedures'
+          },
+          description: {
+            es: 'Practica procedimientos de contingencia, desvíos y requisitos ETOPS para operaciones seguras.',
+            en: 'Practice contingency procedures, diversions, and ETOPS requirements for safe operations.'
+          }
+        },
+        {
+          icon: 'certificate',
+          title: {
+            es: 'Listo para Certificación',
+            en: 'Certification Ready'
+          },
+          description: {
+            es: 'Preguntas diseñadas para coincidir con exámenes de certificación reales con explicaciones detalladas y referencias.',
+            en: 'Questions designed to match real certification exams with detailed explanations and references.'
+          }
+        },
+        {
+          icon: 'lightning',
+          title: {
+            es: 'Aprendizaje Interactivo',
+            en: 'Interactive Learning'
+          },
+          description: {
+            es: 'Pistas, explicaciones detalladas y seguimiento de progreso para optimizar tus sesiones de estudio.',
+            en: 'Hints, detailed explanations, and progress tracking to optimize your study sessions.'
+          }
+        }
+      ],
+
+      // Configuración
+      showOnHomepage: true,
+      appUrl: '/apps/north-atlantic-procedures/guide.html',
+      offerId: null,
+
+      // Timestamps (se generan automáticamente)
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+
+    // ========================================================================
+    // INSERCIÓN EN FIREBASE - NO MODIFICAR ESTA SECCIÓN
+    // ========================================================================
+
+    console.log('📝 Insertando producto:', productData.id);
+    console.log('   Nombre:', productData.name.es);
+    console.log('   Precio: $' + productData.price);
+
+    await setDoc(doc(db, 'products', productData.id), productData);
+
+    console.log('');
+    console.log('✅ ¡PRODUCTO INSERTADO EXITOSAMENTE!');
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('');
+    console.log('📊 RESUMEN DEL PRODUCTO:');
+    console.log('   🆔 ID: ' + productData.id);
+    console.log('   📝 Nombre (ES): ' + productData.name.es);
+    console.log('   📝 Nombre (EN): ' + productData.name.en);
+    console.log('   💰 Precio: $' + productData.price + ' (antes $' + productData.originalPrice + ')');
+    console.log('   📁 Categoría: ' + productData.category);
+    console.log('   ⭐ Rating: ' + productData.rating + '/5.0 (' + productData.reviews + ' reviews)');
+    console.log('   ✨ Features: ' + productData.features.length + ' simples, ' + productData.detailedFeatures.length + ' detalladas');
+    console.log('   🎨 Colores: ' + productData.detailGradientColors.join(', '));
+    console.log('');
+    console.log('🔗 ENLACES:');
+    console.log('   📄 Ver producto: ' + window.location.origin + '/#/product/' + productData.id);
+    console.log('   🚀 App URL: ' + (productData.appUrl || 'No definida'));
+    console.log('');
+    console.log('📋 CONTENIDO INCLUIDO:');
+    console.log('   ✓ Nombres bilingües (ES/EN)');
+    console.log('   ✓ Descripciones bilingües (corta, larga)');
+    console.log('   ✓ ' + productData.features.length + ' características simples');
+    console.log('   ✓ ' + productData.detailedFeatures.length + ' características detalladas con iconos');
+    console.log('   ✓ Gradiente de colores personalizado');
+    console.log('   ✓ Badge, rating y reviews');
+    console.log('   ✓ Timestamps automáticos');
+    console.log('');
+    console.log('🔄 RECARGA LA PÁGINA para ver el producto en acción');
+    console.log('');
+    console.log('💡 COMANDOS ÚTILES:');
+    console.log('   Para eliminar: deleteProductById("' + productData.id + '")');
+    console.log('   Para ver todos: checkFirebaseProducts()');
+    console.log('');
+    console.log('═══════════════════════════════════════════════════════════');
+
+    return productData;
+
+  } catch (error) {
+    console.error('');
+    console.error('❌ ERROR AL INSERTAR PRODUCTO');
+    console.error('═══════════════════════════════════════════════════════════');
+    console.error('Error:', error.message);
+    console.error('Detalles:', error);
+    console.error('');
+    console.error('🔍 Verifica que:');
+    console.error('   1. Estás en la página correcta de tu sitio');
+    console.error('   2. Firebase está inicializado');
+    console.error('   3. Tienes permisos para escribir en Firestore');
+    console.error('   4. El ID del producto no existe ya');
+    console.error('═══════════════════════════════════════════════════════════');
+    throw error;
+  }
+})();
+
+/* ============================================================================
+   PLANTILLA PARA CREAR MÁS PRODUCTOS
+   ============================================================================
+
+   Para crear un nuevo producto, copia la sección "DATOS DEL PRODUCTO" y
+   modifica los siguientes campos:
+
+   CAMPOS OBLIGATORIOS:
+   -------------------
+   - id: Identificador único (ej: 'my-new-product')
+   - name.es / name.en: Nombres en español e inglés
+   - title.es / title.en: Títulos en español e inglés
+   - description: Descripción bilingüe
+   - price: Precio del producto
+   - image / imageURL: URL de la imagen
+   - category: Categoría ('aviation', 'technology', etc.)
+
+   CAMPOS OPCIONALES:
+   -----------------
+   - originalPrice: Precio original (para mostrar descuento)
+   - badge: Etiqueta ('Disponible', 'Nuevo', 'Destacado')
+   - badgeColor: Color del badge ('blue', 'green', 'red')
+   - rating: Calificación (0-5)
+   - reviews: Número de reseñas
+   - features: Array de características simples
+   - detailedFeatures: Array de características detalladas
+   - colors / detailGradientColors: Colores del gradiente
+   - tags: Etiquetas para búsqueda
+   - appUrl: URL de la aplicación
+   - showOnHomepage: true/false
+
+   ICONOS DISPONIBLES para detailedFeatures:
+   -----------------------------------------
+   'radio', 'map', 'cloud', 'warning', 'certificate', 'lightning',
+   'code', 'database', 'shield', 'default'
+
+   EJEMPLO MÍNIMO:
+   --------------
+   {
+     id: 'simple-product',
+     name: { es: 'Producto Simple', en: 'Simple Product' },
+     title: { es: 'Producto Simple', en: 'Simple Product' },
+     description: {
+       es: 'Descripción del producto',
+       en: 'Product description'
+     },
+     price: 50,
+     image: 'https://placehold.co/600x400',
+     imageURL: 'https://placehold.co/600x400',
+     category: 'technology',
+     showOnHomepage: true,
+     createdAt: serverTimestamp(),
+     updatedAt: serverTimestamp()
+   }
+
+   ============================================================================ */

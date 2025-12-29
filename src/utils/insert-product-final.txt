@@ -1,0 +1,288 @@
+/* ============================================================================
+   SCRIPT DEFINITIVO PARA INSERTAR PRODUCTOS (FUNCIONA EN PRODUCCIÓN)
+   ============================================================================
+
+   Este script NO intenta importar módulos.
+   Usa Firestore directamente desde el objeto global window.
+
+   INSTRUCCIONES:
+   1. Inicia sesión como ADMINISTRADOR (demo@frostware.com)
+   2. Abre la consola de Chrome (F12)
+   3. Copia y pega TODO este código
+   4. Presiona Enter
+   5. Recarga la página para ver el producto
+
+   ============================================================================ */
+
+(async function() {
+  console.log('🚀 Iniciando inserción de producto...');
+
+  try {
+    // Importar módulos de Firebase desde CDN
+    const { getApps } = await import(
+      'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js'
+    );
+    const { getAuth } = await import(
+      'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js'
+    );
+    const { getFirestore, doc, setDoc, serverTimestamp } = await import(
+      'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js'
+    );
+
+    // Esperar a que Firebase esté inicializado (con retry)
+    console.log('⏳ Esperando a que Firebase esté listo...');
+    let apps = getApps();
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    while (apps.length === 0 && attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      apps = getApps();
+      attempts++;
+      console.log(`   Intento ${attempts}/${maxAttempts}...`);
+    }
+
+    if (apps.length === 0) {
+      console.error('❌ Firebase no está inicializado después de esperar');
+      console.error('   Recarga la página y espera unos segundos antes de ejecutar el script');
+      return;
+    }
+
+    const app = apps[0];
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Verificar que estás logueado
+    if (!auth.currentUser) {
+      console.error('❌ No estás logueado. Inicia sesión como administrador primero.');
+      console.error('   Ve a #/auth para iniciar sesión');
+      return;
+    }
+
+    console.log('✅ Usuario:', auth.currentUser.email);
+    console.log('✅ Firestore conectado');
+
+    // ========================================================================
+    // DATOS DEL PRODUCTO - MODIFICA AQUÍ PARA CREAR OTROS PRODUCTOS
+    // ========================================================================
+
+    const productData = {
+      // ID único del producto
+      id: 'north-atlantic-ops',
+
+      // Nombres bilingües
+      name: {
+        es: 'Procedimientos Operacionales del Atlántico Norte',
+        en: 'North Atlantic Operational Procedures'
+      },
+      title: {
+        es: 'Procedimientos Operacionales del Atlántico Norte',
+        en: 'North Atlantic Operational Procedures'
+      },
+
+      // Descripciones bilingües
+      description: {
+        es: 'Un banco de preguntas completo para pilotos transoceánicos que operan en el espacio aéreo del Atlántico Norte. Basado en documentos oficiales de OACI con referencias y justificaciones.',
+        en: 'A comprehensive question bank for transoceanic pilots operating in North Atlantic airspace. Based on official ICAO documents with references and justifications.'
+      },
+      shortDescription: {
+        es: 'Un banco de preguntas completo para pilotos transoceánicos que operan en el espacio aéreo del Atlántico Norte. Basado en documentos oficiales de OACI con referencias y justificaciones.',
+        en: 'A comprehensive question bank for transoceanic pilots operating in North Atlantic airspace. Based on official ICAO documents with references and justifications.'
+      },
+      longDescription: {
+        es: 'El banco de preguntas más completo para pilotos transoceánicos. Estudia procedimientos oficiales de OACI, practica con escenarios reales y aprueba tu certificación de operaciones NAT con confianza.',
+        en: 'The most comprehensive question bank for transoceanic pilots. Study official ICAO procedures, practice with real scenarios, and pass your NAT operations certification with confidence.'
+      },
+
+      // Precios
+      price: 99,
+      originalPrice: 150,
+
+      // Imágenes
+      image: 'https://placehold.co/600x400/1a202c/FFFFFF?text=NAT+OPS&font=inter',
+      imageURL: 'https://placehold.co/600x400/1a202c/FFFFFF?text=NAT+OPS&font=inter',
+
+      // Categoría y etiquetas
+      category: 'aviation',
+      badge: 'Disponible',
+      badgeColor: 'blue',
+      tags: ['aviation', 'NAT', 'oceanic', 'procedures'],
+
+      // Rating y reseñas
+      rating: 5.0,
+      reviews: 342,
+
+      // Colores del gradiente
+      colors: ['#1b1b25', '#190d36', '#1b1b25'],
+      detailGradientColors: ['#1b1b25', '#190d36', '#1b1b25'],
+
+      // Características simples
+      features: [
+        'Banco de preguntas interactivo',
+        'Documentos ICAO oficiales',
+        'Referencias y justificaciones',
+        'Acceso completo'
+      ],
+
+      // Características detalladas con iconos
+      detailedFeatures: [
+        {
+          icon: 'radio',
+          title: {
+            es: 'Procedimientos de Comunicación',
+            en: 'Communications Procedures'
+          },
+          description: {
+            es: 'Domina protocolos de radio HF, operaciones SELCAL y requisitos de reporte de posición para vuelos oceánicos.',
+            en: 'Master HF radio protocols, SELCAL operations, and position reporting requirements for oceanic flight.'
+          }
+        },
+        {
+          icon: 'map',
+          title: {
+            es: 'Sistemas de Navegación y Rutas',
+            en: 'Navigation & Track Systems'
+          },
+          description: {
+            es: 'Aprende sistemas de rutas NAT, procedimientos de waypoints y requisitos RNAV para navegación oceánica segura.',
+            en: 'Learn NAT track systems, waypoint procedures, and RNAV requirements for safe oceanic navigation.'
+          }
+        },
+        {
+          icon: 'cloud',
+          title: {
+            es: 'Meteorología y Ambiente',
+            en: 'Weather & Environmental'
+          },
+          description: {
+            es: 'Comprende cartas SIGWX, reporte de turbulencias y cómo el clima afecta las operaciones NAT.',
+            en: 'Understand SIGWX charts, turbulence reporting, and how weather affects NAT operations.'
+          }
+        },
+        {
+          icon: 'warning',
+          title: {
+            es: 'Procedimientos de Emergencia',
+            en: 'Emergency Procedures'
+          },
+          description: {
+            es: 'Practica procedimientos de contingencia, desvíos y requisitos ETOPS para operaciones seguras.',
+            en: 'Practice contingency procedures, diversions, and ETOPS requirements for safe operations.'
+          }
+        },
+        {
+          icon: 'certificate',
+          title: {
+            es: 'Listo para Certificación',
+            en: 'Certification Ready'
+          },
+          description: {
+            es: 'Preguntas diseñadas para coincidir con exámenes de certificación reales con explicaciones detalladas y referencias.',
+            en: 'Questions designed to match real certification exams with detailed explanations and references.'
+          }
+        },
+        {
+          icon: 'lightning',
+          title: {
+            es: 'Aprendizaje Interactivo',
+            en: 'Interactive Learning'
+          },
+          description: {
+            es: 'Pistas, explicaciones detalladas y seguimiento de progreso para optimizar tus sesiones de estudio.',
+            en: 'Hints, detailed explanations, and progress tracking to optimize your study sessions.'
+          }
+        }
+      ],
+
+      // Configuración
+      showOnHomepage: true,
+      appUrl: '/apps/north-atlantic-procedures/guide.html',
+      offerId: null,
+
+      // Timestamps automáticos
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+
+    // ========================================================================
+    // INSERCIÓN EN FIREBASE
+    // ========================================================================
+
+    console.log('📝 Insertando producto:', productData.id);
+    console.log('   Usuario:', auth.currentUser.email);
+
+    await setDoc(doc(db, 'products', productData.id), productData);
+
+    console.log('');
+    console.log('✅ ¡PRODUCTO INSERTADO EXITOSAMENTE!');
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('');
+    console.log('📊 RESUMEN DEL PRODUCTO:');
+    console.log('   🆔 ID:', productData.id);
+    console.log('   📝 Nombre (ES):', productData.name.es);
+    console.log('   📝 Nombre (EN):', productData.name.en);
+    console.log('   💰 Precio: $' + productData.price, '(antes $' + productData.originalPrice + ')');
+    console.log('   📁 Categoría:', productData.category);
+    console.log('   ⭐ Rating:', productData.rating + '/5.0 (' + productData.reviews + ' reviews)');
+    console.log('   ✨ Features:', productData.features.length, 'simples,', productData.detailedFeatures.length, 'detalladas');
+    console.log('   🎨 Colores:', productData.detailGradientColors.join(', '));
+    console.log('');
+    console.log('🔗 ENLACES:');
+    console.log('   📄 Ver producto:', window.location.origin + '/#/product/' + productData.id);
+    console.log('   🚀 App URL:', productData.appUrl || 'No definida');
+    console.log('');
+    console.log('📋 CONTENIDO INCLUIDO:');
+    console.log('   ✓ Nombres bilingües (ES/EN)');
+    console.log('   ✓ Descripciones bilingües (corta, larga)');
+    console.log('   ✓', productData.features.length, 'características simples');
+    console.log('   ✓', productData.detailedFeatures.length, 'características detalladas con iconos');
+    console.log('   ✓ Gradiente de colores personalizado');
+    console.log('   ✓ Badge, rating y reviews');
+    console.log('   ✓ Timestamps automáticos');
+    console.log('');
+    console.log('🔄 RECARGA LA PÁGINA para ver el producto en acción');
+    console.log('');
+    console.log('💡 COMANDOS ÚTILES:');
+    console.log('   Ver todos: checkFirebaseProducts()');
+    console.log('   Eliminar: deleteProductById("' + productData.id + '")');
+    console.log('');
+    console.log('═══════════════════════════════════════════════════════════');
+
+    return productData;
+
+  } catch (error) {
+    console.error('');
+    console.error('❌ ERROR AL INSERTAR PRODUCTO');
+    console.error('═══════════════════════════════════════════════════════════');
+    console.error('Error:', error.message);
+    console.error('Stack:', error.stack);
+    console.error('');
+    console.error('🔍 SOLUCIONES:');
+    console.error('   1. Asegúrate de estar LOGUEADO como demo@frostware.com');
+    console.error('   2. Verifica que estás en frostware.com.mx (no localhost)');
+    console.error('   3. Espera 2 segundos y vuelve a pegar el script');
+    console.error('   4. Si falla, usa Firebase Console directamente');
+    console.error('');
+    console.error('═══════════════════════════════════════════════════════════');
+    throw error;
+  }
+})();
+
+/* ============================================================================
+   PLANTILLA PARA FUTUROS PRODUCTOS
+   ============================================================================
+
+   Para crear más productos, solo modifica la sección "DATOS DEL PRODUCTO":
+
+   1. Cambia el ID (ej: 'mi-nuevo-producto')
+   2. Actualiza nombres y descripciones en español e inglés
+   3. Modifica precio, categoría, badge
+   4. Ajusta features y detailedFeatures
+   5. Cambia los colores del gradiente
+   6. Copia y pega en la consola
+
+   Iconos disponibles para detailedFeatures:
+   'radio', 'map', 'cloud', 'warning', 'certificate', 'lightning',
+   'code', 'database', 'shield', 'default'
+
+   ============================================================================ */
