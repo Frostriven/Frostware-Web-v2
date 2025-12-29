@@ -2,6 +2,18 @@
 
 Esta guía te ayudará a insertar productos en Firebase usando scripts desde la consola de Chrome.
 
+## ⚠️ IMPORTANTE: Seguridad de Credenciales
+
+**NUNCA incluyas credenciales de Firebase directamente en archivos de código que se suban a Git.**
+
+Los scripts en esta carpeta que requieren configuración de Firebase (`insert-product-production.txt`) usan placeholders y NO contienen credenciales reales. Esto es por seguridad.
+
+**Métodos recomendados (de más seguro a menos seguro):**
+1. ✅ **Firebase Console** - Método más seguro (ver abajo)
+2. ✅ **Scripts de terminal con variables de entorno**
+3. ✅ **Scripts que usan Firebase ya inicializado** (`insert-product-final.txt`)
+4. ❌ **Scripts con credenciales hardcodeadas** - NO RECOMENDADO
+
 ## 🚀 Método 1: Usando el Script Completo desde la Consola
 
 Este es el método más rápido y directo.

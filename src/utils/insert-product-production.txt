@@ -29,15 +29,28 @@
     const { initializeApp, getApps } = firebaseApp;
     const { getFirestore, doc, setDoc, serverTimestamp } = firebaseFirestore;
 
-    // Configuración de Firebase (usa tus credenciales)
+    // ⚠️ NOTA IMPORTANTE DE SEGURIDAD:
+    // Este script NO es recomendado para uso en producción ya que requiere
+    // exponer las credenciales de Firebase en el código.
+    //
+    // ALTERNATIVAS RECOMENDADAS:
+    // 1. Usar Firebase Console directamente (método más seguro)
+    // 2. Usar insert-product-final.txt que usa la app Firebase ya inicializada
+    // 3. Usar scripts de terminal con variables de entorno
+    //
+    // Si aún deseas usar este método, obtén la configuración de:
+    // Firebase Console → Project Settings → General → Your apps
+    //
+    // ⚠️ NUNCA hagas commit de tus credenciales reales a Git
+
     const firebaseConfig = {
-      apiKey: "AIzaSyAMKAQCHu0M7e7CnzYl4xKBQxMLlKNgjr0",
-      authDomain: "frostware.firebaseapp.com",
-      projectId: "frostware-website",  // ⚠️ IMPORTANTE: Usar el proyecto correcto
-      storageBucket: "frostware-website.firebasestorage.app",
-      messagingSenderId: "850493009299",
-      appId: "1:850493009299:web:7a6e2f0f67e31d8e72eba4",
-      measurementId: "G-LQQTD3PWLQ"
+      apiKey: "TU_API_KEY_AQUI",
+      authDomain: "tu-proyecto.firebaseapp.com",
+      projectId: "tu-proyecto-id",
+      storageBucket: "tu-proyecto.firebasestorage.app",
+      messagingSenderId: "TU_SENDER_ID",
+      appId: "TU_APP_ID",
+      measurementId: "TU_MEASUREMENT_ID"
     };
 
     // Inicializar Firebase solo si no está inicializado
