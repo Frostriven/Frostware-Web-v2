@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frostware - Vista Previa de Mejoras de Diseño</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/src/styles/enhancements.css">
+    <link rel="stylesheet" href="/src/styles/dark-mode.css">
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .preview-section {
+            margin-bottom: 4rem;
+            padding: 2rem;
+            border-radius: 16px;
+            background: white;
+        }
+        html.dark .preview-section {
+            background: #1a1f2e;
+        }
+        .option-label {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, #22a7d0, #1e96bc);
+            color: white;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Toggle de modo oscuro -->
+    <div class="fixed top-4 right-4 z-50">
+        <button id="theme-toggle-demo" class="bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 py-2 rounded-lg font-semibold transition-all hover:scale-105">
+            <span class="dark:hidden">🌙 Modo Oscuro</span>
+            <span class="hidden dark:inline">☀️ Modo Claro</span>
+        </button>
+    </div>
+
+    <div class="container mx-auto px-6 py-12 max-w-7xl">
+        <!-- Header -->
+        <div class="text-center mb-16">
+            <h1 class="text-5xl font-bold mb-4 text-gray-900 dark:text-white">
+                Vista Previa de Mejoras - Frostware
+            </h1>
+            <p class="text-xl text-gray-600 dark:text-gray-300">
+                Explora todas las propuestas de diseño con ratings, imágenes, admin panel completo y modales
+            </p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                Todas estas mejoras son opcionales y reversibles. Elige lo que más te guste.
+            </p>
+        </div>
+
+        <!-- PROPUESTA 1: TARJETAS DE PRODUCTOS CON RATING E IMAGEN -->
+        <div class="preview-section">
+            <h2 class="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+                📦 Propuesta 1: Tarjetas de Productos (con Rating e Imagen)
+            </h2>
+            <p class="text-gray-600 dark:text-gray-300 mb-8">
+                Tres variaciones para elegir. Ahora incluyen sistema de calificación y contenedor de imagen dedicado.
+            </p>
+
+            <!-- Opción A: Glassmorphism -->
+            <div class="mb-12">
+                <span class="option-label">OPCIÓN A - Glassmorphism Premium ⭐ RECOMENDADO</span>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Efecto vidrio esmerilado con profundidad. Moderno y elegante.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="product-card-glass">
+                        <div class="product-image-wrapper">
+                            <img src="https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400&h=240&fit=crop" alt="Software">
+                        </div>
+                        <div class="product-card-content">
+                            <span class="category-badge">Software</span>
+                            <h3 class="text-lg font-bold mt-3 mb-2 text-gray-900 dark:text-white">FocusFlow Pro</h3>
+                            <div class="product-rating">
+                                <div class="rating-stars">
+                                    <svg class="rating-star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                    <svg class="rating-star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                    <svg class="rating-star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                    <svg class="rating-star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                    <svg class="rating-star empty" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                </div>
+                                <span class="rating-count">(127)</span>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-300 text-sm mb-4">
+                                Gestiona tu tiempo de forma inteligente con técnicas de productividad avanzadas.
+                            </p>
+                            <div class="flex justify-between items-center mt-auto">
+                                <span class="text-2xl font-bold text-[#22a7d0]">$29.99</span>
+                                <button class="bg-[#22a7d0] text-white px-4 py-2 rounded-lg hover:bg-[#1e96bc] transition">
+                                    Comprar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="product-card-glass">
+                        <div class="product-image-wrapper">
+                            <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=240&fit=crop" alt="Curso">
+                        </div>
+                        <div class="product-card-content">
+                            <span class="category-badge">Curso</span>
+                            <h3 class="text-lg font-bold mt-3 mb-2 text-gray-900 dark:text-white">Masterclass React</h3>
+                            <div class="product-rating">
+                                <div class="rating-stars">
+                                    <svg class="rating-star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                    <svg class="rating-star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                    <svg class="rating-star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                    <svg class="rating-star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                    <svg class="rating-star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                </div>
+                                <span class="rating-count">(89)</span>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-300 text-sm mb-4">
+                                Aprende React desde cero hasta nivel avanzado con proyectos reales.
+                            </p>
+                            <div class="flex justify-between items-center mt-auto">
+                                <span class="text-2xl font-bold text-[#22a7d0]">$49.99</span>
+                                <button class="bg-[#22a7d0] text-white px-4 py-2 rounded-lg hover:bg-[#1e96bc] transition">
+                                    Comprar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="product-card-glass">
+                        <div class="product-image-wrapper">
+                            <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=240&fit=crop" alt="Herramienta">
+                        </div>
+                        <div class="product-card-content">
+                            <span class="category-badge">Herramienta</span>
+                            <h3 class="text-lg font-bold mt-3 mb-2 text-gray-900 dark:text-white">DataViz Studio</h3>
+                            <div class="product-rating">
+                                <div class="rating-stars">
+                                    <svg class="rating-star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                    <svg class="rating-star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                    <svg class="rating-star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                    <svg class="rating-star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                    <svg class="rating-star empty" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                </div>
+                                <span class="rating-count">(203)</span>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-300 text-sm mb-4">
+                                Crea visualizaciones de datos impactantes sin escribir código.
+                            </p>
+                            <div class="flex justify-between items-center mt-auto">
+                                <span class="text-2xl font-bold text-[#22a7d0]">$39.99</span>
+                                <button class="bg-[#22a7d0] text-white px-4 py-2 rounded-lg hover:bg-[#1e96bc] transition">
+                                    Comprar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PROPUESTA 2: PANEL DE ADMINISTRACIÓN COMPLETO -->
+        <div class="preview-section">
+            <h2 class="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+                📊 Propuesta 2: Panel de Administración Completo
+            </h2>
+            <p class="text-gray-600 dark:text-gray-300 mb-8">
+                Tabla completa con todas las columnas: Categoría, Precio, Ofertas, Badge, Acciones
+            </p>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="admin-stat-card">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="admin-icon-wrapper">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                            </svg>
+                        </div>
+                        <span class="text-green-600 text-sm font-semibold">+12.5%</span>
+                    </div>
+                    <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Total Productos</h3>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white">127</p>
+                </div>
+                <div class="admin-stat-card">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="admin-icon-wrapper">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <span class="text-green-600 text-sm font-semibold">+8.2%</span>
+                    </div>
+                    <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Ingresos</h3>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white">$12,450</p>
+                </div>
+                <div class="admin-stat-card">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="admin-icon-wrapper">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                        </div>
+                        <span class="text-red-600 text-sm font-semibold">-2.4%</span>
+                    </div>
+                    <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Usuarios Activos</h3>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white">1,893</p>
+                </div>
+            </div>
+
+            <!-- Tabla de productos -->
+            <div class="overflow-x-auto">
+                <table class="admin-products-table">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Categoría</th>
+                            <th>Precio</th>
+                            <th>Ofertas</th>
+                            <th>Badge</th>
+                            <th class="text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="admin-table-row">
+                            <td>
+                                <div class="font-semibold text-gray-900 dark:text-white">FocusFlow Pro</div>
+                                <div class="text-xs text-gray-500">ID: #FF-2024-001</div>
+                            </td>
+                            <td>
+                                <div class="category-cell">
+                                    <div class="category-icon bg-blue-100 dark:bg-blue-900/30 text-blue-600">💼</div>
+                                    <span>Software</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="price-cell">
+                                    $29.99
+                                    <span class="original-price">$49.99</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="offer-badge">
+                                    🔥 40% OFF
+                                </span>
+                            </td>
+                            <td>
+                                <span class="status-badge featured">
+                                    ⭐ Destacado
+                                </span>
+                            </td>
+                            <td>
+                                <div class="actions-cell">
+                                    <button class="action-btn" title="Editar">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                        </svg>
+                                    </button>
+                                    <button class="action-btn delete" title="Eliminar">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="admin-table-row">
+                            <td>
+                                <div class="font-semibold text-gray-900 dark:text-white">Masterclass React</div>
+                                <div class="text-xs text-gray-500">ID: #MC-2024-002</div>
+                            </td>
+                            <td>
+                                <div class="category-cell">
+                                    <div class="category-icon bg-purple-100 dark:bg-purple-900/30 text-purple-600">📚</div>
+                                    <span>Curso</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="price-cell">$49.99</div>
+                            </td>
+                            <td>
+                                <span class="offer-badge no-offer">Sin oferta</span>
+                            </td>
+                            <td>
+                                <span class="status-badge active">
+                                    ✓ Activo
+                                </span>
+                            </td>
+                            <td>
+                                <div class="actions-cell">
+                                    <button class="action-btn">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                        </svg>
+                                    </button>
+                                    <button class="action-btn delete">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="admin-table-row">
+                            <td>
+                                <div class="font-semibold text-gray-900 dark:text-white">DataViz Studio</div>
+                                <div class="text-xs text-gray-500">ID: #DV-2024-003</div>
+                            </td>
+                            <td>
+                                <div class="category-cell">
+                                    <div class="category-icon bg-green-100 dark:bg-green-900/30 text-green-600">🛠️</div>
+                                    <span>Herramienta</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="price-cell">
+                                    $39.99
+                                    <span class="original-price">$59.99</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="offer-badge">
+                                    💰 33% OFF
+                                </span>
+                            </td>
+                            <td>
+                                <span class="status-badge draft">
+                                    📝 Borrador
+                                </span>
+                            </td>
+                            <td>
+                                <div class="actions-cell">
+                                    <button class="action-btn">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                        </svg>
+                                    </button>
+                                    <button class="action-btn delete">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PROPUESTA 3: MODALES -->
+        <div class="preview-section">
+            <h2 class="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+                🎯 Propuesta 3: Modales Interactivos
+            </h2>
+            <p class="text-gray-600 dark:text-gray-300 mb-8">
+                Diseños completos para: crear producto, editar producto, carrito de compras y mis productos
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button onclick="openModal('product-create')" class="modal-btn modal-btn-primary justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Ver Modal: Crear Producto
+                </button>
+                <button onclick="openModal('product-edit')" class="modal-btn modal-btn-primary justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    Ver Modal: Editar Producto
+                </button>
+                <button onclick="openModal('cart')" class="modal-btn modal-btn-primary justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                    Ver Modal: Carrito de Compras
+                </button>
+                <button onclick="openModal('my-products')" class="modal-btn modal-btn-primary justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Ver Modal: Mis Productos
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Crear Producto -->
+    <div id="modal-product-create" class="modal-overlay" onclick="closeModalOnOverlay(event, 'product-create')">
+        <div class="modal-container" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 class="modal-title">Crear Nuevo Producto</h2>
+                <button class="modal-close" onclick="closeModal('product-create')">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-form-group">
+                    <label class="modal-form-label">Nombre del Producto</label>
+                    <input type="text" class="modal-form-input" placeholder="Ej: FocusFlow Pro">
+                </div>
+                <div class="modal-form-group">
+                    <label class="modal-form-label">Categoría</label>
+                    <select class="modal-form-select">
+                        <option>Software</option>
+                        <option>Curso</option>
+                        <option>Herramienta</option>
+                        <option>Template</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="modal-form-group">
+                        <label class="modal-form-label">Precio</label>
+                        <input type="number" class="modal-form-input" placeholder="29.99">
+                    </div>
+                    <div class="modal-form-group">
+                        <label class="modal-form-label">Descuento (%)</label>
+                        <input type="number" class="modal-form-input" placeholder="0">
+                    </div>
+                </div>
+                <div class="modal-form-group">
+                    <label class="modal-form-label">Descripción</label>
+                    <textarea class="modal-form-textarea" placeholder="Describe tu producto..."></textarea>
+                </div>
+                <div class="modal-form-group">
+                    <label class="modal-form-label">URL de Imagen</label>
+                    <input type="url" class="modal-form-input" placeholder="https://...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeModal('product-create')">Cancelar</button>
+                <button class="modal-btn modal-btn-primary">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Crear Producto
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Editar Producto -->
+    <div id="modal-product-edit" class="modal-overlay" onclick="closeModalOnOverlay(event, 'product-edit')">
+        <div class="modal-container" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 class="modal-title">Editar Producto</h2>
+                <button class="modal-close" onclick="closeModal('product-edit')">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-form-group">
+                    <label class="modal-form-label">Nombre del Producto</label>
+                    <input type="text" class="modal-form-input" value="FocusFlow Pro">
+                </div>
+                <div class="modal-form-group">
+                    <label class="modal-form-label">Categoría</label>
+                    <select class="modal-form-select">
+                        <option selected>Software</option>
+                        <option>Curso</option>
+                        <option>Herramienta</option>
+                        <option>Template</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="modal-form-group">
+                        <label class="modal-form-label">Precio</label>
+                        <input type="number" class="modal-form-input" value="29.99">
+                    </div>
+                    <div class="modal-form-group">
+                        <label class="modal-form-label">Descuento (%)</label>
+                        <input type="number" class="modal-form-input" value="40">
+                    </div>
+                </div>
+                <div class="modal-form-group">
+                    <label class="modal-form-label">Estado</label>
+                    <select class="modal-form-select">
+                        <option>Activo</option>
+                        <option>Inactivo</option>
+                        <option>Borrador</option>
+                        <option selected>Destacado</option>
+                    </select>
+                </div>
+                <div class="modal-form-group">
+                    <label class="modal-form-label">Descripción</label>
+                    <textarea class="modal-form-textarea">Gestiona tu tiempo de forma inteligente con técnicas de productividad avanzadas.</textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeModal('product-edit')">Cancelar</button>
+                <button class="modal-btn modal-btn-primary">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Carrito -->
+    <div id="modal-cart" class="modal-overlay cart-modal" onclick="closeModalOnOverlay(event, 'cart')">
+        <div class="modal-container" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 class="modal-title">Carrito de Compras</h2>
+                <button class="modal-close" onclick="closeModal('cart')">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="cart-item">
+                    <img src="https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=80&h=80&fit=crop" alt="Producto" class="cart-item-image">
+                    <div class="cart-item-details">
+                        <h3 class="cart-item-title">FocusFlow Pro</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Software de productividad</p>
+                        <div class="cart-item-quantity">
+                            <button class="quantity-btn">-</button>
+                            <span class="text-sm font-medium px-3">1</span>
+                            <button class="quantity-btn">+</button>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="cart-item-price">$29.99</p>
+                        <button class="text-red-600 hover:text-red-700 text-sm mt-2">Eliminar</button>
+                    </div>
+                </div>
+
+                <div class="cart-item">
+                    <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=80&h=80&fit=crop" alt="Producto" class="cart-item-image">
+                    <div class="cart-item-details">
+                        <h3 class="cart-item-title">Masterclass React</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Curso completo</p>
+                        <div class="cart-item-quantity">
+                            <button class="quantity-btn">-</button>
+                            <span class="text-sm font-medium px-3">1</span>
+                            <button class="quantity-btn">+</button>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="cart-item-price">$49.99</p>
+                        <button class="text-red-600 hover:text-red-700 text-sm mt-2">Eliminar</button>
+                    </div>
+                </div>
+
+                <div class="cart-total">
+                    <div class="cart-total-row">
+                        <span>Subtotal</span>
+                        <span>$79.98</span>
+                    </div>
+                    <div class="cart-total-row">
+                        <span>Descuentos</span>
+                        <span class="text-green-600">-$10.00</span>
+                    </div>
+                    <div class="cart-total-row">
+                        <span>IVA (21%)</span>
+                        <span>$14.70</span>
+                    </div>
+                    <div class="cart-total-final">
+                        <span>Total</span>
+                        <span>$84.68</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeModal('cart')">Seguir Comprando</button>
+                <button class="modal-btn modal-btn-primary">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                    </svg>
+                    Proceder al Pago
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Mis Productos -->
+    <div id="modal-my-products" class="modal-overlay" onclick="closeModalOnOverlay(event, 'my-products')">
+        <div class="modal-container" style="max-width: 900px;" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 class="modal-title">Mis Productos</h2>
+                <button class="modal-close" onclick="closeModal('my-products')">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="my-products-grid">
+                    <div class="my-product-card">
+                        <img src="https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400&h=160&fit=crop" alt="Producto" class="my-product-image">
+                        <div class="my-product-info">
+                            <h3 class="my-product-title">FocusFlow Pro</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Software de productividad</p>
+                            <p class="my-product-date">Adquirido el 15 Dic 2024</p>
+                            <button class="mt-3 w-full bg-[#22a7d0] text-white px-4 py-2 rounded-lg hover:bg-[#1e96bc] transition text-sm font-semibold">
+                                Descargar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="my-product-card">
+                        <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=160&fit=crop" alt="Producto" class="my-product-image">
+                        <div class="my-product-info">
+                            <h3 class="my-product-title">Masterclass React</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Curso completo</p>
+                            <p class="my-product-date">Adquirido el 10 Dic 2024</p>
+                            <button class="mt-3 w-full bg-[#22a7d0] text-white px-4 py-2 rounded-lg hover:bg-[#1e96bc] transition text-sm font-semibold">
+                                Acceder
+                            </button>
+                        </div>
+                    </div>
+                    <div class="my-product-card">
+                        <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=160&fit=crop" alt="Producto" class="my-product-image">
+                        <div class="my-product-info">
+                            <h3 class="my-product-title">DataViz Studio</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Herramienta de visualización</p>
+                            <p class="my-product-date">Adquirido el 5 Dic 2024</p>
+                            <button class="mt-3 w-full bg-[#22a7d0] text-white px-4 py-2 rounded-lg hover:bg-[#1e96bc] transition text-sm font-semibold">
+                                Descargar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeModal('my-products')">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme toggle
+        const themeToggle = document.getElementById('theme-toggle-demo');
+        themeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+        });
+
+        // Modal functions - hacerlas globales para que funcionen con onclick
+        window.openModal = function(modalId) {
+            const modal = document.getElementById(`modal-${modalId}`);
+            if (modal) {
+                modal.style.display = 'flex';
+                setTimeout(() => modal.classList.add('active'), 10);
+            }
+        }
+
+        window.closeModal = function(modalId) {
+            const modal = document.getElementById(`modal-${modalId}`);
+            if (modal) {
+                modal.classList.remove('active');
+                setTimeout(() => modal.style.display = 'none', 300);
+            }
+        }
+
+        window.closeModalOnOverlay = function(event, modalId) {
+            if (event.target === event.currentTarget) {
+                closeModal(modalId);
+            }
+        }
+
+        // Stagger animation on load
+        window.addEventListener('load', () => {
+            const items = document.querySelectorAll('.stagger-item');
+            items.forEach((item, index) => {
+                item.style.animationDelay = `${index * 0.1}s`;
+            });
+        });
+    </script>
+</body>
+</html>

@@ -171,7 +171,7 @@ class ShoppingCart {
             id: product.id,
             title: product.title,
             price: product.price || 0,
-            imageURL: product.imageURL,
+            imageURL: product.imageURL || product.image,
             shortDescription: product.shortDescription
         });
 
@@ -332,7 +332,7 @@ class ShoppingCart {
 
             return `
             <div class="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                <img src="${item.imageURL || 'https://placehold.co/80x80/e5e7eb/9ca3af?text=No+Image'}"
+                <img src="${item.imageURL || item.image || 'https://placehold.co/80x80/e5e7eb/9ca3af?text=No+Image'}"
                      alt="${name}"
                      class="w-16 h-16 rounded-lg object-cover">
                 <div class="flex-grow">
@@ -487,10 +487,10 @@ class ShoppingCart {
             for (const item of this.cart) {
                 await addUserProduct(auth.currentUser.uid, {
                     id: item.id,
-                    title: item.title,
-                    shortDescription: item.shortDescription,
+                    name: item.title,  // title -> name
+                    description: item.shortDescription,  // shortDescription -> description
                     price: item.price,
-                    imageURL: item.imageURL,
+                    image: item.imageURL,  // imageURL -> image
                     category: 'purchased',
                     purchaseDate: new Date().toISOString()
                 });
@@ -693,7 +693,7 @@ class ShoppingCart {
 
     showToast(message, type = 'success') {
         const toast = document.createElement('div');
-        toast.className = 'fixed top-4 right-4 z-50 transform transition-all duration-300 translate-x-full';
+        toast.className = 'fixed top-20 right-4 z-50 transform transition-all duration-300 translate-x-full';
 
         const bgColor = {
             'success': 'bg-green-500',

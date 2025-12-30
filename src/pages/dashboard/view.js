@@ -187,18 +187,17 @@ export async function renderDashboardView(productId) {
 
                 <div class="space-y-3">
                   ${allProducts.map(prod => {
-                    const isPurchased = purchasedProductIds.has(prod.id);
-                    const isCurrentProduct = prod.id === productId;
+    const isPurchased = purchasedProductIds.has(prod.id);
+    const isCurrentProduct = prod.id === productId;
 
-                    return `
+    return `
                       <div class="space-y-3">
-                        <div class="flex items-center justify-between p-4 rounded-lg border-2 ${
-                          isPurchased
-                            ? isCurrentProduct
-                              ? 'border-[#22a7d0] bg-blue-50'
-                              : 'border-green-200 bg-green-50'
-                            : 'border-gray-300 bg-gray-100 opacity-75'
-                        } transition-all duration-200 hover:shadow-md ${isPurchased ? 'cursor-pointer' : ''}">
+                        <div class="flex items-center justify-between p-4 rounded-lg border-2 ${isPurchased
+        ? isCurrentProduct
+          ? 'border-[#22a7d0] bg-blue-50'
+          : 'border-green-200 bg-green-50'
+        : 'border-gray-300 bg-gray-100 opacity-75'
+      } transition-all duration-200 hover:shadow-md ${isPurchased ? 'cursor-pointer' : ''}">
                           <div class="flex items-center space-x-3 flex-1">
                             <div class="relative">
                               <input type="checkbox" id="product-${prod.id}" ${isPurchased ? 'checked' : ''} ${!isPurchased ? 'disabled' : ''}
@@ -212,7 +211,7 @@ export async function renderDashboardView(productId) {
                                 </div>
                               ` : ''}
                             </div>
-                            <img src="${prod.image}" alt="${prod.name}" class="w-10 h-10 rounded-lg object-cover shadow-sm transition-all duration-200 ${!isPurchased ? 'grayscale' : ''}">
+                            <img src="${prod.imageURL || prod.image}" alt="${prod.name}" class="w-10 h-10 rounded-lg object-cover shadow-sm transition-all duration-200 ${!isPurchased ? 'grayscale' : ''}">
                             <div class="flex-1">
                               <h3 class="font-semibold ${isPurchased ? 'text-gray-900' : 'text-gray-500'} transition-colors">${prod.name}</h3>
                               <p class="text-sm ${isPurchased ? 'text-gray-600' : 'text-gray-400'}">${prod.category}</p>
@@ -228,19 +227,19 @@ export async function renderDashboardView(productId) {
                           </div>
                           <div class="text-right ml-4">
                             ${isPurchased
-                              ? `<div class="flex items-center space-x-2">
+        ? `<div class="flex items-center space-x-2">
                                    <span class="px-3 py-1 text-xs font-medium rounded-full border" style="background-color: ${(categories[prod.category]?.color || '#10B981')}20; color: ${categories[prod.category]?.color || '#10B981'}; border-color: ${categories[prod.category]?.color || '#10B981'}40;">
                                      <span class="w-2 h-2 rounded-full inline-block mr-1 animate-pulse" style="background-color: ${categories[prod.category]?.color || '#10B981'};"></span>
                                      Activo
                                    </span>
                                  </div>`
-                              : `<div class="text-right space-y-2">
+        : `<div class="text-right space-y-2">
                                    <div class="text-lg font-bold text-gray-500">$${prod.price}</div>
                                    <button onclick="addToCartFromDashboard('${prod.id}')" class="px-3 py-1 bg-[#22a7d0] text-white text-xs font-medium rounded-lg hover:bg-[#1e96bc] transition-colors shadow-sm transform hover:scale-105 duration-200">
                                      Agregar al Carrito
                                    </button>
                                  </div>`
-                            }
+      }
                           </div>
                         </div>
 
@@ -250,12 +249,12 @@ export async function renderDashboardView(productId) {
                             <h4 class="text-sm font-medium text-gray-700">Temas disponibles:</h4>
                             <div class="grid grid-cols-2 gap-2">
                               ${(prod.topics || [
-                                { id: 'communications', name: 'Communications', questions: 45 },
-                                { id: 'navigation', name: 'Navigation & Tracks', questions: 38 },
-                                { id: 'weather', name: 'Weather & Environmental', questions: 32 },
-                                { id: 'emergency', name: 'Emergency Procedures', questions: 25 },
-                                { id: 'certification', name: 'Certification Standards', questions: 10 }
-                              ]).map(topic => `
+          { id: 'communications', name: 'Communications', questions: 45 },
+          { id: 'navigation', name: 'Navigation & Tracks', questions: 38 },
+          { id: 'weather', name: 'Weather & Environmental', questions: 32 },
+          { id: 'emergency', name: 'Emergency Procedures', questions: 25 },
+          { id: 'certification', name: 'Certification Standards', questions: 10 }
+        ]).map(topic => `
                                 <label class="flex items-center space-x-2 p-2 rounded border border-gray-200 hover:bg-gray-50">
                                   <input type="checkbox" checked class="text-[#22a7d0] focus:ring-[#22a7d0]"
                                          onchange="updateTopicSelection('${prod.id}', '${topic.id}', this.checked)">
@@ -270,7 +269,7 @@ export async function renderDashboardView(productId) {
                         ` : ''}
                       </div>
                     `;
-                  }).join('')}
+  }).join('')}
                 </div>
 
                 <!-- Info and Summary -->
@@ -548,7 +547,7 @@ export async function renderDashboardView(productId) {
   }
 
   // Global functions for interaction
-  window.toggleProductDatabase = function(productId, isSelected) {
+  window.toggleProductDatabase = function (productId, isSelected) {
     console.log(`Database ${productId} ${isSelected ? 'activated' : 'deactivated'}`);
 
     // Show/hide topics section
@@ -569,7 +568,7 @@ export async function renderDashboardView(productId) {
     updateSessionSummary();
   };
 
-  window.addToCartFromDashboard = function(productId) {
+  window.addToCartFromDashboard = function (productId) {
     // Find the product and add to cart
     const productToAdd = allProducts.find(p => p.id === productId);
     if (productToAdd && window.cart) {
@@ -590,13 +589,13 @@ export async function renderDashboardView(productId) {
     }
   };
 
-  window.updateTopicSelection = function(productId, topicId, isSelected) {
+  window.updateTopicSelection = function (productId, topicId, isSelected) {
     console.log(`Topic ${topicId} in ${productId} ${isSelected ? 'selected' : 'deselected'}`);
     updateAllCounts();
     updateSessionSummary();
   };
 
-  window.updateTimerDisplay = function(value) {
+  window.updateTimerDisplay = function (value) {
     const display = document.getElementById('timer-display');
     if (display) {
       display.textContent = `${value} minutos`;

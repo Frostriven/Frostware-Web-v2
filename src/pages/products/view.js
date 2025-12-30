@@ -120,7 +120,7 @@ function generateProductsHTML(products) {
         <!-- Inner container for content -->
         <div class="w-full h-full flex flex-col" style="border-radius: 14px; overflow: hidden;">
             <div class="w-full h-1/2 overflow-hidden">
-            <img src="${product.image || 'https://placehold.co/600x400/1a202c/FFFFFF?text=' + encodeURIComponent(name) + '&font=inter'}"
+            <img src="${product.imageURL || product.image || 'https://placehold.co/600x400/1a202c/FFFFFF?text=' + encodeURIComponent(name) + '&font=inter'}"
                 class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                 alt="${name}">
             </div>

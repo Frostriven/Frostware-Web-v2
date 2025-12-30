@@ -378,13 +378,13 @@ function initializeAccountPage(initialTab = 'profile') {
           // Handle date formatting based on current language
           const dateLocale = currentLang === 'es' ? 'es-ES' : 'en-US';
           const formattedDate = product.purchaseDate?.toDate ? product.purchaseDate.toDate().toLocaleDateString(dateLocale) :
-                               product.purchaseDate instanceof Date ? product.purchaseDate.toLocaleDateString(dateLocale) :
-                               t('account.product.dateNotAvailable');
+            product.purchaseDate instanceof Date ? product.purchaseDate.toLocaleDateString(dateLocale) :
+              t('account.product.dateNotAvailable');
 
           return `
           <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
             <div class="flex items-start gap-4">
-              <img src="${product.image || 'https://placehold.co/80x80/1a202c/FFFFFF?text=' + encodeURIComponent(name.charAt(0))}" alt="${name}" class="w-20 h-20 rounded-lg object-cover shadow-md">
+              <img src="${product.imageURL || product.image || 'https://placehold.co/80x80/1a202c/FFFFFF?text=' + encodeURIComponent(name.charAt(0))}" alt="${name}" class="w-20 h-20 rounded-lg object-cover shadow-md">
               <div class="flex-1">
                 <div class="flex justify-between items-start mb-2">
                   <h3 class="font-bold text-gray-900 text-lg">${name}</h3>
@@ -640,7 +640,7 @@ function initializeAccountPage(initialTab = 'profile') {
 }
 
 // Función global para eliminar productos (accesible desde el HTML)
-window.removeUserProduct = async function(productId, userId) {
+window.removeUserProduct = async function (productId, userId) {
   try {
     const lang = i18n.getCurrentLanguage();
     const confirmed = confirm(lang === 'es' ? '¿Estás seguro de que deseas eliminar este producto?' : 'Are you sure you want to delete this product?');

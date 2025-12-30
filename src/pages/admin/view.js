@@ -264,43 +264,43 @@ export async function renderAdminView() {
                   </thead>
                   <tbody class="divide-y divide-gray-200" id="products-table-body">
                     ${products.map(product => {
-                      // Calcular descuento si hay oferta activa
-                      const hasOffer = product.hasActiveOffer && product.originalPrice && product.originalPrice > product.price;
-                      const discountPercent = hasOffer
-                        ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-                        : 0;
+      // Calcular descuento si hay oferta activa
+      const hasOffer = product.hasActiveOffer && product.originalPrice && product.originalPrice > product.price;
+      const discountPercent = hasOffer
+        ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+        : 0;
 
-                      return `
+      return `
                       <tr>
                         <td class="px-6 py-4 whitespace-nowrap">
                           <div class="flex items-center">
                             ${(() => {
-                              const productName = typeof product.name === 'string'
-                                ? product.name
-                                : (product.name?.[i18n.getCurrentLanguage()] || product.name?.es || product.name?.en || 'Sin nombre');
-                              const productDesc = typeof product.description === 'string'
-                                ? product.description.substring(0, 50)
-                                : (product.description?.[i18n.getCurrentLanguage()] || product.description?.es || product.description?.en || 'Sin descripción').substring(0, 50);
-                              return `
-                                <img src="${product.image || 'https://placehold.co/40x40/1a202c/FFFFFF?text=' + encodeURIComponent(productName.charAt(0))}"
+          const productName = typeof product.name === 'string'
+            ? product.name
+            : (product.name?.[i18n.getCurrentLanguage()] || product.name?.es || product.name?.en || 'Sin nombre');
+          const productDesc = typeof product.description === 'string'
+            ? product.description.substring(0, 50)
+            : (product.description?.[i18n.getCurrentLanguage()] || product.description?.es || product.description?.en || 'Sin descripción').substring(0, 50);
+          return `
+                                <img src="${product.imageURL || product.image || 'https://placehold.co/40x40/1a202c/FFFFFF?text=' + encodeURIComponent(productName.charAt(0))}"
                                      alt="${productName}" class="w-10 h-10 rounded-lg object-cover">
                                 <div class="ml-4">
                                   <div class="text-sm font-medium text-gray-900">${productName}</div>
                                   <div class="text-sm text-gray-500">${productDesc}...</div>
                                 </div>
                               `;
-                            })()}
+        })()}
                           </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                           ${(() => {
-                            const categoryColor = categoryColorMap[product.category] || '#6B7280';
-                            return `
+          const categoryColor = categoryColorMap[product.category] || '#6B7280';
+          return `
                               <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color: ${categoryColor}20; color: ${categoryColor}">
                                 ${product.category}
                               </span>
                             `;
-                          })()}
+        })()}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                           ${hasOffer ? `
@@ -331,13 +331,13 @@ export async function renderAdminView() {
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                           ${product.badge ? (() => {
-                            const badgeColor = badgeColorMap[product.badge] || '#3B82F6';
-                            return `
+          const badgeColor = badgeColorMap[product.badge] || '#3B82F6';
+          return `
                               <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color: ${badgeColor}20; color: ${badgeColor}">
                                 ${product.badge}
                               </span>
                             `;
-                          })() : '-'}
+        })() : '-'}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                           <button data-product-id="${product.id}" data-action="edit-product"
@@ -350,7 +350,7 @@ export async function renderAdminView() {
                           </button>
                         </td>
                       </tr>`;
-                    }).join('')}
+    }).join('')}
                   </tbody>
                 </table>
               </div>
@@ -1222,7 +1222,7 @@ function initializeBadgeForm() {
 }
 
 // Global function to edit products
-window.editProduct = async function(productId) {
+window.editProduct = async function (productId) {
   console.log('📝 editProduct called with ID:', productId);
   try {
     // Get product data
@@ -1249,7 +1249,7 @@ window.editProduct = async function(productId) {
 
     // Apply category and badge colors
     await applySelectColors(product.category, product.badge);
-    document.getElementById('product-image').value = product.image || '';
+    document.getElementById('product-image').value = product.imageURL || product.image || '';
     document.getElementById('product-app-url').value = product.appUrl || '';
     document.getElementById('product-show-on-homepage').checked = product.showOnHomepage || false;
 
@@ -1347,7 +1347,7 @@ window.editProduct = async function(productId) {
 };
 
 // Global function to delete products
-window.deleteProduct = async function(productId) {
+window.deleteProduct = async function (productId) {
   try {
     // Check if user is authenticated and admin
     if (!auth?.currentUser) {
@@ -1643,7 +1643,7 @@ function loadBadgesList(badges, products) {
 }
 
 // Global function to edit categories
-window.editCategory = async function(categoryId) {
+window.editCategory = async function (categoryId) {
   try {
     const categoryDoc = await getDoc(doc(db, 'categories', categoryId));
     if (!categoryDoc.exists()) {
@@ -1672,7 +1672,7 @@ window.editCategory = async function(categoryId) {
 };
 
 // Global function to delete categories
-window.deleteCategory = async function(categoryId, productCount = 0) {
+window.deleteCategory = async function (categoryId, productCount = 0) {
   try {
     if (!auth?.currentUser) {
       showAdminToast('Debes iniciar sesión para realizar esta acción', 'error');
@@ -1724,7 +1724,7 @@ window.deleteCategory = async function(categoryId, productCount = 0) {
 };
 
 // Global function to edit badges
-window.editBadge = async function(badgeId) {
+window.editBadge = async function (badgeId) {
   try {
     const badgeDoc = await getDoc(doc(db, 'badges', badgeId));
     if (!badgeDoc.exists()) {
@@ -1753,7 +1753,7 @@ window.editBadge = async function(badgeId) {
 };
 
 // Global function to delete badges
-window.deleteBadge = async function(badgeId, productCount = 0) {
+window.deleteBadge = async function (badgeId, productCount = 0) {
   try {
     if (!auth?.currentUser) {
       showAdminToast('Debes iniciar sesión para realizar esta acción', 'error');
@@ -2128,7 +2128,7 @@ async function loadOffers() {
   }
 }
 
-window.editOffer = async function(offerId) {
+window.editOffer = async function (offerId) {
   try {
     const offerDoc = await getDoc(doc(db, 'offers', offerId));
     if (!offerDoc.exists()) {
@@ -2163,7 +2163,7 @@ window.editOffer = async function(offerId) {
   }
 };
 
-window.deleteOffer = async function(offerId) {
+window.deleteOffer = async function (offerId) {
   try {
     if (!auth?.currentUser) {
       showAdminToast('Debes iniciar sesión para realizar esta acción', 'error');

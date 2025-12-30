@@ -1,0 +1,428 @@
+/**
+ * Frostware Dark Mode Styles
+ * Aesthetic: "Midnight Premium" - Sophisticated dark theme with cyan accents
+ *
+ * Color Philosophy:
+ * - Deep blue-black backgrounds (#0a0e1a, #0f1419) for premium feel
+ * - Cyan (#22a7d0) as signature accent color that "glows" against dark
+ * - Muted grays for text (#e4e8ef, #9ca3af) for readability
+ * - Warm highlights for interactive elements
+ */
+
+/* ============================================
+   THEME TRANSITION ANIMATION
+   ============================================ */
+
+html.theme-transitioning,
+html.theme-transitioning * {
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* ============================================
+   CSS VARIABLES - LIGHT MODE (Default)
+   ============================================ */
+
+:root {
+  /* Backgrounds */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f9fafb;
+  --color-bg-tertiary: #f3f4f6;
+  --color-bg-elevated: #ffffff;
+
+  /* Text Colors */
+  --color-text-primary: #111827;
+  --color-text-secondary: #4b5563;
+  --color-text-tertiary: #6b7280;
+  --color-text-inverse: #ffffff;
+
+  /* Border Colors */
+  --color-border-primary: #e5e7eb;
+  --color-border-secondary: #d1d5db;
+
+  /* Brand Colors - Consistent across themes */
+  --color-brand-primary: #22a7d0;
+  --color-brand-primary-hover: #1e96bc;
+  --color-brand-primary-dark: #1a7fa3;
+
+  /* Interactive Elements */
+  --color-interactive-hover: rgba(34, 167, 208, 0.1);
+  --color-interactive-active: rgba(34, 167, 208, 0.2);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* Glow Effects */
+  --glow-brand: 0 0 20px rgba(34, 167, 208, 0.3);
+  --glow-brand-strong: 0 0 30px rgba(34, 167, 208, 0.5);
+}
+
+/* ============================================
+   CSS VARIABLES - DARK MODE
+   ============================================ */
+
+html.dark,
+html[data-theme="dark"] {
+  /* Backgrounds - Deep blue-black palette */
+  --color-bg-primary: #0a0e1a;
+  --color-bg-secondary: #0f1419;
+  --color-bg-tertiary: #151a24;
+  --color-bg-elevated: #1a1f2e;
+
+  /* Text Colors - High contrast for readability */
+  --color-text-primary: #e4e8ef;
+  --color-text-secondary: #9ca3af;
+  --color-text-tertiary: #6b7280;
+  --color-text-inverse: #0a0e1a;
+
+  /* Border Colors - Subtle but visible */
+  --color-border-primary: #1e293b;
+  --color-border-secondary: #2d3748;
+
+  /* Interactive Elements - Enhanced for dark mode */
+  --color-interactive-hover: rgba(34, 167, 208, 0.15);
+  --color-interactive-active: rgba(34, 167, 208, 0.25);
+
+  /* Shadows - Adjusted for dark backgrounds */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.7), 0 4px 6px -2px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.8), 0 10px 10px -5px rgba(0, 0, 0, 0.6);
+
+  /* Glow Effects - Enhanced for dark mode */
+  --glow-brand: 0 0 30px rgba(34, 167, 208, 0.4);
+  --glow-brand-strong: 0 0 40px rgba(34, 167, 208, 0.6), 0 0 60px rgba(34, 167, 208, 0.3);
+}
+
+/* ============================================
+   BASE STYLES - Apply theme variables
+   ============================================ */
+
+html.dark {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+html.dark body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+/* ============================================
+   COMPONENT STYLES - Dark Mode Overrides
+   ============================================ */
+
+/* Headers & Navigation */
+html.dark header {
+  background-color: rgba(10, 14, 26, 0.95) !important;
+  border-color: var(--color-border-primary) !important;
+}
+
+/* Navigation links - Mejorado contraste */
+html.dark nav a,
+html.dark nav a.nav-link {
+  color: #e5e7eb !important; /* Gris muy claro (gray-200) para excelente contraste */
+}
+
+html.dark nav a:hover,
+html.dark nav a.nav-link:hover {
+  color: #ffffff !important; /* Blanco puro en hover */
+}
+
+html.dark nav a.active,
+html.dark nav a.nav-link.active {
+  color: #ffffff !important; /* Blanco puro para enlaces activos */
+  font-weight: 600;
+}
+
+/* Asegurar que text-gray-300 en modo oscuro sea más claro */
+html.dark .text-gray-300 {
+  color: #e5e7eb !important;
+}
+
+/* Cards & Panels */
+html.dark .bg-white {
+  background-color: var(--color-bg-elevated) !important;
+}
+
+html.dark .bg-gray-50 {
+  background-color: var(--color-bg-secondary) !important;
+}
+
+html.dark .bg-gray-100 {
+  background-color: var(--color-bg-tertiary) !important;
+}
+
+html.dark .bg-gray-900 {
+  background-color: #000000 !important;
+}
+
+/* Text Colors */
+html.dark .text-gray-800,
+html.dark .text-gray-900 {
+  color: var(--color-text-primary) !important;
+}
+
+html.dark .text-gray-600,
+html.dark .text-gray-700 {
+  color: var(--color-text-secondary) !important;
+}
+
+html.dark .text-gray-500 {
+  color: var(--color-text-tertiary) !important;
+}
+
+html.dark .text-gray-300,
+html.dark .text-gray-400 {
+  color: var(--color-text-secondary) !important;
+}
+
+/* Borders */
+html.dark .border-gray-200,
+html.dark .border-gray-300 {
+  border-color: var(--color-border-primary) !important;
+}
+
+html.dark .border-gray-700 {
+  border-color: var(--color-border-secondary) !important;
+}
+
+/* Forms & Inputs */
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: var(--color-bg-tertiary) !important;
+  border-color: var(--color-border-secondary) !important;
+  color: var(--color-text-primary) !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: var(--color-text-tertiary) !important;
+}
+
+html.dark input:focus,
+html.dark textarea:focus,
+html.dark select:focus {
+  border-color: var(--color-brand-primary) !important;
+  box-shadow: 0 0 0 3px rgba(34, 167, 208, 0.1) !important;
+}
+
+html.dark input:disabled,
+html.dark textarea:disabled,
+html.dark select:disabled {
+  background-color: var(--color-bg-secondary) !important;
+  color: var(--color-text-tertiary) !important;
+  cursor: not-allowed;
+}
+
+/* Buttons */
+html.dark .bg-gray-500 {
+  background-color: #4b5563 !important;
+}
+
+html.dark .bg-gray-500:hover {
+  background-color: #6b7280 !important;
+}
+
+/* Hover States */
+html.dark .hover\:bg-gray-50:hover {
+  background-color: var(--color-interactive-hover) !important;
+}
+
+html.dark .hover\:bg-gray-100:hover {
+  background-color: var(--color-interactive-hover) !important;
+}
+
+html.dark .hover\:text-gray-700:hover,
+html.dark .hover\:text-gray-900:hover {
+  color: var(--color-text-primary) !important;
+}
+
+/* Neon Effects - Enhanced in dark mode */
+html.dark .neon-text {
+  text-shadow: var(--glow-brand-strong);
+}
+
+html.dark .hover-neon-glow:hover {
+  box-shadow: var(--glow-brand);
+}
+
+/* Shadows */
+html.dark .shadow {
+  box-shadow: var(--shadow-sm) !important;
+}
+
+html.dark .shadow-lg {
+  box-shadow: var(--shadow-lg) !important;
+}
+
+html.dark .shadow-xl {
+  box-shadow: var(--shadow-xl) !important;
+}
+
+html.dark .shadow-2xl {
+  box-shadow: var(--shadow-xl) !important;
+}
+
+/* Dropdowns & Modals */
+html.dark .bg-black {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Footer */
+html.dark footer {
+  background-color: #000000 !important;
+  border-top: 1px solid var(--color-border-primary);
+}
+
+/* Brand Color - Consistent but enhanced glow in dark */
+html.dark .text-\[\#22a7d0\] {
+  color: #22a7d0 !important;
+  text-shadow: 0 0 10px rgba(34, 167, 208, 0.3);
+}
+
+html.dark .bg-\[\#22a7d0\] {
+  background-color: #22a7d0 !important;
+}
+
+html.dark .bg-\[\#22a7d0\]:hover {
+  background-color: #1e96bc !important;
+  box-shadow: var(--glow-brand);
+}
+
+/* Badges & Tags */
+html.dark .bg-green-100 {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+}
+
+html.dark .text-green-800 {
+  color: #86efac !important;
+}
+
+html.dark .bg-blue-50 {
+  background-color: rgba(34, 167, 208, 0.15) !important;
+}
+
+html.dark .text-blue-700 {
+  color: #22a7d0 !important;
+}
+
+html.dark .bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+}
+
+html.dark .text-red-600 {
+  color: #f87171 !important;
+}
+
+html.dark .bg-amber-500 {
+  color: #fbbf24 !important;
+}
+
+/* Special Effects for Dark Mode */
+html.dark .hero-bg {
+  background: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 50%, var(--color-bg-tertiary) 100%);
+  position: relative;
+}
+
+html.dark .hero-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 20% 50%, rgba(34, 167, 208, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 80% 80%, rgba(34, 167, 208, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* Backdrop Blur Enhancement */
+html.dark .backdrop-blur-md {
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+}
+
+html.dark .backdrop-blur-sm {
+  backdrop-filter: blur(8px) saturate(150%);
+  -webkit-backdrop-filter: blur(8px) saturate(150%);
+}
+
+/* Code Blocks (if any) */
+html.dark code,
+html.dark pre {
+  background-color: #000000 !important;
+  color: #22a7d0 !important;
+  border: 1px solid var(--color-border-primary);
+}
+
+/* Scrollbar Styling for Dark Mode */
+html.dark ::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: var(--color-border-secondary);
+  border-radius: 6px;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+}
+
+/* Selection Color */
+html.dark ::selection {
+  background-color: rgba(34, 167, 208, 0.3);
+  color: var(--color-text-primary);
+}
+
+/* ============================================
+   ANIMATIONS & MICRO-INTERACTIONS
+   ============================================ */
+
+/* Smooth glow pulse on brand elements */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(34, 167, 208, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(34, 167, 208, 0.5), 0 0 40px rgba(34, 167, 208, 0.2);
+  }
+}
+
+html.dark .btn-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* Shimmer effect for loading states */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+html.dark .shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-tertiary) 0%,
+    var(--color-bg-elevated) 20%,
+    var(--color-bg-tertiary) 40%,
+    var(--color-bg-tertiary) 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s linear infinite;
+}

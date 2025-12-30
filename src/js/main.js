@@ -1,5 +1,7 @@
 import '../styles/styles.css';
 import '../styles/firebase-integration.css';
+import '../styles/dark-mode.css';
+import '../styles/enhancements.css';
 // Firebase init
 import './firebase.js';
 import { initRouter, registerRoute } from './router.js';
@@ -25,6 +27,9 @@ import { getFlagSVG } from '../i18n/flags.js';
 import { updateHomepageTranslations } from './homepage-i18n.js';
 // Firebase helpers (disponibles en consola para debugging)
 import '../utils/firebase-init-helper.js';
+// Theme Manager
+import themeManager from '../utils/themeManager.js';
+import { createThemeToggleHTML, getThemeToggleStyles, bindThemeToggleEvents, initializeThemeToggle } from '../components/ThemeToggle.js';
 
 // Track page load time to prevent automatic actions during page load
 window.pageLoadTime = Date.now();
@@ -33,6 +38,14 @@ window.pageLoadTime = Date.now();
 const initializeApp = async () => {
   // Wait for translations to be ready to prevent flickering keys
   await i18n.ready();
+
+  // Inject theme toggle styles into head
+  if (!document.getElementById('theme-toggle-styles')) {
+    const styleElement = document.createElement('div');
+    styleElement.id = 'theme-toggle-styles';
+    styleElement.innerHTML = getThemeToggleStyles();
+    document.head.appendChild(styleElement.firstElementChild);
+  }
 
   // Add loading state to prevent auth flash
   let authInitialized = false;
@@ -94,7 +107,7 @@ const initializeApp = async () => {
               </svg>
             </button>
 
-            <div id="language-dropdown" class="hidden absolute right-0 mt-2 w-44 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden">
+            <div id="language-dropdown" class="hidden absolute right-0 mt-2 w-44 bg-white rounded-lg shadow-lg border border-gray-200 z-[102] overflow-hidden">
               <button onclick="changeLanguage('es')" class="flex items-center w-full px-4 py-3 hover:bg-gray-50 transition-colors text-gray-700 hover:text-gray-900 ${i18n.getCurrentLanguage() === 'es' ? 'bg-blue-50 text-blue-700' : ''}">
                 <div class="w-5 h-5 mr-3">${getFlagSVG('es')}</div>
                 <span class="font-medium">Español</span>
@@ -134,7 +147,7 @@ const initializeApp = async () => {
               <!-- User Greeting Below Icon -->
               <span class="text-gray-300 text-xs mt-0.5 whitespace-nowrap">${t('navigation.greeting')}, <span class="font-semibold text-white">${user.displayName || user.email?.split('@')[0] || 'Usuario'}</span></span>
 
-              <div id="user-menu-dropdown" class="hidden absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden">
+              <div id="user-menu-dropdown" class="hidden absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-[101] overflow-hidden">
                 <div class="py-2">
                   <a href="#/account" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors ${currentHash === '#/account' ? 'bg-blue-50 text-blue-700' : ''}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -161,6 +174,11 @@ const initializeApp = async () => {
 
                   <hr class="my-2 border-gray-200">
 
+                  <!-- Theme Toggle -->
+                  ${createThemeToggleHTML(themeManager.isDarkMode())}
+
+                  <hr class="my-2 border-gray-200">
+
                   <button id="btn-header-logout" class="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
@@ -171,6 +189,28 @@ const initializeApp = async () => {
               </div>
             </div>
           ` : `
+            <!-- Theme Toggle for non-logged in users (iOS Switch) -->
+            <button
+              id="theme-toggle-public"
+              class="p-2 rounded-lg hover:bg-gray-700/50 transition-colors flex items-center gap-2"
+              aria-label="Toggle dark mode"
+              title="${themeManager.isDarkMode() ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}"
+            >
+              <div class="ios-switch-container">
+                <div class="ios-switch ${themeManager.isDarkMode() ? 'active' : ''}" data-theme-switch-public>
+                  <div class="ios-switch-track ${themeManager.isDarkMode() ? 'active' : ''}">
+                    <div class="ios-switch-thumb ${themeManager.isDarkMode() ? 'active' : ''}">
+                      <svg class="thumb-icon sun ${!themeManager.isDarkMode() ? 'visible' : ''}" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd" />
+                      </svg>
+                      <svg class="thumb-icon moon ${themeManager.isDarkMode() ? 'visible' : ''}" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </button>
             <a class="cta-button bg-[#22a7d0] text-white font-bold py-2 px-4 rounded-lg" href="#/auth">${t('navigation.login')}</a>
           `}
         </div>
@@ -243,6 +283,29 @@ const initializeApp = async () => {
           userMenuArrow.style.transform = 'rotate(0deg)';
         });
       });
+    }
+
+    // Initialize theme toggle if user is logged in
+    if (user) {
+      setTimeout(() => {
+        initializeThemeToggle(themeManager);
+      }, 10);
+    } else {
+      // Initialize theme toggle for public users
+      const publicToggle = header.querySelector('#theme-toggle-public');
+      if (publicToggle) {
+        publicToggle.addEventListener('click', () => {
+          themeManager.toggleTheme();
+          renderHeader(null, true); // Re-render header to update icons
+
+          if (window.cart && window.cart.showToast) {
+            const message = themeManager.isDarkMode()
+              ? '🌙 Modo oscuro activado'
+              : '☀️ Modo claro activado';
+            window.cart.showToast(message, 'success');
+          }
+        });
+      }
     }
 
     // Re-bind cart events after header render and update cart count
