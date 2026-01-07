@@ -13,6 +13,7 @@ import { renderProductsView } from '../pages/products/view.js';
 import { renderAdminView } from '../pages/admin/view.js';
 import { renderProductDetailView } from '../pages/product-detail/view.js';
 import { renderDashboardView } from '../pages/dashboard/view.js';
+import { renderTrainingView } from '../pages/training/view.js';
 import { renderTermsView } from '../pages/terms/view.js';
 import { renderPrivacyView } from '../pages/privacy/view.js';
 import { renderContactView } from '../pages/contact/view.js';
@@ -87,19 +88,19 @@ const initializeApp = async () => {
             <div class="arc-1"></div>
             <div class="arc-2"></div>
           </div>
-          <a class="text-white text-xl font-bold" href="#/">Frostware</a>
+          <a class="text-gray-800 dark:text-white text-xl font-bold" href="#/">Frostware</a>
         </div>
         <div class="hidden md:flex items-center space-x-1">
-          <a class="py-2 px-3 text-gray-300 hover:text-white nav-link ${currentHash === '#/' ? 'active' : ''}" href="#/">${t('navigation.home')}</a>
-          <a class="py-2 px-3 text-gray-300 hover:text-white nav-link ${currentHash === '#/products' ? 'active' : ''}" href="#/products">${t('navigation.products')}</a>
-          <a class="py-2 px-3 text-gray-300 hover:text-white nav-link ${currentHash === '#/terms' ? 'active' : ''}" href="#/terms">${t('navigation.terms')}</a>
-          <a class="py-2 px-3 text-gray-300 hover:text-white nav-link ${currentHash === '#/privacy' ? 'active' : ''}" href="#/privacy">${t('navigation.privacy')}</a>
-          <a class="py-2 px-3 text-gray-300 hover:text-white nav-link ${currentHash === '#/contact' ? 'active' : ''}" href="#/contact">${t('navigation.contact')}</a>
+          <a class="py-2 px-3 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white nav-link ${currentHash === '#/' ? 'active' : ''}" href="#/">${t('navigation.home')}</a>
+          <a class="py-2 px-3 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white nav-link ${currentHash === '#/products' ? 'active' : ''}" href="#/products">${t('navigation.products')}</a>
+          <a class="py-2 px-3 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white nav-link ${currentHash === '#/terms' ? 'active' : ''}" href="#/terms">${t('navigation.terms')}</a>
+          <a class="py-2 px-3 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white nav-link ${currentHash === '#/privacy' ? 'active' : ''}" href="#/privacy">${t('navigation.privacy')}</a>
+          <a class="py-2 px-3 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white nav-link ${currentHash === '#/contact' ? 'active' : ''}" href="#/contact">${t('navigation.contact')}</a>
         </div>
         <div class="flex items-center space-x-4">
           <!-- Language Selector -->
           <div class="relative">
-            <button id="language-selector" class="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors text-gray-300 hover:text-white">
+            <button id="language-selector" class="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">
               <div class="w-5 h-5">${getFlagSVG(i18n.getCurrentLanguage())}</div>
               <span class="text-sm font-medium">${i18n.getCurrentLanguage().toUpperCase()}</span>
               <svg class="w-4 h-4 transition-transform duration-200" id="language-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,16 +108,16 @@ const initializeApp = async () => {
               </svg>
             </button>
 
-            <div id="language-dropdown" class="hidden absolute right-0 mt-2 w-44 bg-white rounded-lg shadow-lg border border-gray-200 z-[102] overflow-hidden">
-              <button onclick="changeLanguage('es')" class="flex items-center w-full px-4 py-3 hover:bg-gray-50 transition-colors text-gray-700 hover:text-gray-900 ${i18n.getCurrentLanguage() === 'es' ? 'bg-blue-50 text-blue-700' : ''}">
+            <div id="language-dropdown" class="hidden absolute right-0 mt-2 w-44 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-[102] overflow-hidden">
+              <button onclick="changeLanguage('es')" class="flex items-center w-full px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white ${i18n.getCurrentLanguage() === 'es' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : ''}">
                 <div class="w-5 h-5 mr-3">${getFlagSVG('es')}</div>
                 <span class="font-medium">Español</span>
-                ${i18n.getCurrentLanguage() === 'es' ? '<svg class="w-4 h-4 ml-auto text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>' : ''}
+                ${i18n.getCurrentLanguage() === 'es' ? '<svg class="w-4 h-4 ml-auto text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>' : ''}
               </button>
-              <button onclick="changeLanguage('en')" class="flex items-center w-full px-4 py-3 hover:bg-gray-50 transition-colors text-gray-700 hover:text-gray-900 ${i18n.getCurrentLanguage() === 'en' ? 'bg-blue-50 text-blue-700' : ''}">
+              <button onclick="changeLanguage('en')" class="flex items-center w-full px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white ${i18n.getCurrentLanguage() === 'en' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : ''}">
                 <div class="w-5 h-5 mr-3">${getFlagSVG('en')}</div>
                 <span class="font-medium">English</span>
-                ${i18n.getCurrentLanguage() === 'en' ? '<svg class="w-4 h-4 ml-auto text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>' : ''}
+                ${i18n.getCurrentLanguage() === 'en' ? '<svg class="w-4 h-4 ml-auto text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>' : ''}
               </button>
             </div>
           </div>
@@ -124,7 +125,7 @@ const initializeApp = async () => {
           <!-- Carrito de compras (solo para usuarios loggeados) -->
           ${user ? `
             <div class="relative">
-              <button id="cart-button" class="text-gray-300 hover:text-white transition-colors">
+              <button id="cart-button" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l-1 12a2 2 0 01-2 2H8a2 2 0 01-2-2L5 9z"></path>
                 </svg>
@@ -135,7 +136,7 @@ const initializeApp = async () => {
           ${user ? `
             <!-- User Menu with Greeting Stacked -->
             <div class="relative flex flex-col items-center" id="user-menu-container">
-              <button id="user-menu-button" class="flex items-center gap-1 text-gray-300 hover:text-white transition-colors focus:outline-none">
+              <button id="user-menu-button" class="flex items-center gap-1 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors focus:outline-none">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -145,18 +146,18 @@ const initializeApp = async () => {
                 </svg>
               </button>
               <!-- User Greeting Below Icon -->
-              <span class="text-gray-300 text-xs mt-0.5 whitespace-nowrap">${t('navigation.greeting')}, <span class="font-semibold text-white">${user.displayName || user.email?.split('@')[0] || 'Usuario'}</span></span>
+              <span class="text-gray-500 dark:text-gray-400 text-xs mt-0.5 whitespace-nowrap">${t('navigation.greeting')}, <span class="font-semibold text-gray-700 dark:text-white">${user.displayName || user.email?.split('@')[0] || 'Usuario'}</span></span>
 
-              <div id="user-menu-dropdown" class="hidden absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-[101] overflow-hidden">
+              <div id="user-menu-dropdown" class="hidden absolute right-0 top-full mt-1 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-[101] overflow-hidden">
                 <div class="py-2">
-                  <a href="#/account" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors ${currentHash === '#/account' ? 'bg-blue-50 text-blue-700' : ''}">
+                  <a href="#/account" class="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${currentHash === '#/account' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : ''}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                     </svg>
                     <span class="font-medium">${t('navigation.myAccount')}</span>
                   </a>
 
-                  <a href="#/account/products" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors ${currentHash === '#/account/products' ? 'bg-blue-50 text-blue-700' : ''}">
+                  <a href="#/account/products" class="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${currentHash === '#/account/products' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : ''}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
                     </svg>
@@ -164,7 +165,7 @@ const initializeApp = async () => {
                   </a>
 
                   ${isAdmin ? `
-                    <a href="#/admin" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors ${currentHash === '#/admin' ? 'bg-blue-50 text-blue-700' : ''}">
+                    <a href="#/admin" class="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${currentHash === '#/admin' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : ''}">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                       </svg>
@@ -172,14 +173,14 @@ const initializeApp = async () => {
                     </a>
                   ` : ''}
 
-                  <hr class="my-2 border-gray-200">
+                  <hr class="my-2 border-gray-200 dark:border-gray-700">
 
                   <!-- Theme Toggle -->
                   ${createThemeToggleHTML(themeManager.isDarkMode())}
 
-                  <hr class="my-2 border-gray-200">
+                  <hr class="my-2 border-gray-200 dark:border-gray-700">
 
-                  <button id="btn-header-logout" class="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 transition-colors">
+                  <button id="btn-header-logout" class="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                     </svg>
@@ -192,7 +193,7 @@ const initializeApp = async () => {
             <!-- Theme Toggle for non-logged in users (iOS Switch) -->
             <button
               id="theme-toggle-public"
-              class="p-2 rounded-lg hover:bg-gray-700/50 transition-colors flex items-center gap-2"
+              class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700/50 transition-colors flex items-center gap-2"
               aria-label="Toggle dark mode"
               title="${themeManager.isDarkMode() ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}"
             >
@@ -512,6 +513,22 @@ const initializeApp = async () => {
       const productId = dashboardMatch[1];
       setMainVisible(false);
       renderDashboardView(productId);
+    }
+  });
+
+  // Register training route handler
+  registerRoute('#/training', () => {
+    console.log('🎮 Ruta de entrenamiento detectada');
+    const hash = window.location.hash;
+    console.log('📍 Hash actual:', hash);
+    const trainingMatch = hash.match(/^#\/training\/(.+)$/);
+    if (trainingMatch) {
+      const productId = trainingMatch[1];
+      console.log('✅ ProductId extraído:', productId);
+      setMainVisible(false);
+      renderTrainingView(productId);
+    } else {
+      console.log('❌ No se pudo extraer productId del hash');
     }
   });
 

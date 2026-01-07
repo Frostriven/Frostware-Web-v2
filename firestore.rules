@@ -7,7 +7,8 @@ service cloud.firestore {
     function isAdmin() {
       return request.auth != null &&
              (request.auth.token.email == 'demo@frostware.com' ||
-              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+              (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
     }
 
     // Products collection - read for all, write for admins only
@@ -45,6 +46,38 @@ service cloud.firestore {
     match /users/{userId}/products/{productId} {
       allow read: if request.auth != null && request.auth.uid == userId;
       allow write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isAdmin();
+    }
+
+    // ============================================
+    // REGLAS PARA SESIONES DE ENTRENAMIENTO
+    // ============================================
+    match /sessions/{sessionId} {
+      // Permitir a usuarios autenticados crear sesiones
+      allow create: if request.auth != null;
+
+      // Los usuarios pueden leer/actualizar/eliminar sus propias sesiones
+      allow read, update, delete: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+
+      // Admins tienen acceso completo
+      allow read, write: if isAdmin();
+    }
+
+    // ============================================
+    // REGLAS PARA ESTADÍSTICAS DE USUARIO
+    // ============================================
+    match /user_statistics/{userId} {
+      // Los usuarios pueden leer sus propias estadísticas
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // Los usuarios pueden crear/actualizar sus propias estadísticas
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+
+      // Solo admins pueden eliminar estadísticas
+      allow delete: if isAdmin();
+
+      // Admins tienen acceso completo
       allow read, write: if isAdmin();
     }
 

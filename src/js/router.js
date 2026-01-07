@@ -41,6 +41,14 @@ export function initRouter() {
       }
     }
 
+    if (path.startsWith('#/training/')) {
+      const trainingHandler = routes.get('#/training');
+      if (trainingHandler) {
+        trainingHandler();
+        return;
+      }
+    }
+
     // Normal route handling
     const handler = routes.get(path) || routes.get('#/');
     if (typeof handler === 'function') handler();

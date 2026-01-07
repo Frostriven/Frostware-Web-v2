@@ -1,42 +1,13 @@
-import { auth, db } from '../../js/firebase.js';
+import { auth } from '../../js/firebase.js';
 import { verifyUserAppAccess, getProductsFromFirebase, getUserProducts } from '../../js/userProfile.js';
-import { collection, getDocs, query } from 'firebase/firestore';
-
-// Helper function to get categories with colors from Firebase
-async function getCategoriesFromFirebase() {
-  try {
-    const categoriesQuery = query(collection(db, 'categories'));
-    const querySnapshot = await getDocs(categoriesQuery);
-    const categories = {};
-
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      categories[doc.id] = {
-        id: doc.id,
-        name: data.name || doc.id,
-        color: data.color || '#3B82F6'
-      };
-    });
-
-    // Return default categories if Firebase is empty
-    if (Object.keys(categories).length === 0) {
-      return {
-        'aviation': { id: 'aviation', name: 'Aviación', color: '#3B82F6' },
-        'development': { id: 'development', name: 'Desarrollo', color: '#10B981' },
-        'education': { id: 'education', name: 'Educación', color: '#F59E0B' },
-        'ai': { id: 'ai', name: 'Inteligencia Artificial', color: '#8B5CF6' }
-      };
-    }
-
-    return categories;
-  } catch (error) {
-    console.error('Error loading categories:', error);
-    return {
-      'aviation': { id: 'aviation', name: 'Aviación', color: '#3B82F6' },
-      'development': { id: 'development', name: 'Desarrollo', color: '#10B981' }
-    };
-  }
-}
+import {
+  createSession,
+  completeSession,
+  getUserStatistics,
+  getUserSessions,
+  getProductStatistics,
+  formatTime
+} from '../../js/sessionManager.js';
 
 export async function renderDashboardView(productId) {
   const spaRoot = document.getElementById('spa-root');
@@ -74,17 +45,111 @@ export async function renderDashboardView(productId) {
   let product = null;
   let allProducts = [];
   let userPurchasedProducts = [];
-  let categories = {};
+  let userStats = null;
+  let productStats = null;
 
   try {
     allProducts = await getProductsFromFirebase();
     product = allProducts.find(p => p.id === productId);
     userPurchasedProducts = await getUserProducts(auth.currentUser.uid);
-    categories = await getCategoriesFromFirebase();
+
+    // Load user statistics
+    try {
+      userStats = await getUserStatistics();
+      productStats = await getProductStatistics(productId);
+      console.log('📊 Estadísticas del usuario:', userStats);
+      console.log('📊 Estadísticas del producto:', productStats);
+    } catch (statsError) {
+      console.warn('⚠️ No se pudieron cargar estadísticas (puede ser primera vez):', statsError.message);
+      // Usar estadísticas vacías si hay error
+      userStats = {
+        totalSessions: 0,
+        totalQuestions: 0,
+        correctAnswers: 0,
+        incorrectAnswers: 0,
+        averageScore: 0,
+        totalTimeSpent: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+        achievements: [],
+        productStats: {}
+      };
+      productStats = {
+        sessions: 0,
+        averageScore: 0,
+        totalQuestions: 0,
+        correctAnswers: 0,
+        topicPerformance: {}
+      };
+    }
 
     if (!product) {
       throw new Error('Producto no encontrado');
     }
+
+    // Helper function to get text in current language (bilingual support)
+    const getText = (field) => {
+      if (!field) return '';
+      if (typeof field === 'string') return field;
+      if (typeof field === 'object') {
+        const lang = localStorage.getItem('language') || 'es';
+        return field[lang] || field.es || field.en || '';
+      }
+      return '';
+    };
+
+    // Helper function to get product name safely
+    const getProductName = (prod) => {
+      return getText(prod.name) || getText(prod.title) || 'Producto';
+    };
+
+    // Enhance product with text getters
+    product.displayName = getProductName(product);
+    product.displayDescription = getText(product.description) || getText(product.shortDescription) || '';
+
+    // Get colors for header gradient from product's detailGradientColors or colors array
+    // Try multiple sources: detailGradientColors, colors, headerColor/headerColor2, or default to cyan theme
+    const gradientColors = product.detailGradientColors || product.colors;
+
+    if (gradientColors && Array.isArray(gradientColors) && gradientColors.length > 0) {
+      product.headerColor1 = gradientColors[0];
+      product.headerColor2 = gradientColors[1] || gradientColors[0];
+    } else if (product.headerColor && product.headerColor2) {
+      product.headerColor1 = product.headerColor;
+      product.headerColor2 = product.headerColor2;
+    } else {
+      // Default to cyan theme
+      product.headerColor1 = '#0891b2'; // cyan-600
+      product.headerColor2 = '#0e7490'; // cyan-700
+    }
+
+    // Enhance userPurchasedProducts with displayNames
+    userPurchasedProducts = userPurchasedProducts.map(p => ({
+      ...p,
+      displayName: getProductName(p)
+    }));
+
+    // Enhance allProducts with displayNames
+    allProducts = allProducts.map(p => ({
+      ...p,
+      displayName: getProductName(p),
+      displayDescription: getText(p.description) || getText(p.shortDescription) || ''
+    }));
+
+    // Debug logging
+    console.log('🎨 Current Product:', {
+      productId: product.id,
+      name: product.name,
+      displayName: product.displayName,
+      gradientColors: gradientColors,
+      headerColor1: product.headerColor1,
+      headerColor2: product.headerColor2
+    });
+
+    console.log('📦 User Purchased Products:', userPurchasedProducts.map(p => ({
+      id: p.id,
+      displayName: p.displayName
+    })));
   } catch (error) {
     console.error('Error loading product:', error);
     spaRoot.innerHTML = `
@@ -101,69 +166,338 @@ export async function renderDashboardView(productId) {
     return;
   }
 
-  // Get purchase date for display
-  const purchaseDate = accessCheck.purchaseDate;
-  const formattedDate = purchaseDate ? new Date(purchaseDate.seconds * 1000).toLocaleDateString('es-ES', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  }) : 'Fecha no disponible';
-
   // Create the purchased products set for easy lookup
   const purchasedProductIds = new Set(userPurchasedProducts.map(p => p.id));
 
   spaRoot.innerHTML = `
     <style>
+      /* CSS Variables for theming */
+      :root {
+        --color-bg-primary: #ffffff;
+        --color-bg-secondary: #f9fafb;
+        --color-text-primary: #111827;
+        --color-text-secondary: #4b5563;
+        --color-border-primary: #e5e7eb;
+        --color-brand-primary: #22a7d0;
+        --color-brand-secondary: #1e96bc;
+      }
+
+      html.dark {
+        --color-bg-primary: #0a0e1a;
+        --color-bg-secondary: #1a1f2e;
+        --color-text-primary: #e4e8ef;
+        --color-text-secondary: #94a3b8;
+        --color-border-primary: #1e293b;
+      }
+
       /* Custom slider styles */
       .slider::-webkit-slider-thumb {
         appearance: none;
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
         border-radius: 50%;
-        background: #22a7d0;
+        background: white;
+        border: 3px solid #22a7d0;
         cursor: pointer;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        box-shadow: 0 2px 8px rgba(34, 167, 208, 0.3);
+        transition: all 0.3s ease;
+      }
+
+      .slider::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
       }
 
       .slider::-moz-range-thumb {
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
         border-radius: 50%;
-        background: #22a7d0;
+        background: white;
+        border: 3px solid #22a7d0;
         cursor: pointer;
-        border: none;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        box-shadow: 0 2px 8px rgba(34, 167, 208, 0.3);
       }
 
       .slider::-webkit-slider-track {
-        background: #e5e7eb;
+        background: var(--color-border-primary, #e5e7eb);
         height: 8px;
         border-radius: 4px;
       }
 
       .slider::-moz-range-track {
-        background: #e5e7eb;
+        background: var(--color-border-primary, #e5e7eb);
         height: 8px;
         border-radius: 4px;
         border: none;
       }
+
+      /* Card glassmorphism */
+      .card-glass {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(34, 167, 208, 0.15);
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        border-radius: 1rem;
+      }
+
+      html.dark .card-glass {
+        background: rgba(26, 31, 46, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .card-glass:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 30px rgba(34, 167, 208, 0.2);
+      }
+
+      /* Database item styles */
+      .database-item {
+        position: relative;
+        padding: 1.5rem;
+        background: var(--color-bg-primary);
+        border: 2px solid var(--color-border-primary);
+        border-radius: 1rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .database-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(180deg, #22a7d0, #1e96bc);
+        border-radius: 1rem 0 0 1rem;
+        transform: scaleY(0);
+        transition: transform 0.3s ease;
+      }
+
+      .database-item:hover::before {
+        transform: scaleY(1);
+      }
+
+      .database-item:hover {
+        border-color: #22a7d0;
+        box-shadow: 0 4px 12px rgba(34, 167, 208, 0.2);
+      }
+
+      .database-item.selected {
+        border-color: #22a7d0;
+        background: rgba(34, 167, 208, 0.05);
+      }
+
+      html.dark .database-item {
+        background: var(--color-bg-secondary);
+      }
+
+      html.dark .database-item.selected {
+        background: rgba(34, 167, 208, 0.1);
+      }
+
+      /* Topic item styles */
+      .topic-item {
+        padding: 0.75rem;
+        background: var(--color-bg-primary);
+        border: 1px solid var(--color-border-primary);
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .topic-item:hover {
+        border-color: #22a7d0;
+        background: rgba(34, 167, 208, 0.05);
+      }
+
+      .topic-item.selected {
+        border-color: #22a7d0;
+        background: rgba(34, 167, 208, 0.08);
+      }
+
+      html.dark .topic-item {
+        background: var(--color-bg-secondary);
+      }
+
+      html.dark .topic-item:hover {
+        background: rgba(34, 167, 208, 0.15);
+      }
+
+      html.dark .topic-item.selected {
+        background: rgba(34, 167, 208, 0.2);
+      }
+
+      /* iOS Toggle Switch */
+      .ios-toggle {
+        position: relative;
+        display: inline-block;
+        width: 51px;
+        height: 31px;
+      }
+
+      .ios-toggle input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .ios-toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #cbd5e1;
+        transition: .3s;
+        border-radius: 31px;
+      }
+
+      .ios-toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 23px;
+        width: 23px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .3s;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .ios-toggle input:checked + .ios-toggle-slider {
+        background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+      }
+
+      .ios-toggle input:checked + .ios-toggle-slider:before {
+        transform: translateX(20px);
+      }
+
+      .ios-toggle input:disabled + .ios-toggle-slider {
+        background-color: #e2e8f0;
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+
+      html.dark .ios-toggle-slider {
+        background-color: #475569;
+      }
+
+      html.dark .ios-toggle input:checked + .ios-toggle-slider {
+        background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+      }
+
+      /* Mode card styles */
+      .mode-card {
+        padding: 1.5rem;
+        background: var(--color-bg-primary);
+        border: 2px solid var(--color-border-primary);
+        border-radius: 1rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-align: center;
+      }
+
+      .mode-card:hover {
+        border-color: #22a7d0;
+        background: rgba(34, 167, 208, 0.05);
+        transform: translateY(-2px);
+      }
+
+      .mode-card.selected {
+        border-color: #22a7d0;
+        background: rgba(34, 167, 208, 0.1);
+        box-shadow: 0 0 0 3px rgba(34, 167, 208, 0.2);
+      }
+
+      html.dark .mode-card {
+        background: var(--color-bg-secondary);
+      }
+
+      html.dark .mode-card:hover {
+        background: rgba(34, 167, 208, 0.15);
+      }
+
+      html.dark .mode-card.selected {
+        background: rgba(34, 167, 208, 0.2);
+      }
+
+      /* Animations */
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .fade-in {
+        animation: slideIn 0.5s ease;
+      }
+
+      /* Custom checkbox for topics */
+      .custom-checkbox {
+        position: relative;
+        width: 24px;
+        height: 24px;
+        border: 2px solid #cbd5e1;
+        border-radius: 6px;
+        background: white;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+      }
+
+      .custom-checkbox svg {
+        opacity: 0;
+        transform: scale(0);
+        transition: all 0.3s ease;
+      }
+
+      .topic-item.selected .custom-checkbox,
+      .database-item.selected .custom-checkbox {
+        background: linear-gradient(135deg, #22a7d0 0%, #1e96bc 100%);
+        border-color: #22a7d0;
+      }
+
+      .topic-item.selected .custom-checkbox svg,
+      .database-item.selected .custom-checkbox svg {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      html.dark .custom-checkbox {
+        background: var(--color-bg-secondary);
+        border-color: #475569;
+      }
     </style>
-    <div class="min-h-screen bg-gray-50">
+    <div class="min-h-screen relative">
       <!-- Header Navigation -->
-      <div class="bg-gradient-to-r from-orange-50 to-amber-50 border-b border-orange-200 p-6">
-        <div class="container mx-auto max-w-6xl">
-          <div class="flex items-center justify-between">
-            <button id="back-to-products" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#22a7d0] to-[#1e96c8] text-white font-semibold rounded-lg hover:from-[#1e96c8] hover:to-[#1a8bb8] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
-              <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+      <div class="page-header p-8 relative overflow-hidden" style="background: linear-gradient(135deg, ${product.headerColor1} 0%, ${product.headerColor2} 100%);">
+        <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-radial from-white/15 to-transparent pointer-events-none"></div>
+        <div class="container mx-auto max-w-7xl relative z-10">
+          <div class="flex items-center gap-2 mb-4 text-white/80 text-sm">
+            <a href="#/products" class="hover:text-white transition flex items-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M15 19l-7-7 7-7"/>
               </svg>
-              Explorar Todos los Productos
-            </button>
-            <div class="text-center">
-              <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900">${product.name}</h1>
-              <p class="text-orange-700 text-sm">Dashboard de Entrenamiento</p>
+              Mis Productos
+            </a>
+            <span>/</span>
+            <span class="text-white">Configuración de Entrenamiento</span>
+          </div>
+          <div class="flex items-center gap-6">
+            <div class="w-20 h-20 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-4xl shadow-xl">
+              ${product.image ? `<img src="${product.imageURL || product.image}" alt="${product.displayName}" class="w-full h-full object-cover rounded-2xl" />` : '📚'}
             </div>
-            <div class="w-48"></div> <!-- Spacer for centering -->
+            <div>
+              <h1 class="text-4xl font-bold text-white mb-2">${product.displayName}</h1>
+              <p class="text-white/90 text-lg">${product.displayDescription || 'Configura tu sesión de entrenamiento personalizada'}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -177,92 +511,91 @@ export async function renderDashboardView(productId) {
             <div class="lg:col-span-2 space-y-6">
 
               <!-- Product Database Selection -->
-              <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
-                <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                  <svg class="w-6 h-6 mr-2 text-[#22a7d0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
-                  </svg>
-                  Bases de Datos Disponibles
-                </h2>
+              <div class="card-glass p-6 fade-in">
+                <div class="flex items-center gap-3 mb-6 pb-4 border-b-2" style="border-color: var(--color-border-primary);">
+                  <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <span class="text-2xl">📚</span>
+                  </div>
+                  <h2 class="text-2xl font-bold" style="color: var(--color-text-primary);">Bases de Datos de Conocimiento</h2>
+                </div>
 
-                <div class="space-y-3">
+                <!-- Info Banner -->
+                <div class="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-6">
+                  <div class="flex gap-3">
+                    <span class="text-2xl">💡</span>
+                    <div class="flex-1">
+                      <h3 class="font-extrabold text-blue-800 dark:text-blue-300 mb-2">Selección Inteligente de Contenido</h3>
+                      <ul class="text-sm font-semibold text-gray-800 dark:text-blue-300 space-y-1">
+                        <li>• Combina múltiples bases de datos para sesiones personalizadas</li>
+                        <li>• Selecciona temas específicos de cada producto</li>
+                        <li>• Los productos no comprados están disponibles para agregar al carrito</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Database Items -->
+                <div class="space-y-4">
                   ${allProducts.map(prod => {
     const isPurchased = purchasedProductIds.has(prod.id);
-    const isCurrentProduct = prod.id === productId;
 
     return `
-                      <div class="space-y-3">
-                        <div class="flex items-center justify-between p-4 rounded-lg border-2 ${isPurchased
-        ? isCurrentProduct
-          ? 'border-[#22a7d0] bg-blue-50'
-          : 'border-green-200 bg-green-50'
-        : 'border-gray-300 bg-gray-100 opacity-75'
-      } transition-all duration-200 hover:shadow-md ${isPurchased ? 'cursor-pointer' : ''}">
-                          <div class="flex items-center space-x-3 flex-1">
-                            <div class="relative">
-                              <input type="checkbox" id="product-${prod.id}" ${isPurchased ? 'checked' : ''} ${!isPurchased ? 'disabled' : ''}
-                                     class="w-5 h-5 text-[#22a7d0] bg-white border-2 border-gray-300 rounded focus:ring-2 focus:ring-[#22a7d0] focus:ring-opacity-50 transition-all duration-200 ${!isPurchased ? 'cursor-not-allowed opacity-50' : 'hover:border-[#22a7d0] cursor-pointer'}"
-                                     onchange="toggleProductDatabase('${prod.id}', this.checked)">
-                              ${isPurchased ? `
-                                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                  <svg class="w-3 h-3 text-white transform transition-all duration-300 ${document.getElementById('product-' + prod.id)?.checked ? 'scale-100 opacity-100' : 'scale-0 opacity-0'}" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                  </svg>
-                                </div>
-                              ` : ''}
+                      <div class="database-item ${isPurchased ? 'selected' : 'locked'}" onclick="${isPurchased ? 'toggleDatabase(this)' : ''}" data-product-id="${prod.id}">
+                        <div class="flex items-center gap-4">
+                          ${isPurchased ? `
+                            <label class="ios-toggle flex-shrink-0" onclick="event.stopPropagation()">
+                              <input type="checkbox" id="product-${prod.id}" checked onchange="toggleProductDatabase('${prod.id}', this.checked)">
+                              <span class="ios-toggle-slider"></span>
+                            </label>
+                          ` : `
+                            <div class="flex-shrink-0 opacity-50">
+                              <svg class="w-6 h-6" style="color: var(--color-text-secondary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                              </svg>
                             </div>
-                            <img src="${prod.imageURL || prod.image}" alt="${prod.name}" class="w-10 h-10 rounded-lg object-cover shadow-sm transition-all duration-200 ${!isPurchased ? 'grayscale' : ''}">
-                            <div class="flex-1">
-                              <h3 class="font-semibold ${isPurchased ? 'text-gray-900' : 'text-gray-500'} transition-colors">${prod.name}</h3>
-                              <p class="text-sm ${isPurchased ? 'text-gray-600' : 'text-gray-400'}">${prod.category}</p>
-                              ${!isPurchased ? `<p class="text-xs text-gray-500 mt-1">Este producto no ha sido comprado</p>` : ''}
-                            </div>
-                            ${isPurchased ? `
-                              <div class="flex items-center">
-                                <svg id="chevron-${prod.id}" class="w-5 h-5 text-gray-400 transition-transform duration-200 ${document.getElementById('product-' + prod.id)?.checked ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                </svg>
-                              </div>
-                            ` : ''}
+                          `}
+                          <img src="${prod.imageURL || prod.image}" alt="${prod.displayName}" class="w-14 h-14 rounded-xl object-cover shadow-md ${!isPurchased ? 'grayscale' : ''}">
+                          <div class="flex-1">
+                            <h3 class="font-bold text-lg ${isPurchased ? 'text-gray-900 dark:text-gray-100' : 'text-gray-600 dark:text-gray-400'}">${prod.displayName}</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">${typeof prod.category === 'string' ? prod.category : 'Categoría'} ${prod.questionCount ? `• ${prod.questionCount} preguntas` : ''}</p>
                           </div>
-                          <div class="text-right ml-4">
-                            ${isPurchased
-        ? `<div class="flex items-center space-x-2">
-                                   <span class="px-3 py-1 text-xs font-medium rounded-full border" style="background-color: ${(categories[prod.category]?.color || '#10B981')}20; color: ${categories[prod.category]?.color || '#10B981'}; border-color: ${categories[prod.category]?.color || '#10B981'}40;">
-                                     <span class="w-2 h-2 rounded-full inline-block mr-1 animate-pulse" style="background-color: ${categories[prod.category]?.color || '#10B981'};"></span>
-                                     Activo
-                                   </span>
-                                 </div>`
-        : `<div class="text-right space-y-2">
-                                   <div class="text-lg font-bold text-gray-500">$${prod.price}</div>
-                                   <button onclick="addToCartFromDashboard('${prod.id}')" class="px-3 py-1 bg-[#22a7d0] text-white text-xs font-medium rounded-lg hover:bg-[#1e96bc] transition-colors shadow-sm transform hover:scale-105 duration-200">
-                                     Agregar al Carrito
-                                   </button>
-                                 </div>`
+                          ${isPurchased
+        ? `<div class="px-4 py-2 bg-green-100 dark:bg-green-900/50 rounded-full text-sm font-semibold border border-green-400 dark:border-green-500/50 shadow-[0_0_10px_rgba(74,222,128,0.2)]">
+                              <span class="inline-block w-2 h-2 bg-green-600 dark:bg-green-400 rounded-full mr-2 animate-pulse shadow-[0_0_8px_currentColor]"></span>
+                              <span class="text-green-800 dark:text-green-200 font-bold tracking-wide">Activo</span>
+                            </div>`
+        : `<div class="text-right">
+                              <div class="text-2xl font-bold" style="color: var(--color-text-secondary);">$${prod.price || '0.00'}</div>
+                              <button onclick="addToCartFromDashboard(event, '${prod.id}')" class="mt-2 px-4 py-2 bg-orange-500 text-white text-sm font-semibold rounded-lg hover:bg-orange-600 transition shadow-md">
+                                Agregar
+                              </button>
+                            </div>`
       }
-                          </div>
                         </div>
 
-                        <!-- Topic Selection for Purchased Products -->
+                        <!-- Topics -->
                         ${isPurchased ? `
-                          <div id="topics-${prod.id}" class="ml-8 space-y-2 ${!document.getElementById('product-' + prod.id)?.checked ? 'hidden' : ''}">
-                            <h4 class="text-sm font-medium text-gray-700">Temas disponibles:</h4>
-                            <div class="grid grid-cols-2 gap-2">
+                          <div class="topics-section mt-4 pt-4 border-t border-dashed" style="border-color: var(--color-border-primary);" id="topics-${prod.id}">
+                            <div class="grid grid-cols-2 gap-3">
                               ${(prod.topics || [
           { id: 'communications', name: 'Communications', questions: 45 },
           { id: 'navigation', name: 'Navigation & Tracks', questions: 38 },
           { id: 'weather', name: 'Weather & Environmental', questions: 32 },
-          { id: 'emergency', name: 'Emergency Procedures', questions: 25 },
-          { id: 'certification', name: 'Certification Standards', questions: 10 }
-        ]).map(topic => `
-                                <label class="flex items-center space-x-2 p-2 rounded border border-gray-200 hover:bg-gray-50">
-                                  <input type="checkbox" checked class="text-[#22a7d0] focus:ring-[#22a7d0]"
-                                         onchange="updateTopicSelection('${prod.id}', '${topic.id}', this.checked)">
-                                  <div class="flex-1">
-                                    <div class="text-sm font-medium text-gray-900">${topic.name}</div>
-                                    <div class="text-xs text-gray-500">${topic.questions} preguntas</div>
+          { id: 'emergency', name: 'Emergency Procedures', questions: 25 }
+        ]).map((topic, index) => `
+                                <div class="topic-item ${index < 2 ? 'selected' : ''}" onclick="event.stopPropagation(); toggleTopic(this, '${prod.id}', '${topic.id}')">
+                                  <div class="flex items-center gap-3">
+                                    <div class="custom-checkbox">
+                                      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                                        <polyline points="20 6 9 17 4 12"/>
+                                      </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                      <div class="font-semibold text-sm" style="color: var(--color-text-primary);">${topic.name}</div>
+                                      <div class="text-xs" style="color: var(--color-text-secondary);">${topic.questions} preguntas</div>
+                                    </div>
                                   </div>
-                                </label>
+                                </div>
                               `).join('')}
                             </div>
                           </div>
@@ -274,40 +607,40 @@ export async function renderDashboardView(productId) {
 
                 <!-- Info and Summary -->
                 <div class="mt-4 space-y-3">
-                  <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div class="p-4 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-lg">
                     <div class="flex items-start space-x-3">
-                      <svg class="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg class="w-5 h-5 text-blue-700 dark:text-blue-300 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                       </svg>
                       <div>
-                        <h4 class="font-medium text-amber-900 mb-1">Cómo funciona la selección de bases de datos</h4>
-                        <ul class="text-sm text-amber-800 space-y-1">
-                          <li>• <strong>Productos comprados:</strong> Puedes seleccionar los temas específicos de cada producto</li>
-                          <li>• <strong>Productos no comprados:</strong> Aparecen en gris con el precio, necesitas comprarlos primero</li>
-                          <li>• <strong>Combinación de bases:</strong> Selecciona múltiples productos para combinar sus preguntas en una sola sesión</li>
-                          <li>• <strong>Temas personalizados:</strong> Elige los temas específicos que quieres estudiar de cada producto</li>
+                        <h4 class="font-extrabold text-blue-800 dark:text-blue-300 mb-1">Cómo funciona la selección de bases de datos</h4>
+                        <ul class="text-sm font-semibold text-gray-800 dark:text-blue-300 space-y-1">
+                          <li>• <strong class="text-blue-900 dark:text-blue-300">Productos comprados:</strong> Puedes seleccionar los temas específicos de cada producto</li>
+                          <li>• <strong class="text-blue-900 dark:text-blue-300">Productos no comprados:</strong> Aparecen en gris con el precio, necesitas comprarlos primero</li>
+                          <li>• <strong class="text-blue-900 dark:text-blue-300">Combinación de bases:</strong> Selecciona múltiples productos para combinar sus preguntas en una sola sesión</li>
+                          <li>• <strong class="text-blue-900 dark:text-blue-300">Temas personalizados:</strong> Elige los temas específicos que quieres estudiar de cada producto</li>
                         </ul>
                       </div>
                     </div>
                   </div>
 
-                  <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div class="p-4 bg-cyan-50 dark:bg-slate-900/80 border-2 border-cyan-200 dark:border-cyan-800/50 rounded-lg shadow-lg dark:shadow-cyan-900/20">
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                       <div>
-                        <div class="text-lg font-bold text-[#22a7d0]" id="active-databases-count">${userPurchasedProducts.length}</div>
-                        <div class="text-xs text-blue-800">Bases Activas</div>
+                        <div class="text-lg font-bold text-cyan-700 dark:text-cyan-400" id="active-databases-count">${userPurchasedProducts.length}</div>
+                        <div class="text-xs font-bold text-gray-800 dark:text-slate-300">Bases Activas</div>
                       </div>
                       <div>
-                        <div class="text-lg font-bold text-[#22a7d0]" id="total-questions">0</div>
-                        <div class="text-xs text-blue-800">Preguntas Totales</div>
+                        <div class="text-lg font-bold text-cyan-700 dark:text-cyan-400" id="total-questions">0</div>
+                        <div class="text-xs font-bold text-gray-800 dark:text-slate-300">Preguntas Totales</div>
                       </div>
                       <div>
-                        <div class="text-lg font-bold text-[#22a7d0]" id="selected-topics">0</div>
-                        <div class="text-xs text-blue-800">Temas Seleccionados</div>
+                        <div class="text-lg font-bold text-cyan-700 dark:text-cyan-400" id="selected-topics">0</div>
+                        <div class="text-xs font-bold text-gray-800 dark:text-slate-300">Temas Seleccionados</div>
                       </div>
                       <div>
-                        <div class="text-lg font-bold text-[#22a7d0]" id="estimated-time">~60min</div>
-                        <div class="text-xs text-blue-800">Tiempo Estimado</div>
+                        <div class="text-lg font-bold text-cyan-700 dark:text-cyan-400" id="estimated-time">~60min</div>
+                        <div class="text-xs font-bold text-gray-800 dark:text-slate-300">Tiempo Estimado</div>
                       </div>
                     </div>
                   </div>
@@ -315,104 +648,91 @@ export async function renderDashboardView(productId) {
               </div>
 
               <!-- Training Configuration -->
-              <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
-                <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                  <svg class="w-6 h-6 mr-2 text-[#22a7d0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                  </svg>
-                  Configuración de Entrenamiento
-                </h2>
+              <div class="card-glass p-6 fade-in" style="animation-delay: 0.1s;">
+                <div class="flex items-center gap-3 mb-6 pb-4 border-b-2" style="border-color: var(--color-border-primary);">
+                  <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <span class="text-2xl">⚙️</span>
+                  </div>
+                  <h2 class="text-2xl font-bold" style="color: var(--color-text-primary);">Configuración de Sesión</h2>
+                </div>
 
-                <div class="grid md:grid-cols-2 gap-6">
-                  <!-- Mode Selection -->
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-3">Modo de Entrenamiento</label>
-                    <div class="space-y-3">
-                      <label class="flex items-center">
-                        <input type="radio" name="training-mode" value="practice" checked class="mr-3 text-[#22a7d0] focus:ring-[#22a7d0]">
-                        <div>
-                          <div class="font-medium text-gray-900">Modo Práctica</div>
-                          <div class="text-sm text-gray-600">Sin límite de tiempo, respuestas inmediatas</div>
-                        </div>
-                      </label>
-                      <label class="flex items-center">
-                        <input type="radio" name="training-mode" value="exam" class="mr-3 text-[#22a7d0] focus:ring-[#22a7d0]">
-                        <div>
-                          <div class="font-medium text-gray-900">Modo Examen</div>
-                          <div class="text-sm text-gray-600">Tiempo limitado, evaluación final</div>
-                        </div>
-                      </label>
+                <!-- Mode Selection -->
+                <div class="mb-6">
+                  <label class="block font-semibold mb-3" style="color: var(--color-text-primary);">Modo de Entrenamiento</label>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="mode-card selected" onclick="selectMode(this, 'practice')">
+                      <div class="text-3xl mb-2">🎯</div>
+                      <h3 class="font-bold text-lg mb-1" style="color: var(--color-text-primary);">Modo Práctica</h3>
+                      <p class="text-sm" style="color: var(--color-text-secondary);">Aprende a tu ritmo sin límite de tiempo</p>
                     </div>
-                  </div>
-
-                  <!-- Question Count -->
-                  <div>
-                    <label for="question-count" class="block text-sm font-medium text-gray-700 mb-3">Número de Preguntas</label>
-                    <select id="question-count" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#22a7d0] focus:border-[#22a7d0]">
-                      <option value="10">10 preguntas</option>
-                      <option value="25">25 preguntas</option>
-                      <option value="50" selected>50 preguntas</option>
-                      <option value="100">100 preguntas</option>
-                      <option value="all">Todas las preguntas</option>
-                    </select>
-                  </div>
-
-                  <!-- Exam Timer -->
-                  <div id="exam-timer-section" class="hidden">
-                    <label for="exam-timer" class="block text-sm font-medium text-gray-700 mb-3">
-                      Tiempo del Examen: <span id="timer-display" class="font-bold text-[#22a7d0]">60 minutos</span>
-                    </label>
-                    <input type="range" id="exam-timer" min="15" max="180" value="60" step="15"
-                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                           oninput="updateTimerDisplay(this.value)">
-                    <div class="flex justify-between text-xs text-gray-500 mt-1">
-                      <span>15 min</span>
-                      <span>180 min</span>
+                    <div class="mode-card" onclick="selectMode(this, 'exam')">
+                      <div class="text-3xl mb-2">📝</div>
+                      <h3 class="font-bold text-lg mb-1" style="color: var(--color-text-primary);">Modo Examen</h3>
+                      <p class="text-sm" style="color: var(--color-text-secondary);">Condiciones reales con tiempo limitado</p>
                     </div>
-                  </div>
-
-                  <!-- Session Summary -->
-                  <div class="md:col-span-2">
-                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                      <h4 class="font-medium text-gray-900 mb-3">Resumen de la Sesión</h4>
-                      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <span class="text-gray-600">Modo:</span>
-                          <div class="font-medium" id="session-mode">Práctica</div>
-                        </div>
-                        <div>
-                          <span class="text-gray-600">Preguntas:</span>
-                          <div class="font-medium" id="session-questions">50</div>
-                        </div>
-                        <div>
-                          <span class="text-gray-600">Tiempo:</span>
-                          <div class="font-medium" id="session-time">Sin límite</div>
-                        </div>
-                        <div>
-                          <span class="text-gray-600">Productos:</span>
-                          <div class="font-medium" id="session-products">${userPurchasedProducts.length}</div>
-                        </div>
-                      </div>
-                      <div class="mt-3 pt-3 border-t border-gray-200">
-                        <span class="text-gray-600 text-sm">Temas seleccionados:</span>
-                        <div class="mt-1" id="session-topics-list">
-                          <span class="text-sm text-gray-500">Todos los temas de productos seleccionados</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Start Button -->
-                  <div class="md:col-span-2">
-                    <button id="start-training" class="w-full bg-[#22a7d0] text-white px-6 py-4 rounded-lg font-bold hover:bg-[#1e96bc] transition-all duration-300 shadow-lg transform hover:scale-105">
-                      <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                      </svg>
-                      Iniciar Entrenamiento
-                    </button>
                   </div>
                 </div>
+
+                <!-- Question Count -->
+                <div class="mb-6">
+                  <label class="block font-semibold mb-3" style="color: var(--color-text-primary);">Número de Preguntas</label>
+                  <select id="question-count" class="w-full p-3 border-2 rounded-xl font-medium focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/20 outline-none transition" style="border-color: var(--color-border-primary); background: var(--color-bg-primary); color: var(--color-text-primary);">
+                    <option value="10">10 preguntas - Sesión rápida</option>
+                    <option value="25">25 preguntas - Sesión corta</option>
+                    <option value="50" selected>50 preguntas - Sesión estándar</option>
+                    <option value="100">100 preguntas - Sesión extendida</option>
+                    <option value="all">Todas las preguntas disponibles</option>
+                  </select>
+                </div>
+
+                <!-- Timer (hidden by default) -->
+                <div id="timer-section" class="mb-6 hidden">
+                  <div class="flex justify-between items-center mb-3">
+                    <label class="font-semibold" style="color: var(--color-text-primary);">Tiempo del Examen</label>
+                    <span class="text-xl font-bold text-cyan-600 dark:text-cyan-400"><span id="timer-value">60</span> min</span>
+                  </div>
+                  <input type="range" id="timer-slider" min="15" max="180" value="60" step="15" class="w-full h-2 rounded-lg appearance-none cursor-pointer slider" oninput="updateTimer(this.value)">
+                  <div class="flex justify-between text-xs mt-1" style="color: var(--color-text-secondary);">
+                    <span>15 min</span>
+                    <span>180 min</span>
+                  </div>
+                </div>
+
+                <!-- Summary -->
+                <div class="border-2 rounded-xl p-5 bg-white dark:bg-gray-900/50 border-gray-200 dark:border-cyan-600">
+                  <div class="flex items-center gap-2 font-bold text-lg mb-4 text-gray-800 dark:text-white">
+                    <span>📊</span>
+                    Resumen de la Sesión
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="p-3 rounded-lg shadow-sm border bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700">
+                      <div class="text-xs mb-1 font-semibold text-gray-700 dark:text-gray-400">Modo</div>
+                      <div class="font-bold text-lg text-gray-800 dark:text-white" id="session-mode">Práctica</div>
+                    </div>
+                    <div class="p-3 rounded-lg shadow-sm border bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700">
+                      <div class="text-xs mb-1 font-semibold text-gray-700 dark:text-gray-400">Preguntas</div>
+                      <div class="font-bold text-lg text-gray-800 dark:text-white" id="session-questions">50</div>
+                    </div>
+                    <div class="p-3 rounded-lg shadow-sm border bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700">
+                      <div class="text-xs mb-1 font-semibold text-gray-700 dark:text-gray-400">Temas Activos</div>
+                      <div class="font-bold text-lg text-gray-800 dark:text-white" id="selected-topics">0</div>
+                    </div>
+                    <div class="p-3 rounded-lg shadow-sm border bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700">
+                      <div class="text-xs mb-1 font-semibold text-gray-700 dark:text-gray-400">Tiempo Est.</div>
+                      <div class="font-bold text-lg text-gray-800 dark:text-white" id="session-time">~60 min</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Start Button -->
+                <button id="start-training" class="btn-primary w-full mt-6 bg-gradient-to-r from-[#22a7d0] to-[#1e96bc] text-white px-6 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1">
+                  <div class="flex items-center justify-center gap-3">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                    <span>Iniciar Entrenamiento</span>
+                  </div>
+                </button>
               </div>
             </div>
 
@@ -420,72 +740,80 @@ export async function renderDashboardView(productId) {
             <div class="space-y-6">
 
               <!-- General Statistics -->
-              <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Estadísticas Generales</h3>
+              <div class="card-glass rounded-xl p-6 bg-white dark:bg-transparent border border-gray-200 dark:border-transparent">
+                <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Estadísticas Generales</h3>
                 <div class="space-y-4">
                   <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">Productos Adquiridos</span>
-                    <span class="font-bold text-[#22a7d0]">${userPurchasedProducts.length}</span>
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">Productos Adquiridos</span>
+                    <span class="font-bold text-cyan-700 dark:text-cyan-400">${userPurchasedProducts.length}</span>
                   </div>
                   <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">Preguntas Respondidas</span>
-                    <span class="font-bold text-[#22a7d0]">0</span>
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">Preguntas Respondidas</span>
+                    <span class="font-bold text-cyan-700 dark:text-cyan-400">${userStats?.totalQuestions || 0}</span>
                   </div>
                   <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">Promedio General</span>
-                    <span class="font-bold text-[#22a7d0]">--%</span>
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">Promedio General</span>
+                    <span class="font-bold text-cyan-700 dark:text-cyan-400">${userStats?.averageScore || 0}%</span>
                   </div>
                   <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-600">Tiempo Total Estudiado</span>
-                    <span class="font-bold text-[#22a7d0]">0h 0m</span>
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">Tiempo Total Estudiado</span>
+                    <span class="font-bold text-cyan-700 dark:text-cyan-400">${formatTime(userStats?.totalTimeSpent || 0)}</span>
                   </div>
                 </div>
               </div>
 
               <!-- Product-specific Statistics -->
-              <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Estadísticas por Producto</h3>
+              <div class="card-glass rounded-xl p-6 bg-white dark:bg-transparent border border-gray-200 dark:border-transparent">
+                <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Estadísticas por Producto</h3>
                 <div class="space-y-4">
-                  ${userPurchasedProducts.map(prod => `
-                    <div class="border-l-4 border-[#22a7d0] pl-4">
-                      <h4 class="font-semibold text-gray-900 text-sm">${prod.name}</h4>
-                      <div class="grid grid-cols-2 gap-2 text-xs text-gray-600 mt-2">
-                        <div>Progreso: <span class="font-medium">0%</span></div>
-                        <div>Mejores: <span class="font-medium">--%</span></div>
-                        <div>Preguntas: <span class="font-medium">0</span></div>
-                        <div>Tiempo: <span class="font-medium">0h</span></div>
+                  ${userPurchasedProducts.map(prod => {
+                    const prodStats = userStats?.productStats?.[prod.id] || {
+                      sessions: 0,
+                      averageScore: 0,
+                      totalQuestions: 0,
+                      correctAnswers: 0
+                    };
+                    return `
+                    <div class="border-l-4 border-cyan-600 dark:border-cyan-500 pl-4">
+                      <h4 class="font-bold text-gray-800 dark:text-white text-sm">${prod.displayName}</h4>
+                      <div class="grid grid-cols-2 gap-2 text-xs font-medium text-gray-700 dark:text-gray-400 mt-2">
+                        <div>Sesiones: <span class="font-semibold">${prodStats.sessions}</span></div>
+                        <div>Promedio: <span class="font-semibold">${prodStats.averageScore}%</span></div>
+                        <div>Preguntas: <span class="font-semibold">${prodStats.totalQuestions}</span></div>
+                        <div>Correctas: <span class="font-semibold">${prodStats.correctAnswers}</span></div>
                       </div>
                     </div>
-                  `).join('')}
+                  `;
+                  }).join('')}
                 </div>
               </div>
 
               <!-- Quick Access -->
-              <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Acceso Rápido</h3>
+              <div class="card-glass rounded-xl p-6 bg-white dark:bg-transparent border border-gray-200 dark:border-transparent">
+                <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Acceso Rápido</h3>
                 <div class="space-y-3">
-                  <button class="w-full text-left p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <button class="w-full text-left p-3 rounded-lg bg-cyan-50 dark:bg-gray-800 hover:bg-cyan-100 dark:hover:bg-gray-700 transition-colors border border-cyan-200 dark:border-gray-700 shadow-sm">
                     <div class="flex items-center">
-                      <svg class="w-5 h-5 mr-3 text-[#22a7d0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg class="w-5 h-5 mr-3 text-cyan-700 dark:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                       </svg>
-                      <span class="text-sm font-medium">Historial de Sesiones</span>
+                      <span class="text-sm font-bold text-gray-800 dark:text-gray-200">Historial de Sesiones</span>
                     </div>
                   </button>
-                  <button class="w-full text-left p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <button class="w-full text-left p-3 rounded-lg bg-cyan-50 dark:bg-gray-800 hover:bg-cyan-100 dark:hover:bg-gray-700 transition-colors border border-cyan-200 dark:border-gray-700 shadow-sm">
                     <div class="flex items-center">
-                      <svg class="w-5 h-5 mr-3 text-[#22a7d0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg class="w-5 h-5 mr-3 text-cyan-700 dark:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                       </svg>
-                      <span class="text-sm font-medium">Documentación</span>
+                      <span class="text-sm font-bold text-gray-800 dark:text-gray-200">Documentación</span>
                     </div>
                   </button>
-                  <button class="w-full text-left p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <button class="w-full text-left p-3 rounded-lg bg-cyan-50 dark:bg-gray-800 hover:bg-cyan-100 dark:hover:bg-gray-700 transition-colors border border-cyan-200 dark:border-gray-700 shadow-sm">
                     <div class="flex items-center">
-                      <svg class="w-5 h-5 mr-3 text-[#22a7d0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg class="w-5 h-5 mr-3 text-cyan-700 dark:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                       </svg>
-                      <span class="text-sm font-medium">Ayuda y Soporte</span>
+                      <span class="text-sm font-bold text-gray-800 dark:text-gray-200">Ayuda y Soporte</span>
                     </div>
                   </button>
                 </div>
@@ -498,109 +826,100 @@ export async function renderDashboardView(productId) {
   `;
 
   // Add event listeners
-  const backButton = document.getElementById('back-to-products');
-  if (backButton) {
-    backButton.addEventListener('click', () => {
-      window.location.hash = '#/products';
-    });
-  }
-
   const startTrainingButton = document.getElementById('start-training');
   if (startTrainingButton) {
     startTrainingButton.addEventListener('click', () => {
-      // TODO: Navigate to guide page when implemented with selected configuration
-      const selectedProducts = getSelectedProducts();
-      const trainingMode = document.querySelector('input[name="training-mode"]:checked').value;
-      const questionCount = document.getElementById('question-count').value;
-      const examTimer = document.getElementById('exam-timer').value;
-
-      console.log('Training Configuration:', {
-        products: selectedProducts,
-        mode: trainingMode,
-        questions: questionCount,
-        timer: examTimer
-      });
-
-      // For now, navigate to guide with main product
-      window.location.hash = `#/guide/${productId}`;
+      console.log('🚀 Iniciando entrenamiento para producto:', productId);
+      // Redirigir a la aplicación de entrenamiento dentro del SPA
+      window.location.hash = `#/training/${productId}`;
+      console.log('✅ Hash actualizado a:', window.location.hash);
     });
   }
-
-  // Training mode toggle for exam timer
-  const trainingModeInputs = document.querySelectorAll('input[name="training-mode"]');
-  trainingModeInputs.forEach(input => {
-    input.addEventListener('change', (e) => {
-      const examTimerSection = document.getElementById('exam-timer-section');
-      if (e.target.value === 'exam') {
-        examTimerSection.classList.remove('hidden');
-      } else {
-        examTimerSection.classList.add('hidden');
-      }
-      updateSessionSummary();
-    });
-  });
 
   // Question count change listener
   const questionCountSelect = document.getElementById('question-count');
   if (questionCountSelect) {
-    questionCountSelect.addEventListener('change', updateSessionSummary);
+    questionCountSelect.addEventListener('change', () => {
+      updateSessionSummary();
+    });
   }
 
   // Global functions for interaction
-  window.toggleProductDatabase = function (productId, isSelected) {
-    console.log(`Database ${productId} ${isSelected ? 'activated' : 'deactivated'}`);
+  window.toggleDatabase = function (element) {
+    element.classList.toggle('selected');
+  };
 
-    // Show/hide topics section
-    const topicsSection = document.getElementById(`topics-${productId}`);
-    const chevron = document.getElementById(`chevron-${productId}`);
-
-    if (topicsSection) {
-      if (isSelected) {
-        topicsSection.classList.remove('hidden');
-        if (chevron) chevron.classList.add('rotate-180');
-      } else {
-        topicsSection.classList.add('hidden');
-        if (chevron) chevron.classList.remove('rotate-180');
-      }
-    }
-
+  window.toggleTopic = function (element, productId, topicId) {
+    element.classList.toggle('selected');
     updateAllCounts();
+  };
+
+  window.selectMode = function (element, mode) {
+    document.querySelectorAll('.mode-card').forEach(card => card.classList.remove('selected'));
+    element.classList.add('selected');
+
+    const timerSection = document.getElementById('timer-section');
+    if (mode === 'exam') {
+      timerSection.classList.remove('hidden');
+    } else {
+      timerSection.classList.add('hidden');
+    }
     updateSessionSummary();
   };
 
-  window.addToCartFromDashboard = function (productId) {
-    // Find the product and add to cart
-    const productToAdd = allProducts.find(p => p.id === productId);
+  window.updateTimer = function (value) {
+    const timerValue = document.getElementById('timer-value');
+    if (timerValue) {
+      timerValue.textContent = value;
+    }
+    const slider = document.getElementById('timer-slider');
+    if (slider) {
+      const percentage = ((value - 15) / (180 - 15)) * 100;
+      slider.style.background = `linear-gradient(to right, #22a7d0 0%, #22a7d0 ${percentage}%, var(--color-border-primary) ${percentage}%, var(--color-border-primary) 100%)`;
+    }
+  };
+
+  window.toggleProductDatabase = function (prodId, isSelected) {
+    const topicsSection = document.getElementById(`topics-${prodId}`);
+    if (topicsSection) {
+      if (isSelected) {
+        topicsSection.style.display = 'block';
+      } else {
+        topicsSection.style.display = 'none';
+      }
+    }
+    updateAllCounts();
+  };
+
+  window.addToCartFromDashboard = function (evt, prodId) {
+    evt.stopPropagation();
+
+    const productToAdd = allProducts.find(p => p.id === prodId);
     if (productToAdd && window.cart) {
       window.cart.addToCart(productToAdd);
 
-      // Show success message
-      const button = event.target;
-      const originalText = button.textContent;
-      button.textContent = '¡Agregado!';
-      button.classList.remove('bg-[#22a7d0]', 'hover:bg-[#1e96bc]');
-      button.classList.add('bg-green-500', 'hover:bg-green-600');
+      // Abrir el modal del carrito
+      if (window.cart.openCartModal) {
+        window.cart.openCartModal();
+      }
 
-      setTimeout(() => {
-        button.textContent = originalText;
-        button.classList.remove('bg-green-500', 'hover:bg-green-600');
-        button.classList.add('bg-[#22a7d0]', 'hover:bg-[#1e96bc]');
-      }, 2000);
+      // Cambiar el botón a "Agregado"
+      const button = evt.target;
+      if (button && button.tagName === 'BUTTON') {
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '✓ Agregado';
+        button.classList.remove('bg-orange-500', 'hover:bg-orange-600');
+        button.classList.add('bg-green-500', 'cursor-default');
+        button.disabled = true;
+
+        setTimeout(() => {
+          button.innerHTML = originalHTML;
+          button.classList.remove('bg-green-500', 'cursor-default');
+          button.classList.add('bg-orange-500', 'hover:bg-orange-600');
+          button.disabled = false;
+        }, 3000);
+      }
     }
-  };
-
-  window.updateTopicSelection = function (productId, topicId, isSelected) {
-    console.log(`Topic ${topicId} in ${productId} ${isSelected ? 'selected' : 'deselected'}`);
-    updateAllCounts();
-    updateSessionSummary();
-  };
-
-  window.updateTimerDisplay = function (value) {
-    const display = document.getElementById('timer-display');
-    if (display) {
-      display.textContent = `${value} minutos`;
-    }
-    updateSessionSummary();
   };
 
   function getSelectedProducts() {
@@ -619,15 +938,15 @@ export async function renderDashboardView(productId) {
     let totalQuestions = 0;
     const selectedProducts = getSelectedProducts();
 
-    selectedProducts.forEach(productId => {
-      const topicsSection = document.getElementById(`topics-${productId}`);
+    selectedProducts.forEach(prodId => {
+      const topicsSection = document.getElementById(`topics-${prodId}`);
       if (topicsSection) {
-        const topicCheckboxes = topicsSection.querySelectorAll('input[type="checkbox"]:checked');
-        totalTopics += topicCheckboxes.length;
+        const selectedTopicItems = topicsSection.querySelectorAll('.topic-item.selected');
+        totalTopics += selectedTopicItems.length;
 
         // Calculate questions from selected topics
-        topicCheckboxes.forEach(checkbox => {
-          const questionElement = checkbox.closest('label').querySelector('.text-xs');
+        selectedTopicItems.forEach(item => {
+          const questionElement = item.querySelector('.text-xs');
           if (questionElement) {
             const match = questionElement.textContent.match(/(\d+)/);
             const questions = match ? parseInt(match[0]) : 0;
@@ -644,10 +963,43 @@ export async function renderDashboardView(productId) {
     const selectedProducts = getSelectedProducts();
     const { totalTopics, totalQuestions } = getSelectedTopics();
 
-    // Update database count
-    const countElement = document.getElementById('active-databases-count');
-    if (countElement) {
-      countElement.textContent = selectedProducts.length;
+    // Update topics count
+    const topicsElement = document.getElementById('selected-topics');
+    if (topicsElement) {
+      topicsElement.textContent = totalTopics;
+    }
+
+    updateSessionSummary();
+  }
+
+  function updateSessionSummary() {
+    const { totalTopics } = getSelectedTopics();
+    const selectedModeCard = document.querySelector('.mode-card.selected');
+    const isExamMode = selectedModeCard?.textContent.includes('Examen');
+    const questionCount = document.getElementById('question-count')?.value || '50';
+    const timerValue = document.getElementById('timer-value')?.textContent || '60';
+
+    // Update session mode
+    const modeElement = document.getElementById('session-mode');
+    if (modeElement) {
+      modeElement.textContent = isExamMode ? 'Examen' : 'Práctica';
+    }
+
+    // Update session questions
+    const questionsElement = document.getElementById('session-questions');
+    if (questionsElement) {
+      questionsElement.textContent = questionCount === 'all' ? 'Todas' : questionCount;
+    }
+
+    // Update session time
+    const timeElement = document.getElementById('session-time');
+    if (timeElement) {
+      if (isExamMode) {
+        timeElement.textContent = `~${timerValue} min`;
+      } else {
+        const estimatedMinutes = Math.ceil(parseInt(questionCount || 50) * 1.2);
+        timeElement.textContent = `~${estimatedMinutes} min`;
+      }
     }
 
     // Update topics count
@@ -655,116 +1007,9 @@ export async function renderDashboardView(productId) {
     if (topicsElement) {
       topicsElement.textContent = totalTopics;
     }
-
-    // Update questions count
-    const questionsElement = document.getElementById('total-questions');
-    if (questionsElement) {
-      questionsElement.textContent = totalQuestions;
-    }
-
-    // Update estimated time based on actual selected topics
-    const timeElement = document.getElementById('estimated-time');
-    if (timeElement) {
-      if (totalQuestions > 0) {
-        const estimatedMinutes = Math.ceil(totalQuestions * 1.2); // 1.2 minutes per question
-        timeElement.textContent = `~${estimatedMinutes}min`;
-      } else {
-        timeElement.textContent = '~0min';
-      }
-    }
   }
 
-  function updateSessionSummary() {
-    const selectedProducts = getSelectedProducts();
-    const { totalTopics, totalQuestions } = getSelectedTopics();
-    const trainingMode = document.querySelector('input[name="training-mode"]:checked')?.value || 'practice';
-    const questionCount = document.getElementById('question-count')?.value || '50';
-    const examTimer = document.getElementById('exam-timer')?.value || '60';
-
-    // Update session mode
-    const modeElement = document.getElementById('session-mode');
-    if (modeElement) {
-      modeElement.textContent = trainingMode === 'practice' ? 'Práctica' : 'Examen';
-    }
-
-    // Update session questions
-    const questionsElement = document.getElementById('session-questions');
-    if (questionsElement) {
-      if (questionCount === 'all') {
-        questionsElement.textContent = `${totalQuestions} (todas)`;
-      } else {
-        questionsElement.textContent = Math.min(parseInt(questionCount), totalQuestions);
-      }
-    }
-
-    // Update session time
-    const timeElement = document.getElementById('session-time');
-    if (timeElement) {
-      if (trainingMode === 'exam') {
-        timeElement.textContent = `${examTimer} minutos`;
-      } else {
-        timeElement.textContent = 'Sin límite';
-      }
-    }
-
-    // Update session products
-    const productsElement = document.getElementById('session-products');
-    if (productsElement) {
-      productsElement.textContent = selectedProducts.length;
-    }
-
-    // Update topics list with specific selected topics
-    const topicsListElement = document.getElementById('session-topics-list');
-    if (topicsListElement) {
-      if (totalTopics > 0) {
-        const selectedTopicDetails = getSelectedTopicsDetails();
-        const topicsHtml = selectedTopicDetails.map(item =>
-          `<span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">${item.productName}: ${item.topics.join(', ')}</span>`
-        ).join('');
-
-        topicsListElement.innerHTML = `
-          <div class="space-y-1">
-            <div class="text-sm text-gray-700 font-medium">${totalTopics} temas seleccionados:</div>
-            <div class="flex flex-wrap">${topicsHtml}</div>
-          </div>
-        `;
-      } else {
-        topicsListElement.innerHTML = `<span class="text-sm text-gray-500">Selecciona productos para ver temas disponibles</span>`;
-      }
-    }
-  }
-
-  function getSelectedTopicsDetails() {
-    const selectedProducts = getSelectedProducts();
-    const topicsDetails = [];
-
-    selectedProducts.forEach(productId => {
-      const product = allProducts.find(p => p.id === productId);
-      const topicsSection = document.getElementById(`topics-${productId}`);
-
-      if (topicsSection && product) {
-        const selectedTopicNames = [];
-        const topicCheckboxes = topicsSection.querySelectorAll('input[type="checkbox"]:checked');
-
-        topicCheckboxes.forEach(checkbox => {
-          const label = checkbox.closest('label');
-          const topicName = label.querySelector('.text-sm.font-medium').textContent;
-          selectedTopicNames.push(topicName);
-        });
-
-        if (selectedTopicNames.length > 0) {
-          topicsDetails.push({
-            productName: product.name,
-            topics: selectedTopicNames
-          });
-        }
-      }
-    });
-
-    return topicsDetails;
-  }
-
-  // Initialize counts and summary
+  // Initialize counts, summary, and timer
   updateAllCounts();
-  updateSessionSummary();
+  updateTimer(60);
 }

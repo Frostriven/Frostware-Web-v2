@@ -559,6 +559,83 @@ export const es = {
   // Authentication messages
   auth: {
     logoutSuccess: "Sesión cerrada exitosamente"
+  },
+
+  // Dashboard page
+  dashboard: {
+    header: {
+      backToProducts: "Mis Productos",
+      configureGuide: "Configuración de Guía"
+    },
+    databases: {
+      title: "Bases de Datos de Conocimiento",
+      infoTitle: "Selección Inteligente de Contenido",
+      infoBullet1: "Combina múltiples bases de datos para sesiones personalizadas",
+      infoBullet2: "Selecciona temas específicos de cada producto",
+      infoBullet3: "Los productos no comprados están disponibles para agregar al carrito",
+      howItWorksTitle: "Cómo funciona la selección de bases de datos",
+      howItWorksBullet1: "Productos comprados:",
+      howItWorksBullet1Desc: "Puedes seleccionar los temas específicos de cada producto",
+      howItWorksBullet2: "Productos no comprados:",
+      howItWorksBullet2Desc: "Aparecen en gris con el precio, necesitas comprarlos primero",
+      howItWorksBullet3: "Combinación de bases:",
+      howItWorksBullet3Desc: "Selecciona múltiples productos para combinar sus preguntas en una sola sesión",
+      howItWorksBullet4: "Temas personalizados:",
+      howItWorksBullet4Desc: "Elige los temas específicos que quieres estudiar de cada producto",
+      activeLabel: "Activo",
+      addButton: "Agregar",
+      questions: "preguntas",
+      categories: "categorías"
+    },
+    configuration: {
+      title: "Configuración de Sesión",
+      modeLabel: "Modo de Entrenamiento",
+      practiceMode: "Modo Práctica",
+      practiceModeDesc: "Aprende a tu ritmo sin límite de tiempo",
+      examMode: "Modo Examen",
+      examModeDesc: "Condiciones reales con tiempo limitado",
+      questionCount: "Número de Preguntas",
+      questionCountQuick: "preguntas - Sesión rápida",
+      questionCountShort: "preguntas - Sesión corta",
+      questionCountStandard: "preguntas - Sesión estándar",
+      questionCountExtended: "preguntas - Sesión extendida",
+      questionCountAll: "Todas las preguntas disponibles",
+      timerLabel: "Tiempo del Examen",
+      timerMinutes: "min",
+      summaryTitle: "Resumen de la Sesión",
+      summaryMode: "Modo",
+      summaryQuestions: "Preguntas",
+      summaryActiveTopics: "Temas Activos",
+      summaryEstimatedTime: "Tiempo Est.",
+      startButton: "Iniciar Entrenamiento"
+    },
+    stats: {
+      progressTitle: "Tu Progreso",
+      products: "Productos",
+      sessions: "Sesiones",
+      average: "Promedio",
+      time: "Tiempo",
+      quickStatsTitle: "Estadísticas Rápidas",
+      correct: "Correctas",
+      incorrect: "Incorrectas",
+      streak: "Racha",
+      achievements: "Logros"
+    },
+    quickActions: {
+      title: "Acceso Rápido",
+      history: "Historial",
+      historyDesc: "Sesiones anteriores",
+      documentation: "Documentación",
+      documentationDesc: "Guías y recursos",
+      support: "Ayuda y Soporte",
+      supportDesc: "¿Necesitas ayuda?"
+    },
+    summary: {
+      activeDatabases: "Bases Activas",
+      totalQuestions: "Preguntas Totales",
+      selectedTopics: "Temas Seleccionados",
+      estimatedTime: "Tiempo Estimado"
+    }
   }
 };
 

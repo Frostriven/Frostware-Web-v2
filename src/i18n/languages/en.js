@@ -516,6 +516,83 @@ export const en = {
   // Authentication messages
   auth: {
     logoutSuccess: "Successfully logged out"
+  },
+
+  // Dashboard page
+  dashboard: {
+    header: {
+      backToProducts: "My Products",
+      configureGuide: "Guide Configuration"
+    },
+    databases: {
+      title: "Knowledge Databases",
+      infoTitle: "Smart Content Selection",
+      infoBullet1: "Combine multiple databases for personalized sessions",
+      infoBullet2: "Select specific topics from each product",
+      infoBullet3: "Unpurchased products are available to add to cart",
+      howItWorksTitle: "How database selection works",
+      howItWorksBullet1: "Purchased products:",
+      howItWorksBullet1Desc: "You can select specific topics from each product",
+      howItWorksBullet2: "Unpurchased products:",
+      howItWorksBullet2Desc: "Appear grayed out with price, you need to purchase them first",
+      howItWorksBullet3: "Database combination:",
+      howItWorksBullet3Desc: "Select multiple products to combine their questions in a single session",
+      howItWorksBullet4: "Custom topics:",
+      howItWorksBullet4Desc: "Choose the specific topics you want to study from each product",
+      activeLabel: "Active",
+      addButton: "Add",
+      questions: "questions",
+      categories: "categories"
+    },
+    configuration: {
+      title: "Session Configuration",
+      modeLabel: "Training Mode",
+      practiceMode: "Practice Mode",
+      practiceModeDesc: "Learn at your own pace without time limit",
+      examMode: "Exam Mode",
+      examModeDesc: "Real conditions with limited time",
+      questionCount: "Number of Questions",
+      questionCountQuick: "questions - Quick session",
+      questionCountShort: "questions - Short session",
+      questionCountStandard: "questions - Standard session",
+      questionCountExtended: "questions - Extended session",
+      questionCountAll: "All available questions",
+      timerLabel: "Exam Time",
+      timerMinutes: "min",
+      summaryTitle: "Session Summary",
+      summaryMode: "Mode",
+      summaryQuestions: "Questions",
+      summaryActiveTopics: "Active Topics",
+      summaryEstimatedTime: "Est. Time",
+      startButton: "Start Training"
+    },
+    stats: {
+      progressTitle: "Your Progress",
+      products: "Products",
+      sessions: "Sessions",
+      average: "Average",
+      time: "Time",
+      quickStatsTitle: "Quick Stats",
+      correct: "Correct",
+      incorrect: "Incorrect",
+      streak: "Streak",
+      achievements: "Achievements"
+    },
+    quickActions: {
+      title: "Quick Access",
+      history: "History",
+      historyDesc: "Previous sessions",
+      documentation: "Documentation",
+      documentationDesc: "Guides and resources",
+      support: "Help & Support",
+      supportDesc: "Need help?"
+    },
+    summary: {
+      activeDatabases: "Active Databases",
+      totalQuestions: "Total Questions",
+      selectedTopics: "Selected Topics",
+      estimatedTime: "Estimated Time"
+    }
   }
 };
 

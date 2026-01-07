@@ -124,26 +124,26 @@ function generateProductsHTML(products) {
                 class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                 alt="${name}">
             </div>
-            <div class="p-4 flex flex-col h-1/2 justify-between bg-white">
+            <div class="p-4 flex flex-col h-1/2 justify-between bg-white dark:bg-gray-800">
             <div class="flex-grow">
-                <h3 class="text-lg font-bold mb-2 text-left">${name}</h3>
+                <h3 class="text-lg font-bold mb-2 text-left text-gray-900 dark:text-gray-100">${name}</h3>
                 <div class="flex items-center mb-2 star-rating justify-start">
                 ${starsHTML}
-                <span class="text-xs text-gray-500 ml-2">(${reviewsCount})</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">(${reviewsCount})</span>
                 </div>
-                <p class="text-gray-600 text-sm text-left line-clamp-2">${description}</p>
+                <p class="text-gray-600 dark:text-gray-300 text-sm text-left line-clamp-2">${description}</p>
             </div>
             <div class="mt-auto">
                 <div class="flex justify-between items-center mb-3">
                 ${product.price === 0 || product.price === "Gratis" ? `
-                <span class="text-2xl font-bold text-gray-900">${t('productsPage.pricing.free')}</span>
+                <span class="text-2xl font-bold text-gray-900 dark:text-gray-100">${t('productsPage.pricing.free')}</span>
                 ` : product.originalPrice && product.originalPrice > product.price ? `
                 <div class="flex items-center space-x-2">
-                    <span class="text-2xl font-bold text-gray-900">$${product.price}</span>
-                    <span class="text-lg text-gray-500 line-through">$${product.originalPrice}</span>
+                    <span class="text-2xl font-bold text-gray-900 dark:text-gray-100">$${product.price}</span>
+                    <span class="text-lg text-gray-500 dark:text-gray-400 line-through">$${product.originalPrice}</span>
                 </div>
                 ` : `
-                <span class="text-2xl font-bold text-gray-900">$${product.price || 99}</span>
+                <span class="text-2xl font-bold text-gray-900 dark:text-gray-100">$${product.price || 99}</span>
                 `}
                 <span class="text-sm ${badgeColor} px-2 py-1 rounded-full">${getBadgeDisplayName(product.badge || 'available')}</span>
                 </div>
@@ -162,7 +162,7 @@ function generateProductsHTML(products) {
       <div class="container mx-auto px-6">
         <div class="text-center mb-12">
           <h2 class="text-sm font-bold uppercase text-[#22a7d0]">${t('productsPage.page.tagline')}</h2>
-          <p class="section-title text-3xl md:text-4xl mt-2">${t('productsPage.page.title')}</p>
+          <p class="section-title text-3xl md:text-4xl mt-2 text-gray-900 dark:text-gray-100">${t('productsPage.page.title')}</p>
         </div>
 
         <!-- Filter Section -->
