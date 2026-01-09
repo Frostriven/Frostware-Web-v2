@@ -11,6 +11,10 @@ import { renderResetView } from '../pages/auth/reset/view.js';
 import { renderAccountView } from '../pages/auth/account/view.js';
 import { renderProductsView } from '../pages/products/view.js';
 import { renderAdminView } from '../pages/admin/view.js';
+import { renderAdminUsersView } from '../pages/admin-users/view.js';
+import { renderProductFormView } from '../pages/product-form/view.js';
+import { renderUserFormView } from '../pages/user-form/view.js';
+import { renderDatabaseManagementView } from '../pages/database-management/view.js';
 import { renderProductDetailView } from '../pages/product-detail/view.js';
 import { renderDashboardView } from '../pages/dashboard/view.js';
 import { renderTrainingView } from '../pages/training/view.js';
@@ -492,6 +496,47 @@ const initializeApp = async () => {
   registerRoute('#/admin', () => {
     setMainVisible(false);
     renderAdminView();
+  });
+  registerRoute('#/admin/users', () => {
+    setMainVisible(false);
+    renderAdminUsersView();
+  });
+
+  registerRoute('#/admin/databases', () => {
+    setMainVisible(false);
+    renderDatabaseManagementView();
+  });
+
+  // User form routes (creation and editing)
+  registerRoute('#/admin/user/new', () => {
+    setMainVisible(false);
+    renderUserFormView();
+  });
+
+  registerRoute('#/admin/user', () => {
+    const hash = window.location.hash;
+    const userEditMatch = hash.match(/^#\/admin\/user\/(.+)$/);
+    if (userEditMatch && userEditMatch[1] !== 'new') {
+      const userId = userEditMatch[1];
+      setMainVisible(false);
+      renderUserFormView(userId);
+    }
+  });
+
+  // Product form routes (creation and editing)
+  registerRoute('#/admin/product/new', () => {
+    setMainVisible(false);
+    renderProductFormView();
+  });
+
+  registerRoute('#/admin/product', () => {
+    const hash = window.location.hash;
+    const productEditMatch = hash.match(/^#\/admin\/product\/(.+)$/);
+    if (productEditMatch && productEditMatch[1] !== 'new') {
+      const productId = productEditMatch[1];
+      setMainVisible(false);
+      renderProductFormView(productId);
+    }
   });
 
   // Register a generic product route handler

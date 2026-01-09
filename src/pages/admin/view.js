@@ -1,6 +1,6 @@
 import { getProductsFromFirebase, initializeProductsInFirebase, isUserAdmin, isAdminEmail } from '../../js/userProfile.js';
 import { auth, db } from '../../js/firebase.js';
-import { doc, setDoc, updateDoc, deleteDoc, collection, addDoc, getDoc, getDocs, query } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, deleteDoc, collection, addDoc, getDoc, getDocs, query, serverTimestamp } from 'firebase/firestore';
 
 export async function renderAdminView() {
   const root = document.getElementById('spa-root');
@@ -74,6 +74,13 @@ export async function renderAdminView() {
             <div class="flex justify-between items-center">
               <h1 class="text-2xl font-bold text-gray-900">Panel de Administración</h1>
               <div class="flex items-center gap-4">
+                <button
+                  id="setup-admin-btn"
+                  class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                  title="Crear usuario admin en Firebase"
+                >
+                  🔧 Configurar Admin
+                </button>
                 <span class="text-sm text-gray-600">Bienvenido, ${auth.currentUser.email}</span>
                 <a href="#/" class="text-[#22a7d0] hover:text-blue-600">← Volver al sitio</a>
               </div>
@@ -143,6 +150,18 @@ export async function renderAdminView() {
                 <button id="tab-offers" class="admin-tab py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
                   Ofertas
                 </button>
+                <a href="#/admin/users" class="admin-tab-link py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center gap-2">
+                  Usuarios
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                  </svg>
+                </a>
+                <a href="#/admin/databases" class="admin-tab-link py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center gap-2">
+                  Bases de Datos
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7M4 7c0-2 1-3 3-3h10c2 0 3 1 3 3M4 7h16M10 11v6m4-6v6"></path>
+                  </svg>
+                </a>
               </nav>
             </div>
 
@@ -228,6 +247,87 @@ export async function renderAdminView() {
                       <label class="block text-sm font-medium text-gray-700 mb-2">URL de la App/Guía (para acceso post-compra)</label>
                       <input type="url" id="product-app-url" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#22a7d0] focus:border-[#22a7d0]" placeholder="https://apps.frostware.com/mi-guia/">
                       <p class="text-xs text-gray-500 mt-1">URL donde el usuario accederá después de comprar el producto</p>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">ID de Base de Datos (para preguntas)</label>
+                      <input type="text" id="product-database-id" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#22a7d0] focus:border-[#22a7d0]" placeholder="Ej: nat-ops-questions">
+                      <p class="text-xs text-gray-500 mt-1">Identificador único para la colección de preguntas de este producto</p>
+                    </div>
+
+                    <!-- Questions Management Section -->
+                    <div class="border-t border-gray-200 pt-4 mt-4">
+                      <h4 class="text-md font-semibold text-gray-900 mb-3 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-[#22a7d0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Gestión de Preguntas
+                      </h4>
+
+                      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                        <div class="flex items-start">
+                          <svg class="w-5 h-5 text-blue-600 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                          </svg>
+                          <div class="text-sm text-blue-800">
+                            <p class="font-medium mb-1">Formato del JSON de preguntas:</p>
+                            <p class="text-xs">El JSON debe ser un array con objetos que contengan: question, options (array), correctAnswer (índice), topic, explanation (opcional)</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                          <div class="flex items-center justify-between">
+                            <div>
+                              <p class="text-xs text-gray-500 uppercase tracking-wide">Preguntas Actuales</p>
+                              <p id="current-questions-count" class="text-2xl font-bold text-gray-900">-</p>
+                            </div>
+                            <div class="p-3 bg-blue-100 rounded-full">
+                              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                          <div class="flex items-center justify-between">
+                            <div>
+                              <p class="text-xs text-gray-500 uppercase tracking-wide">Preguntas Detectadas</p>
+                              <p id="detected-questions-count" class="text-2xl font-bold text-green-600">-</p>
+                            </div>
+                            <div class="p-3 bg-green-100 rounded-full">
+                              <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">JSON de Preguntas</label>
+                        <textarea id="product-questions-json" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#22a7d0] focus:border-[#22a7d0] font-mono text-sm" placeholder='[{"question": "¿Pregunta?", "options": ["A", "B", "C", "D"], "correctAnswer": 0, "topic": "Tema"}]'></textarea>
+                        <p class="text-xs text-gray-500 mt-1">Pega aquí el JSON con las preguntas del producto</p>
+                      </div>
+
+                      <div id="json-validation-message" class="hidden mb-3"></div>
+
+                      <div class="flex gap-3">
+                        <button type="button" id="btn-process-questions" class="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                          </svg>
+                          Procesar JSON
+                        </button>
+                        <button type="button" id="btn-insert-questions" class="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 opacity-50 cursor-not-allowed" disabled>
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                          </svg>
+                          Insertar a Firebase
+                        </button>
+                      </div>
                     </div>
 
                     <div class="flex items-center">
@@ -565,6 +665,7 @@ export async function renderAdminView() {
                 <!-- Offers will be loaded here -->
               </div>
             </div>
+
           </div>
         </div>
       </div>
@@ -610,6 +711,12 @@ export async function renderAdminView() {
 function initializeAdminPage() {
   console.log('🚀 Initializing admin page...');
 
+  // Initialize setup admin button
+  const setupAdminBtn = document.getElementById('setup-admin-btn');
+  if (setupAdminBtn) {
+    setupAdminBtn.addEventListener('click', setupAdminUser);
+  }
+
   // Initialize tabs
   initializeTabs();
 
@@ -636,6 +743,9 @@ function initializeAdminPage() {
   // Initialize offer modal and form
   initializeOfferModal();
   initializeOfferForm();
+
+  // Initialize questions management
+  initializeQuestionsManagement();
 
   console.log('✅ Admin page initialization complete');
 }
@@ -851,13 +961,9 @@ function initializeModals() {
   const btnClose = document.getElementById('close-modal');
   const btnCancel = document.getElementById('cancel-product');
 
-  // Open modal for adding product
+  // Navigate to product form page for adding product
   btnAdd?.addEventListener('click', () => {
-    document.getElementById('modal-title').textContent = 'Agregar Producto';
-    document.getElementById('product-id').value = '';
-    document.getElementById('product-form').reset();
-    document.getElementById('product-rating').value = '4.5';
-    modal.classList.remove('hidden');
+    window.location.hash = '#/admin/product/new';
   });
 
   // Close modal
@@ -1049,6 +1155,7 @@ function initializeProductForm() {
         image: document.getElementById('product-image').value,
         imageURL: document.getElementById('product-image').value, // Alias for homepage
         appUrl: document.getElementById('product-app-url').value,
+        databaseId: document.getElementById('product-database-id').value || null,
         showOnHomepage: document.getElementById('product-show-on-homepage').checked,
         reviews: Math.floor(Math.random() * 400) + 50,
         features: [],
@@ -1221,9 +1328,14 @@ function initializeBadgeForm() {
   });
 }
 
-// Global function to edit products
+// Global function to edit products - navigate to product form page
 window.editProduct = async function (productId) {
   console.log('📝 editProduct called with ID:', productId);
+  // Navigate to product form page with productId
+  window.location.hash = `#/admin/product/${productId}`;
+  return; // Skip the old modal code
+
+  // OLD MODAL CODE (keeping for reference but won't execute)
   try {
     // Get product data
     const productDoc = await getDoc(doc(db, 'products', productId));
@@ -1251,7 +1363,13 @@ window.editProduct = async function (productId) {
     await applySelectColors(product.category, product.badge);
     document.getElementById('product-image').value = product.imageURL || product.image || '';
     document.getElementById('product-app-url').value = product.appUrl || '';
+    document.getElementById('product-database-id').value = product.databaseId || '';
     document.getElementById('product-show-on-homepage').checked = product.showOnHomepage || false;
+
+    // Load current questions count if database ID exists
+    if (product.databaseId) {
+      await loadCurrentQuestionsCount(product.databaseId);
+    }
 
     // Load offers for this product
     const offers = await getOffersFromFirebase();
@@ -2236,3 +2354,274 @@ window.deleteOffer = async function (offerId) {
     showAdminToast('Error: ' + error.message, 'error');
   }
 };
+
+// ============================================
+// QUESTIONS MANAGEMENT FUNCTIONS
+// ============================================
+
+let processedQuestionsData = null;
+
+// Process questions JSON
+async function processQuestionsJSON() {
+  const jsonTextarea = document.getElementById('product-questions-json');
+  const validationMessage = document.getElementById('json-validation-message');
+  const detectedCount = document.getElementById('detected-questions-count');
+  const insertBtn = document.getElementById('btn-insert-questions');
+  const processBtn = document.getElementById('btn-process-questions');
+
+  try {
+    processBtn.disabled = true;
+    processBtn.textContent = 'Procesando...';
+
+    const jsonText = jsonTextarea.value.trim();
+
+    if (!jsonText) {
+      throw new Error('El campo de JSON está vacío');
+    }
+
+    // Parse JSON
+    const questions = JSON.parse(jsonText);
+
+    if (!Array.isArray(questions)) {
+      throw new Error('El JSON debe ser un array de preguntas');
+    }
+
+    if (questions.length === 0) {
+      throw new Error('El array de preguntas está vacío');
+    }
+
+    // Validate each question
+    const errors = [];
+    questions.forEach((q, index) => {
+      if (!q.question || typeof q.question !== 'string') {
+        errors.push(`Pregunta ${index + 1}: falta el campo 'question' o no es texto`);
+      }
+      if (!Array.isArray(q.options) || q.options.length < 2) {
+        errors.push(`Pregunta ${index + 1}: 'options' debe ser un array con al menos 2 opciones`);
+      }
+      if (typeof q.correctAnswer !== 'number' || q.correctAnswer < 0 || q.correctAnswer >= (q.options?.length || 0)) {
+        errors.push(`Pregunta ${index + 1}: 'correctAnswer' debe ser un índice válido de options`);
+      }
+      if (!q.topic || typeof q.topic !== 'string') {
+        errors.push(`Pregunta ${index + 1}: falta el campo 'topic' o no es texto`);
+      }
+    });
+
+    if (errors.length > 0) {
+      throw new Error('Errores de validación:\n' + errors.join('\n'));
+    }
+
+    // All valid!
+    processedQuestionsData = questions;
+    detectedCount.textContent = questions.length;
+
+    validationMessage.className = 'bg-green-50 border border-green-200 rounded-lg p-4 mb-3';
+    validationMessage.innerHTML = `
+      <div class="flex items-start">
+        <svg class="w-5 h-5 text-green-600 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+        </svg>
+        <div class="text-sm text-green-800">
+          <p class="font-medium mb-1">✅ JSON válido</p>
+          <p class="text-xs">Se detectaron ${questions.length} preguntas correctamente formateadas</p>
+          <div class="mt-2 text-xs bg-green-100 rounded p-2">
+            <p><strong>Temas detectados:</strong> ${[...new Set(questions.map(q => q.topic))].join(', ')}</p>
+          </div>
+        </div>
+      </div>
+    `;
+    validationMessage.classList.remove('hidden');
+
+    // Enable insert button
+    insertBtn.disabled = false;
+    insertBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    insertBtn.classList.add('hover:bg-green-700');
+
+    showAdminToast(`✅ ${questions.length} preguntas procesadas correctamente`, 'success');
+
+  } catch (error) {
+    processedQuestionsData = null;
+    detectedCount.textContent = '0';
+
+    validationMessage.className = 'bg-red-50 border border-red-200 rounded-lg p-4 mb-3';
+    validationMessage.innerHTML = `
+      <div class="flex items-start">
+        <svg class="w-5 h-5 text-red-600 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+        </svg>
+        <div class="text-sm text-red-800">
+          <p class="font-medium mb-1">❌ Error en el JSON</p>
+          <p class="text-xs whitespace-pre-wrap">${error.message}</p>
+        </div>
+      </div>
+    `;
+    validationMessage.classList.remove('hidden');
+
+    // Disable insert button
+    insertBtn.disabled = true;
+    insertBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    insertBtn.classList.remove('hover:bg-green-700');
+
+    showAdminToast('Error procesando JSON: ' + error.message, 'error');
+  } finally {
+    processBtn.disabled = false;
+    processBtn.textContent = 'Procesar JSON';
+  }
+}
+
+// Insert questions to Firebase
+async function insertQuestionsToFirebase() {
+  if (!processedQuestionsData) {
+    showAdminToast('Primero debes procesar el JSON de preguntas', 'error');
+    return;
+  }
+
+  const databaseId = document.getElementById('product-database-id').value.trim();
+
+  if (!databaseId) {
+    showAdminToast('Debes especificar un ID de base de datos para el producto', 'error');
+    return;
+  }
+
+  const insertBtn = document.getElementById('btn-insert-questions');
+
+  try {
+    insertBtn.disabled = true;
+    insertBtn.textContent = 'Insertando...';
+
+    // Check if collection exists and count current questions
+    const questionsRef = collection(db, databaseId);
+    const snapshot = await getDocs(questionsRef);
+    const currentCount = snapshot.size;
+
+    // Insert all questions
+    const insertPromises = processedQuestionsData.map(question =>
+      addDoc(questionsRef, {
+        ...question,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+    );
+
+    await Promise.all(insertPromises);
+
+    // Update current questions count
+    const newSnapshot = await getDocs(questionsRef);
+    document.getElementById('current-questions-count').textContent = newSnapshot.size;
+
+    showAdminToast(
+      `✅ ${processedQuestionsData.length} preguntas insertadas exitosamente. Total: ${newSnapshot.size}`,
+      'success'
+    );
+
+    // Clear textarea and reset
+    document.getElementById('product-questions-json').value = '';
+    document.getElementById('detected-questions-count').textContent = '-';
+    document.getElementById('json-validation-message').classList.add('hidden');
+    processedQuestionsData = null;
+
+    insertBtn.disabled = true;
+    insertBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+  } catch (error) {
+    console.error('Error insertando preguntas:', error);
+    showAdminToast('Error al insertar preguntas: ' + error.message, 'error');
+  } finally {
+    insertBtn.disabled = false;
+    insertBtn.textContent = 'Insertar a Firebase';
+  }
+}
+
+// Load current questions count
+async function loadCurrentQuestionsCount(databaseId) {
+  if (!databaseId) {
+    document.getElementById('current-questions-count').textContent = '-';
+    return;
+  }
+
+  try {
+    const questionsRef = collection(db, databaseId);
+    const snapshot = await getDocs(questionsRef);
+    document.getElementById('current-questions-count').textContent = snapshot.size;
+  } catch (error) {
+    console.error('Error cargando conteo de preguntas:', error);
+    document.getElementById('current-questions-count').textContent = 'Error';
+  }
+}
+
+// Initialize questions management
+function initializeQuestionsManagement() {
+  const processBtn = document.getElementById('btn-process-questions');
+  const insertBtn = document.getElementById('btn-insert-questions');
+  const databaseIdInput = document.getElementById('product-database-id');
+
+  processBtn?.addEventListener('click', processQuestionsJSON);
+  insertBtn?.addEventListener('click', insertQuestionsToFirebase);
+
+  // Load current questions count when database ID changes
+  databaseIdInput?.addEventListener('blur', (e) => {
+    loadCurrentQuestionsCount(e.target.value.trim());
+  });
+}
+
+// Setup admin user in Firebase
+async function setupAdminUser() {
+  const btn = document.getElementById('setup-admin-btn');
+  const originalText = btn.innerHTML;
+
+  try {
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Configurando...';
+
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('No hay usuario autenticado');
+    }
+
+    // Create/update user document in Firebase with admin privileges
+    const userRef = doc(db, 'users', currentUser.uid);
+    const userDoc = await getDoc(userRef);
+
+    const userData = {
+      email: currentUser.email,
+      role: 'admin',
+      isAdmin: true,
+      name: currentUser.displayName || currentUser.email.split('@')[0],
+      updatedAt: serverTimestamp()
+    };
+
+    if (userDoc.exists()) {
+      // Update existing user
+      await updateDoc(userRef, userData);
+      showAdminToast('✓ Usuario actualizado como administrador', 'success');
+    } else {
+      // Create new user document
+      await setDoc(userRef, {
+        ...userData,
+        createdAt: serverTimestamp()
+      });
+      showAdminToast('✓ Usuario administrador creado exitosamente', 'success');
+    }
+
+    // Show success message with instructions
+    setTimeout(() => {
+      showAdminToast('Ahora puedes acceder a todas las funciones de administración. Recarga la página si es necesario.', 'info');
+    }, 2000);
+
+    btn.innerHTML = '✓ Configurado';
+    setTimeout(() => {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }, 3000);
+
+  } catch (error) {
+    console.error('Error setting up admin:', error);
+    showAdminToast('Error: ' + error.message, 'error');
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
+
+// Note: User management has been moved to a dedicated page at #/admin/users
+// See src/pages/admin-users/view.js for the full user management interface
+

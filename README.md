@@ -4,7 +4,7 @@
 [![Firebase](https://img.shields.io/badge/Firebase-10.x-FFCA28?logo=firebase)](https://firebase.google.com/)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.x-06B6D4?logo=tailwindcss)](https://tailwindcss.com/)
 
-Plataforma web moderna de productos digitales con autenticación Firebase, carrito de compras, sistema multilingüe (ES/EN) y gestión de productos en tiempo real.
+Plataforma web moderna de productos digitales con autenticación Firebase, sistema multilingüe (ES/EN), gestión completa de productos, usuarios y bases de datos de preguntas, con sistema de entrenamiento y estadísticas.
 
 ---
 
@@ -34,6 +34,8 @@ Toda la documentación está en la carpeta **[`/docs`](./docs)**:
 
 - **[Guía Completa](./docs/GUIA-COMPLETA.md)** - Setup detallado, Firebase, comandos útiles
 - **[Panel de Administración](./docs/ADMIN_PANEL.md)** - Gestión de productos y comandos de consola
+- **[Gestión de Usuarios](./docs/NUEVA-PAGINA-USUARIOS.md)** - Sistema completo de administración de usuarios
+- **[Gestión de Bases de Datos](./docs/FLUJO-USUARIO-PRODUCTO-DATABASE.md)** - Flujo de preguntas y productos
 - **[Creación de Productos](./src/utils/README-PRODUCTS.md)** - Guía para insertar productos en Firebase
 - **[Documentación Técnica](./docs/README.md)** - Índice de todas las guías
 - **[Arquitectura](./docs/ARQUITECTURA.md)** - Estructura del proyecto

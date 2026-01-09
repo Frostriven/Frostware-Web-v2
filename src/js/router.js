@@ -49,6 +49,22 @@ export function initRouter() {
       }
     }
 
+    if (path.startsWith('#/admin/product/')) {
+      const productFormHandler = routes.get('#/admin/product');
+      if (productFormHandler) {
+        productFormHandler();
+        return;
+      }
+    }
+
+    if (path.startsWith('#/admin/user/')) {
+      const userFormHandler = routes.get('#/admin/user');
+      if (userFormHandler) {
+        userFormHandler();
+        return;
+      }
+    }
+
     // Normal route handling
     const handler = routes.get(path) || routes.get('#/');
     if (typeof handler === 'function') handler();

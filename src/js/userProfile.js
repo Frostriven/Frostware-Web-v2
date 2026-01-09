@@ -473,7 +473,7 @@ export async function makeUserAdmin(userId) {
 
 // Lista de emails de administradores predefinidos (fallback)
 const ADMIN_EMAILS = [
-  'demo@frostware.com'
+  'danyley2000@gmail.com'
   // Agrega más emails de administradores aquí
 ];
 

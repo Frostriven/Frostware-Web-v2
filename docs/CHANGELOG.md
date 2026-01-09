@@ -4,6 +4,204 @@ Registro de cambios, fixes y mejoras implementadas en el proyecto Frostware.
 
 ---
 
+## 🚀 [Nuevas Funcionalidades - Enero 2026]
+
+### ✨ Sistema completo de gestión de usuarios
+
+**Descripción**: Página dedicada para administración de usuarios con filtros, búsqueda y gestión de productos asociados.
+
+**Características principales**:
+- Vista de tabla con todos los usuarios del sistema
+- Filtros por rol (admin/user) y estado de productos (con/sin productos)
+- Búsqueda en tiempo real por nombre o email
+- Modal para crear nuevos usuarios con asignación de productos
+- Modal para editar usuarios existentes
+- Modal para ver lista de productos asociados a cada usuario
+- Sistema de notificaciones con toast elegante
+- Contador de resultados filtrados
+- Diseño minimalista y responsive
+
+**Archivos nuevos**:
+- `src/pages/admin-users/view.js` - Vista completa de gestión de usuarios (2380 líneas)
+- `src/pages/user-form/view.js` - Formulario para crear/editar usuarios (800+ líneas)
+
+**Rutas agregadas**:
+- `#/admin/users` - Lista de usuarios
+- `#/admin/user/new` - Crear nuevo usuario
+- `#/admin/user/{userId}` - Editar usuario específico
+
+**Commits relacionados**: feat: agregar gestión completa de usuarios con filtros y modales
+
+---
+
+### ✨ Sistema de gestión de bases de datos de preguntas
+
+**Descripción**: Interfaz para administrar bases de datos de preguntas asociadas a productos, con vista de estadísticas y editor integrado.
+
+**Características principales**:
+- Vista de todas las bases de datos con estadísticas (cantidad de preguntas, última actualización)
+- Búsqueda en tiempo real por nombre de producto o ID de base de datos
+- Creación de nuevas bases de datos asociadas a productos
+- Vista de preguntas de cada base de datos con paginación
+- Editor de preguntas con soporte para:
+  - Pregunta y 4 opciones de respuesta
+  - Marcado de respuesta correcta
+  - Explicación detallada
+  - Topics/temas asociados
+- Eliminación de preguntas con confirmación
+- Diseño tipo Matrix (tema oscuro tecnológico)
+- Estadísticas en tiempo real
+
+**Archivos nuevos**:
+- `src/pages/database-management/view.js` - Vista completa de gestión de bases de datos (1800+ líneas)
+
+**Rutas agregadas**:
+- `#/admin/databases` - Gestión de bases de datos
+
+**Estructura Firebase**:
+```javascript
+// Colección dinámica: {productId}-questions
+{
+  question: "...",
+  options: ["A", "B", "C", "D"],
+  correctAnswer: "A",
+  explanation: "...",
+  topic: "tema-ejemplo",
+  createdAt: timestamp,
+  updatedAt: timestamp
+}
+```
+
+**Commits relacionados**: feat: agregar sistema de gestión de bases de datos de preguntas
+
+---
+
+### ✨ Mejoras en el formulario de productos
+
+**Descripción**: Actualizaciones importantes en la creación y edición de productos.
+
+**Mejoras implementadas**:
+1. **Rating interactivo**: Sistema de estrellas clickeable que actualiza el preview en tiempo real
+2. **Validación de tipos**: Prevención de "[object Object]" asegurando que name, description y title sean strings
+3. **Soporte para productId como parámetro**: Función acepta productId directamente desde el router
+4. **Mejor manejo de errores**: Try-catch mejorado con logs detallados
+
+**Archivos modificados**:
+- `src/pages/product-form/view.js` (líneas 18-69, 252-274, 549-570)
+
+**Commits relacionados**: fix: agregar rating interactivo y validación de tipos en formulario de productos
+
+---
+
+### ✨ Mejoras en el router SPA
+
+**Descripción**: Router mejorado con soporte para rutas dinámicas de administración.
+
+**Nuevas rutas soportadas**:
+- `#/admin/product/{productId}` - Edición de productos
+- `#/admin/user/{userId}` - Edición de usuarios
+- Manejo especial para rutas que empiezan con `/admin/`
+
+**Archivos modificados**:
+- `src/js/router.js` (líneas 52-66)
+- `src/js/main.js` (líneas 507-537)
+
+**Commits relacionados**: fix: agregar manejo de rutas dinámicas para admin
+
+---
+
+### ✨ Botón de configuración de admin
+
+**Descripción**: Botón en el panel de administración para crear/actualizar el usuario admin en Firebase.
+
+**Características**:
+- Botón "🔧 Configurar Admin" en el header del panel
+- Crea o actualiza el documento del usuario en Firestore
+- Asigna rol de admin (role: 'admin', isAdmin: true)
+- Notificaciones de éxito/error
+- Feedback visual con cambio de texto del botón
+
+**Función**:
+```javascript
+async function setupAdminUser() {
+  // Crea/actualiza documento en users/{uid}
+  // Asigna role: 'admin', isAdmin: true
+  // Muestra toast de confirmación
+}
+```
+
+**Archivos modificados**:
+- `src/pages/admin/view.js` (líneas 77-83, 2567-2623)
+
+**Commits relacionados**: feat: agregar botón de configuración de admin
+
+---
+
+### 🔒 Actualización de reglas de Firestore
+
+**Descripción**: Reglas de seguridad actualizadas para soportar nuevas funcionalidades.
+
+**Cambios principales**:
+1. **Email de admin correcto**: Cambio de `demo@frostware.com` a `danyley2000@gmail.com`
+2. **Reglas para sesiones de entrenamiento**: CRUD completo para usuarios autenticados
+3. **Reglas para estadísticas**: Usuarios pueden leer/escribir sus propias estadísticas
+4. **Reglas para bases de datos de preguntas**: Lectura para autenticados, escritura solo admins
+5. **Reglas temporales para debugging**: Lectura de users permitida para todos los autenticados
+
+**Archivos modificados**:
+- `firestore.rules` (líneas 9, 40-89, 91-109)
+
+**Commits relacionados**: security: actualizar reglas de Firestore con email correcto
+
+---
+
+### 🧹 Limpieza de código demo
+
+**Descripción**: Eliminación de referencias hardcodeadas al usuario demo.
+
+**Cambios realizados**:
+1. **Botón de login demo eliminado**: Removido de la página de login
+2. **Email de admin actualizado**: `ADMIN_EMAILS` ahora contiene `danyley2000@gmail.com`
+3. **Código demo removido**: Eliminadas funciones de login demo del archivo login/view.js
+
+**Archivos modificados**:
+- `public/pages/auth/login.html` (líneas 55-62 eliminadas)
+- `src/pages/auth/login/view.js` (líneas 46, 118-144 eliminadas)
+- `src/js/userProfile.js` (línea 476)
+
+**Commits relacionados**: refactor: eliminar referencias hardcodeadas a usuario demo
+
+---
+
+### 🎨 Mejoras de UX en el panel de administración
+
+**Descripción**: Mejoras visuales y de usabilidad en diversas secciones del panel.
+
+**Mejoras implementadas**:
+1. **Alineación de buscador**: Filtros correctamente alineados en gestión de usuarios
+2. **Mejor manejo de errores**: Try-catch en loadAllUsers con degradación elegante
+3. **Mensaje de bienvenida dinámico**: Muestra el email del usuario actual
+4. **Toast notifications**: Sistema de notificaciones consistente en todas las vistas
+
+**Archivos modificados**:
+- `src/pages/admin-users/view.js` (líneas 1261-1277, 322-360)
+- `src/pages/admin/view.js` (línea 84)
+
+**Commits relacionados**: fix: mejorar UX en panel de administración
+
+---
+
+### 📚 Nueva documentación
+
+**Archivos de documentación creados**:
+- `docs/NUEVA-PAGINA-USUARIOS.md` - Guía completa de gestión de usuarios
+- `docs/FLUJO-USUARIO-PRODUCTO-DATABASE.md` - Flujo de usuario-producto-database
+- `docs/MEJORAS-PANEL-ADMIN.md` - Lista de mejoras realizadas
+
+**Commits relacionados**: docs: agregar documentación de nuevas funcionalidades
+
+---
+
 ## 🔧 [Fixes - Diciembre 2025]
 
 ### ✅ Fix: Colores dinámicos para categorías y badges en el panel de administración
