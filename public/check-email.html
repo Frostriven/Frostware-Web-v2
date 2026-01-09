@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verificar Email de Usuario</title>
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #0d1117;
+      color: #58a6ff;
+    }
+    .info-box {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .email {
+      font-size: 24px;
+      color: #00ff00;
+      font-weight: bold;
+      word-break: break-all;
+    }
+    button {
+      background: #238636;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 5px;
+    }
+    button:hover {
+      background: #2ea043;
+    }
+    .copy-btn {
+      background: #1f6feb;
+    }
+    .copy-btn:hover {
+      background: #388bfd;
+    }
+    .status {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .success {
+      background: #1a7f37;
+      color: white;
+    }
+    .error {
+      background: #da3633;
+      color: white;
+    }
+    code {
+      background: #0d1117;
+      padding: 2px 6px;
+      border-radius: 3px;
+      color: #ff7b72;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔍 Verificador de Email de Firebase</h1>
+
+  <div class="info-box">
+    <h2>Tu email actual en Firebase:</h2>
+    <div class="email" id="user-email">Cargando...</div>
+
+    <div style="margin-top: 20px;">
+      <button class="copy-btn" onclick="copyEmail()">📋 Copiar Email</button>
+      <button onclick="updateFirestoreRules()">🔧 Actualizar Reglas de Firestore</button>
+    </div>
+
+    <div id="status"></div>
+  </div>
+
+  <div class="info-box">
+    <h3>📝 Instrucciones:</h3>
+    <ol>
+      <li>Copia tu email exacto usando el botón azul</li>
+      <li>Haz clic en "Actualizar Reglas de Firestore"</li>
+      <li>O actualiza manualmente el archivo <code>firestore.rules</code> línea 9</li>
+    </ol>
+
+    <h3>⚠️ Email actual en firestore.rules:</h3>
+    <code>request.auth.token.email == 'danyley2000@gmail.com'</code>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+
+    // Configuración de Firebase (usa las variables de tu .env)
+    const firebaseConfig = {
+      apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBZO2H0VqIECVREKxAIPYDlshB9aeJcPUE",
+      authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "frostware-website.firebaseapp.com",
+      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "frostware-website",
+      storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "frostware-website.firebasestorage.app",
+      messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "638022006334",
+      appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:638022006334:web:6fa7cf93d7dbcf9088d08c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    let currentEmail = null;
+
+    onAuthStateChanged(auth, (user) => {
+      const emailEl = document.getElementById('user-email');
+      if (user) {
+        currentEmail = user.email;
+        emailEl.textContent = user.email;
+        emailEl.style.color = '#00ff00';
+      } else {
+        emailEl.textContent = 'No autenticado - Por favor inicia sesión primero';
+        emailEl.style.color = '#ff7b72';
+      }
+    });
+
+    window.copyEmail = function() {
+      if (currentEmail) {
+        navigator.clipboard.writeText(currentEmail).then(() => {
+          showStatus('✅ Email copiado al portapapeles: ' + currentEmail, 'success');
+        }).catch(() => {
+          showStatus('❌ Error al copiar', 'error');
+        });
+      }
+    };
+
+    window.updateFirestoreRules = function() {
+      if (!currentEmail) {
+        showStatus('❌ No hay usuario autenticado', 'error');
+        return;
+      }
+
+      const rulesContent = `Actualiza la línea 9 de firestore.rules a:
+
+request.auth.token.email == '${currentEmail}'
+
+Luego ejecuta en terminal:
+firebase deploy --only firestore:rules`;
+
+      showStatus(rulesContent, 'success');
+    };
+
+    function showStatus(message, type) {
+      const statusEl = document.getElementById('status');
+      statusEl.textContent = message;
+      statusEl.className = 'status ' + type;
+      statusEl.style.whiteSpace = 'pre-wrap';
+    }
+  </script>
+</body>
+</html>

@@ -1309,7 +1309,13 @@ function openNewDatabaseModal() {
   const productsWithoutDB = allProducts.filter(p => !p.databaseId);
 
   productSelect.innerHTML = '<option value="">Selecciona un producto...</option>' +
-    productsWithoutDB.map(p => `<option value="${p.id}">${p.name || p.id}</option>`).join('');
+    productsWithoutDB.map(p => {
+      // Handle both string and object name formats
+      const displayName = typeof p.name === 'string'
+        ? p.name
+        : (p.name?.es || p.name?.en || p.title?.es || p.title?.en || p.id);
+      return `<option value="${p.id}">${displayName}</option>`;
+    }).join('');
 
   if (productsWithoutDB.length === 0) {
     productSelect.innerHTML = '<option value="">Todos los productos ya tienen base de datos</option>';

@@ -22,6 +22,10 @@ export async function renderAdminView() {
     return;
   }
 
+  // DEBUG: Log email exacto del usuario
+  console.log('🔍 EMAIL EXACTO DEL USUARIO:', auth.currentUser.email);
+  console.log('📧 Copia este email y actualiza firestore.rules línea 9');
+
   // Check if user is admin
   const userIsAdmin = await isUserAdmin(auth.currentUser.uid) || isAdminEmail(auth.currentUser.email);
 
@@ -752,20 +756,13 @@ function initializeAdminPage() {
 
 // Global click handler for admin panel
 function handleAdminPanelClick(e) {
-  console.log('🖱️ Click detected on:', e.target);
-  console.log('🖱️ Click target tagName:', e.target.tagName);
-  console.log('🖱️ Click target has data-action?', e.target.hasAttribute('data-action'));
-
   const button = e.target.closest('[data-action]');
-  console.log('🔍 Closest button with data-action:', button);
 
   if (!button) {
-    console.log('⚠️ No button with data-action found');
     return;
   }
 
   const action = button.dataset.action;
-  console.log('🔘 Admin button clicked:', action, button.dataset);
 
   // Product actions
   if (action === 'edit-product') {
@@ -962,9 +959,29 @@ function initializeModals() {
   const btnCancel = document.getElementById('cancel-product');
 
   // Navigate to product form page for adding product
-  btnAdd?.addEventListener('click', () => {
-    window.location.hash = '#/admin/product/new';
-  });
+  if (btnAdd) {
+    console.log('✅ btn-add-product found, attaching listener');
+    btnAdd.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('🔘 Agregar Producto clicked, navigating to #/admin/product/new');
+
+      try {
+        // Cambiar hash primero
+        window.location.hash = '#/admin/product/new';
+        console.log('✅ Hash changed to:', window.location.hash);
+
+        // Importar y llamar directamente a la función
+        const { renderProductFormView } = await import('../product-form/view.js');
+        await renderProductFormView();
+        console.log('✅ Product form view rendered');
+      } catch (error) {
+        console.error('❌ Error navigating to product form:', error);
+      }
+    });
+  } else {
+    console.warn('⚠️ btn-add-product not found in DOM');
+  }
 
   // Close modal
   const closeModal = () => {

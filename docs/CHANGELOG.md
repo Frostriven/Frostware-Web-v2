@@ -4,6 +4,205 @@ Registro de cambios, fixes y mejoras implementadas en el proyecto Frostware.
 
 ---
 
+## 🎨 [Formulario de Productos Expandido - Enero 9, 2026]
+
+### ✨ Formulario completo con todos los campos del producto
+
+**Descripción**: Expansión masiva del formulario de productos para incluir TODOS los campos necesarios, organizados en 6 tabs con preview en tiempo real.
+
+**Características principales**:
+
+#### 📋 Estructura de 6 Tabs
+1. **Información Básica**: ID, nombre simple, descripción, categoría, badge y color del badge
+2. **Multilingüe (ES/EN)**: name, title, description, shortDescription, longDescription
+3. **Visuales**: image, imageURL, paleta de colores (array), gradiente con preview en tiempo real
+4. **Features**: Features simples (array) y features detalladas con iconos, títulos y descripciones multilingües
+5. **Precios**: Precio actual, precio original, oferta, rating con estrellas clickeables, reviews
+6. **Avanzado**: appUrl, databaseId, tags con chips removibles, showOnHomepage
+
+#### 🎨 Selectores Visuales Implementados
+- **Color Pickers**: Para colores del producto y gradientes, con preview hex + picker nativo
+- **Icon Picker**: Select con 10 iconos (radio, map, cloud, warning, certificate, lightning, shield, star, globe, rocket)
+- **Color Picker de Iconos**: Personalización individual del color de cada ícono con fallback a colores por defecto
+- **Tag Input**: Sistema de chips para agregar/remover tags
+- **Rating Stars**: 5 estrellas clickeables con valor numérico sincronizado
+
+#### 🎯 Preview en Tiempo Real
+- Panel lateral fijo que muestra:
+  - Card del producto con imagen y badge
+  - Paleta de colores como swatches
+  - Gradiente generado dinámicamente
+  - Features detalladas con iconos coloreados
+- Actualización debounced (300ms) para performance
+- Sincronización con todos los campos del formulario
+
+#### 🌈 Sistema de Colores para Iconos
+**Colores por defecto** por tipo de ícono:
+- `radio` 📻: Púrpura (#8b5cf6) con fondo lavanda
+- `map` 🗺️: Verde (#10b981) con fondo menta
+- `cloud` ☁️: Azul (#3b82f6) con fondo celeste
+- `warning` ⚠️: Naranja (#f59e0b) con fondo ámbar
+- `certificate` 🎓: Teal (#14b8a6) con fondo aqua
+- `lightning` ⚡: Amarillo (#eab308) con fondo lima
+- `shield` 🛡️: Índigo (#6366f1) con fondo lavanda
+- `star` ⭐: Naranja (#f59e0b) con fondo ámbar
+- `globe` 🌐: Cyan (#06b6d4) con fondo aqua
+- `rocket` 🚀: Rosa (#ec4899) con fondo rosa claro
+
+**Color personalizado** opcional para cada ícono con:
+- Color picker nativo + input hex
+- Botón de reset para volver al color por defecto
+- Preview instantáneo en formulario y vista previa
+
+#### 📦 Estructura de Datos Completa
+```javascript
+{
+  // Básicos
+  id: "product-id",
+  name: { es: "...", en: "..." },
+  title: { es: "...", en: "..." },
+  description: { es: "...", en: "..." },
+  shortDescription: { es: "...", en: "..." },
+  longDescription: { es: "...", en: "..." },
+
+  // Visual
+  image: "https://...",
+  imageURL: "https://...",
+  colors: ["#1b1b25", "#190d36", "#1b1b25"],
+  detailGradientColors: ["#1b1b25", "#190d36", "#1b1b25"],
+
+  // Categorización
+  category: "aviation",
+  badge: "Disponible",
+  badgeColor: "blue",
+  tags: ["aviation", "NAT", "oceanic"],
+
+  // Precio
+  price: 99,
+  originalPrice: 150,
+  offerId: null,
+  rating: 5,
+  reviews: 342,
+
+  // Features
+  features: ["Feature 1", "Feature 2", ...],
+  detailedFeatures: [
+    {
+      icon: "radio",
+      iconColor: "#ff0000", // Opcional
+      title: { es: "...", en: "..." },
+      description: { es: "...", en: "..." }
+    }
+  ],
+
+  // Avanzado
+  appUrl: "/apps/...",
+  databaseId: "db-id",
+  showOnHomepage: true,
+  createdAt: timestamp,
+  updatedAt: timestamp
+}
+```
+
+**Archivos modificados**:
+- `src/pages/product-form/view.js` - Expandido de ~1500 a 2900+ líneas
+
+**Funciones agregadas**:
+- `getIconSVG()` - Retorna SVG del ícono seleccionado (global)
+- `initializeTabs()` - Navegación entre tabs
+- `initializeColorPickers()` - Sincronización de color pickers y hex inputs (incluye iconos)
+- `initializeArrayManagers()` - Gestión de arrays dinámicos
+- `updateGradientPreview()` - Preview del gradiente en tiempo real
+- `updateLivePreview()` - Actualización del preview con colores y features
+
+---
+
+## 🔧 [Correcciones y Mejoras UI - Enero 9, 2026]
+
+### ✅ Corrección de navegación en botones
+
+**Problema**: Botones "Agregar Producto" y "Nuevo Usuario" no navegaban correctamente.
+
+**Solución**: Implementación de llamadas directas a las funciones de render con import dinámico.
+
+**Archivos modificados**:
+- `src/pages/admin/view.js` (líneas 962-964)
+- `src/pages/admin-users/view.js` (líneas 1780-1797)
+
+---
+
+### ✅ Rediseño de gestión de usuarios con estilo minimalista
+
+**Descripción**: Rediseño completo de la página de gestión de usuarios para coincidir con el estilo de database-management.
+
+**Mejoras**:
+- Paleta de colores consistente: #f9fafb, #e5e7eb, #22a7d0
+- Header limpio con botón "Volver"
+- Tabla con bordes suaves y hover states elegantes
+- Badges con colores consistentes
+- Modo oscuro completo (#1a1a1a, #161b22, #c9d1d9)
+
+**Archivos modificados**:
+- `src/pages/admin-users/view.js` - Reducido de 2683 a 2359 líneas (estilos inline)
+
+---
+
+### ✅ Corrección de "[object Object]" en database management
+
+**Problema**: Al seleccionar producto en database management aparecía "[object Object]" en lugar del nombre.
+
+**Causa**: Campo `name` es objeto multilingüe `{es, en}` pero se mostraba como string.
+
+**Solución**: Lógica de fallback para extraer nombre correcto:
+```javascript
+const displayName = typeof p.name === 'string'
+  ? p.name
+  : (p.name?.es || p.name?.en || p.title?.es || p.title?.en || p.id);
+```
+
+**Archivos modificados**:
+- `src/pages/database-management/view.js` (líneas 1311-1318)
+
+---
+
+### ✅ Preview de iconos con actualización en tiempo real
+
+**Problema**: Al cambiar el select de ícono, el preview no se actualizaba.
+
+**Solución**:
+- Agregados IDs a los selects de iconos (`detailed-feature-icon-${idx}`)
+- Agregado atributo `data-icon-preview="${idx}"` a los divs de preview
+- Event listener que detecta cambios y actualiza el SVG instantáneamente
+
+**Archivos modificados**:
+- `src/pages/product-form/view.js` (líneas 742-749, 484, 489)
+
+---
+
+### ✅ Vista previa HTML para galería de iconos
+
+**Descripción**: Página HTML independiente para visualizar todos los iconos disponibles.
+
+**Características**:
+- Grid interactivo con los 10 iconos
+- Ejemplos de uso en features
+- Código de estructura de datos
+- Selectores clickeables
+- Diseño responsive
+
+**Archivos nuevos**:
+- `public/icon-preview.html` - Galería visual de iconos
+
+---
+
+**Commits relacionados**:
+- `feat: expandir formulario de productos con todos los campos y preview completo`
+- `fix: corregir navegación de botones y display de nombres en database management`
+- `style: rediseñar gestión de usuarios con estilo minimalista consistente`
+- `feat: agregar color picker personalizado para iconos de features`
+
+---
+
 ## 🚀 [Nuevas Funcionalidades - Enero 2026]
 
 ### ✨ Sistema completo de gestión de usuarios

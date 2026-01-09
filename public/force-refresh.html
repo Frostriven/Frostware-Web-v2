@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Limpiar Caché de Firebase</title>
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #0d1117;
+      color: #58a6ff;
+      text-align: center;
+    }
+    .box {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 30px;
+      margin: 20px 0;
+    }
+    button {
+      background: #238636;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 18px;
+      margin: 10px;
+    }
+    button:hover {
+      background: #2ea043;
+    }
+    .status {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    .success {
+      background: #1a7f37;
+      color: white;
+    }
+    h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+    .instructions {
+      text-align: left;
+      line-height: 1.8;
+    }
+    code {
+      background: #0d1117;
+      padding: 2px 6px;
+      border-radius: 3px;
+      color: #ff7b72;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔄 Limpiar Caché de Firebase</h1>
+
+  <div class="box">
+    <p style="font-size: 18px;">Las reglas de Firestore están correctamente configuradas.</p>
+    <p style="font-size: 16px; color: #8b949e;">Tu email: <code>danyley2000@gmail.com</code></p>
+  </div>
+
+  <div class="box instructions">
+    <h3>📋 Pasos para solucionar:</h3>
+    <ol>
+      <li><strong>Cierra todas las pestañas</strong> de tu aplicación</li>
+      <li><strong>Limpia la caché del navegador:</strong>
+        <ul>
+          <li>Mac: <code>Cmd + Shift + R</code></li>
+          <li>Windows: <code>Ctrl + Shift + R</code></li>
+        </ul>
+      </li>
+      <li><strong>O haz clic en el botón de abajo</strong> para limpiar automáticamente</li>
+      <li><strong>Espera 2-3 minutos</strong> para que Firebase propague las reglas</li>
+      <li><strong>Vuelve a abrir</strong> tu aplicación</li>
+    </ol>
+  </div>
+
+  <button onclick="clearAll()">🧹 Limpiar Todo y Recargar</button>
+
+  <div id="status"></div>
+
+  <script>
+    async function clearAll() {
+      const statusEl = document.getElementById('status');
+      statusEl.className = 'status success';
+      statusEl.innerHTML = '🔄 Limpiando caché...<br><br>';
+
+      try {
+        // Clear all caches
+        if ('caches' in window) {
+          const cacheNames = await caches.keys();
+          await Promise.all(
+            cacheNames.map(cacheName => caches.delete(cacheName))
+          );
+          statusEl.innerHTML += '✅ Cache Storage limpiado<br>';
+        }
+
+        // Clear localStorage
+        localStorage.clear();
+        statusEl.innerHTML += '✅ LocalStorage limpiado<br>';
+
+        // Clear sessionStorage
+        sessionStorage.clear();
+        statusEl.innerHTML += '✅ SessionStorage limpiado<br>';
+
+        // Clear IndexedDB (Firebase usa esto)
+        if ('indexedDB' in window) {
+          const dbs = await indexedDB.databases();
+          for (const db of dbs) {
+            if (db.name) {
+              indexedDB.deleteDatabase(db.name);
+              statusEl.innerHTML += `✅ IndexedDB limpiado: ${db.name}<br>`;
+            }
+          }
+        }
+
+        statusEl.innerHTML += '<br>✅ ¡Listo! Recargando en 3 segundos...<br><br>';
+        statusEl.innerHTML += '💡 Si el problema persiste, espera 5 minutos más para que Firebase propague las reglas.';
+
+        // Reload after 3 seconds
+        setTimeout(() => {
+          window.location.href = '/#/admin';
+        }, 3000);
+
+      } catch (error) {
+        statusEl.className = 'status';
+        statusEl.style.background = '#da3633';
+        statusEl.innerHTML = '❌ Error: ' + error.message + '<br><br>Intenta manualmente: Cmd/Ctrl + Shift + R';
+      }
+    }
+  </script>
+</body>
+</html>

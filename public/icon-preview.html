@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vista Previa de Iconos - Frostware</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f9fafb;
+      padding: 40px 20px;
+      color: #111827;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 12px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: #6b7280;
+      margin-bottom: 40px;
+    }
+
+    .section {
+      background: white;
+      border-radius: 12px;
+      padding: 32px;
+      margin-bottom: 32px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .icon-card {
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .icon-card:hover {
+      border-color: #22a7d0;
+      background: #f0f9ff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(34, 167, 208, 0.1);
+    }
+
+    .icon-card.selected {
+      border-color: #22a7d0;
+      background: #e0f2fe;
+    }
+
+    .icon-display {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f9fafb;
+      border-radius: 8px;
+      color: #22a7d0;
+    }
+
+    .icon-card:hover .icon-display {
+      background: white;
+    }
+
+    .icon-display svg {
+      width: 32px;
+      height: 32px;
+    }
+
+    .icon-name {
+      font-weight: 600;
+      font-size: 14px;
+      color: #111827;
+      margin-bottom: 4px;
+    }
+
+    .icon-description {
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.4;
+    }
+
+    .feature-preview {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      margin-top: 24px;
+    }
+
+    .feature-card {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 20px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .feature-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      background: white;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #22a7d0;
+      border: 1px solid #e5e7eb;
+    }
+
+    .feature-icon svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .feature-content h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 4px;
+    }
+
+    .feature-content p {
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 1.5;
+    }
+
+    .code-snippet {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: 'Monaco', monospace;
+      font-size: 13px;
+      overflow-x: auto;
+      margin-top: 12px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: #22a7d0;
+      color: white;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 Vista Previa de Iconos</h1>
+    <p class="subtitle">Galería completa de iconos disponibles en el formulario de productos</p>
+
+    <!-- Icon Selection Grid -->
+    <div class="section">
+      <div class="section-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+          <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+          <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+          <rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        Selector de Iconos
+        <span class="badge">10 iconos disponibles</span>
+      </div>
+
+      <div class="icon-grid">
+        <!-- Radio -->
+        <div class="icon-card" onclick="selectIcon(this, 'radio')">
+          <div class="icon-display">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <circle cx="10" cy="10" r="2" fill="currentColor"/>
+              <path d="M10 2v3M10 15v3M2 10h3M15 10h3" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="icon-name">radio</div>
+          <div class="icon-description">Comunicaciones y radio HF</div>
+        </div>
+
+        <!-- Map -->
+        <div class="icon-card" onclick="selectIcon(this, 'map')">
+          <div class="icon-display">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M2 5l5-2 6 2 5-2v12l-5 2-6-2-5 2V5z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="icon-name">map</div>
+          <div class="icon-description">Navegación y mapas</div>
+        </div>
+
+        <!-- Cloud -->
+        <div class="icon-card" onclick="selectIcon(this, 'cloud')">
+          <div class="icon-display">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M14 13a4 4 0 001-7.8A5.5 5.5 0 004.5 9H4a3 3 0 000 6h10a3 3 0 100-6z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="icon-name">cloud</div>
+          <div class="icon-description">Meteorología y clima</div>
+        </div>
+
+        <!-- Warning -->
+        <div class="icon-card" onclick="selectIcon(this, 'warning')">
+          <div class="icon-display">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M10 2L2 16h16L10 2z" stroke="currentColor" stroke-width="2"/>
+              <path d="M10 8v4M10 14h.01" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="icon-name">warning</div>
+          <div class="icon-description">Emergencias y alertas</div>
+        </div>
+
+        <!-- Certificate -->
+        <div class="icon-card" onclick="selectIcon(this, 'certificate')">
+          <div class="icon-display">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
+              <path d="M7 10l2 2 4-4" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="icon-name">certificate</div>
+          <div class="icon-description">Certificación y diplomas</div>
+        </div>
+
+        <!-- Lightning -->
+        <div class="icon-card" onclick="selectIcon(this, 'lightning')">
+          <div class="icon-display">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M11 2L4 12h6l-1 6 7-10h-6l1-6z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="icon-name">lightning</div>
+          <div class="icon-description">Velocidad y rendimiento</div>
+        </div>
+
+        <!-- Shield -->
+        <div class="icon-card" onclick="selectIcon(this, 'shield')">
+          <div class="icon-display">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M10 2L3 5v5c0 4 3 7 7 9 4-2 7-5 7-9V5l-7-3z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="icon-name">shield</div>
+          <div class="icon-description">Seguridad y protección</div>
+        </div>
+
+        <!-- Star -->
+        <div class="icon-card" onclick="selectIcon(this, 'star')">
+          <div class="icon-display">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10 2l2.4 5.8 6.1.6-4.6 4L15 19l-5-3.2L5 19l1.1-6.6-4.6-4 6.1-.6L10 2z"/>
+            </svg>
+          </div>
+          <div class="icon-name">star</div>
+          <div class="icon-description">Destacado y premium</div>
+        </div>
+
+        <!-- Globe -->
+        <div class="icon-card" onclick="selectIcon(this, 'globe')">
+          <div class="icon-display">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2"/>
+              <path d="M2 10h16M10 2a8 8 0 018 8M10 18a8 8 0 01-8-8" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="icon-name">globe</div>
+          <div class="icon-description">Global e internacional</div>
+        </div>
+
+        <!-- Rocket -->
+        <div class="icon-card" onclick="selectIcon(this, 'rocket')">
+          <div class="icon-display">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M12 2l6 6-4 4-6-6 4-4zM6 8l-4 4 6 6 4-4-6-6z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="icon-name">rocket</div>
+          <div class="icon-description">Lanzamiento y crecimiento</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview Section -->
+    <div class="section">
+      <div class="section-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+          <path d="M9 9h6M9 12h6M9 15h4" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        Vista Previa: Cómo se ven en Features Detalladas
+      </div>
+
+      <div class="feature-preview">
+        <!-- Example 1 -->
+        <div class="feature-card">
+          <div class="feature-header">
+            <div class="feature-icon">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="2" fill="currentColor"/>
+                <path d="M10 2v3M10 15v3M2 10h3M15 10h3" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </div>
+            <div class="feature-content">
+              <h3>Procedimientos de Comunicación</h3>
+              <p>Domina protocolos de radio HF, operaciones SELCAL y requisitos de reporte de posición para vuelos oceánicos.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Example 2 -->
+        <div class="feature-card">
+          <div class="feature-header">
+            <div class="feature-icon">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M2 5l5-2 6 2 5-2v12l-5 2-6-2-5 2V5z" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </div>
+            <div class="feature-content">
+              <h3>Sistemas de Navegación y Rutas</h3>
+              <p>Aprende sistemas de rutas NAT, procedimientos de waypoints y requisitos RNAV para navegación oceánica segura.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Example 3 -->
+        <div class="feature-card">
+          <div class="feature-header">
+            <div class="feature-icon">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M14 13a4 4 0 001-7.8A5.5 5.5 0 004.5 9H4a3 3 0 000 6h10a3 3 0 100-6z" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </div>
+            <div class="feature-content">
+              <h3>Meteorología y Ambiente</h3>
+              <p>Comprende cartas SIGWX, reporte de turbulencias y cómo el clima afecta las operaciones NAT.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Example 4 -->
+        <div class="feature-card">
+          <div class="feature-header">
+            <div class="feature-icon">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M10 2L2 16h16L10 2z" stroke="currentColor" stroke-width="2"/>
+                <path d="M10 8v4M10 14h.01" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </div>
+            <div class="feature-content">
+              <h3>Procedimientos de Emergencia</h3>
+              <p>Practica procedimientos de contingencia, desvíos y requisitos ETOPS para operaciones seguras.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Example 5 -->
+        <div class="feature-card">
+          <div class="feature-header">
+            <div class="feature-icon">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
+                <path d="M7 10l2 2 4-4" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </div>
+            <div class="feature-content">
+              <h3>Listo para Certificación</h3>
+              <p>Preguntas diseñadas para coincidir con exámenes de certificación reales con explicaciones detalladas y referencias.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Example 6 -->
+        <div class="feature-card">
+          <div class="feature-header">
+            <div class="feature-icon">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M11 2L4 12h6l-1 6 7-10h-6l1-6z" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </div>
+            <div class="feature-content">
+              <h3>Aprendizaje Interactivo</h3>
+              <p>Pistas, explicaciones detalladas y seguimiento de progreso para optimizar tus sesiones de estudio.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Code Example -->
+    <div class="section">
+      <div class="section-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M8 6L4 12l4 6M16 6l4 6-4 6" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        Estructura de Datos en Firebase
+      </div>
+      <div class="code-snippet">
+{
+  "detailedFeatures": [
+    {
+      "icon": "radio",
+      "title": {
+        "es": "Procedimientos de Comunicación",
+        "en": "Communications Procedures"
+      },
+      "description": {
+        "es": "Domina protocolos de radio HF...",
+        "en": "Master HF radio protocols..."
+      }
+    },
+    {
+      "icon": "map",
+      "title": {
+        "es": "Sistemas de Navegación",
+        "en": "Navigation Systems"
+      },
+      "description": {
+        "es": "Aprende sistemas de rutas NAT...",
+        "en": "Learn NAT track systems..."
+      }
+    }
+  ]
+}
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function selectIcon(card, iconName) {
+      // Remove previous selection
+      document.querySelectorAll('.icon-card').forEach(c => c.classList.remove('selected'));
+
+      // Add selection to clicked card
+      card.classList.add('selected');
+
+      // Show notification
+      console.log('Selected icon:', iconName);
+
+      // You could add a toast notification here
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #22a7d0;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000;
+        font-size: 14px;
+        font-weight: 500;
+      `;
+      notification.textContent = `✓ Icono seleccionado: ${iconName}`;
+      document.body.appendChild(notification);
+
+      setTimeout(() => {
+        notification.style.transition = 'opacity 0.3s';
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+      }, 2000);
+    }
+  </script>
+</body>
+</html>
