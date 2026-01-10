@@ -195,14 +195,16 @@ async function loadProductsWithTranslations() {
         purple: 'text-purple-600 bg-purple-100'
       };
 
-      // Get translated name and description using Firebase field names
-      const name = typeof product.title === 'object'
-        ? (product.title[currentLang] || product.title['en'] || product.title)
-        : product.title;
+      // Get translated name and description using Firebase field names (supports both old and new field names)
+      const nameField = product.name || product.title;
+      const name = typeof nameField === 'object'
+        ? (nameField[currentLang] || nameField['es'] || nameField['en'] || '')
+        : nameField || '';
 
-      const description = typeof product.shortDescription === 'object'
-        ? (product.shortDescription[currentLang] || product.shortDescription['en'] || product.shortDescription)
-        : product.shortDescription;
+      const descField = product.description || product.shortDescription;
+      const description = typeof descField === 'object'
+        ? (descField[currentLang] || descField['es'] || descField['en'] || '')
+        : descField || '';
 
       // Use product's badge or default
       const badge = product.badge || 'New';

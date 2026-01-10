@@ -607,6 +607,18 @@ export const en = {
       totalQuestions: "Total Questions",
       selectedTopics: "Selected Topics",
       estimatedTime: "Estimated Time"
+    },
+    topics: {
+      selectAll: "All",
+      deselectAll: "None",
+      topicsAvailable: "topics",
+      availableTopics: "Available Topics",
+      of: "of",
+      noTopics: "No topics available",
+      noTopicsDesc: "This database has no questions with assigned topics yet",
+      questionsPerTopic: "questions per topic",
+      allQuestions: "All questions",
+      customQuestions: "Custom"
     }
   }
 };

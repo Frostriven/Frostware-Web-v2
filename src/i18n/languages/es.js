@@ -650,6 +650,18 @@ export const es = {
       totalQuestions: "Preguntas Totales",
       selectedTopics: "Temas Seleccionados",
       estimatedTime: "Tiempo Estimado"
+    },
+    topics: {
+      selectAll: "Todos",
+      deselectAll: "Ninguno",
+      topicsAvailable: "temas",
+      availableTopics: "Temas Disponibles",
+      of: "de",
+      noTopics: "No hay temas disponibles",
+      noTopicsDesc: "Esta base de datos aún no tiene preguntas con temas asignados",
+      questionsPerTopic: "preguntas por tema",
+      allQuestions: "Todas las preguntas",
+      customQuestions: "Personalizado"
     }
   }
 };
