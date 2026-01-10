@@ -1269,6 +1269,48 @@ export async function renderDatabaseManagementView() {
           </div>
         </div>
       </div>
+
+      <!-- Delete Topic Modal -->
+      <div class="modal-overlay" id="delete-topic-modal">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">Eliminar Tema</h3>
+            <button class="modal-close" id="close-delete-topic-modal">×</button>
+          </div>
+          <div class="modal-body">
+            <div class="warning-box">
+              <div class="warning-header">
+                <span class="warning-icon">⚠️</span>
+                <span class="warning-title">¡Advertencia!</span>
+              </div>
+              <p class="warning-text">
+                Estás a punto de eliminar todas las preguntas del tema
+                <strong id="delete-topic-name"></strong>.
+              </p>
+              <p class="warning-text" style="margin-top: 12px;">
+                Se eliminarán <strong id="delete-topic-count"></strong> preguntas de la base de datos.
+              </p>
+              <p class="warning-text" style="margin-top: 12px; color: #ef4444; font-weight: 600;">
+                Esta acción es <strong>irreversible</strong>.
+              </p>
+            </div>
+
+            <div class="form-group" style="margin-top: 20px;">
+              <label class="form-label">Para confirmar, escribe "ELIMINAR" en mayúsculas:</label>
+              <input type="text" class="form-input" id="delete-topic-confirmation-input" placeholder="ELIMINAR" />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" type="button" id="cancel-delete-topic">Cancelar</button>
+            <button class="modal-btn btn-danger" type="button" id="confirm-delete-topic" disabled>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M2 4h12M5.5 4V2.5A1.5 1.5 0 0 1 7 1h2a1.5 1.5 0 0 1 1.5 1.5V4m2 0v9.5A1.5 1.5 0 0 1 11 15H5a1.5 1.5 0 0 1-1.5-1.5V4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              Eliminar Preguntas del Tema
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   `;
 
@@ -1505,6 +1547,12 @@ function renderQuestions() {
           <option value="">Todos los temas</option>
           ${topics.map(topic => `<option value="${topic}" ${currentTopicFilter === topic ? 'selected' : ''}>${topic}</option>`).join('')}
         </select>
+        <button class="btn-danger" id="delete-topic-btn" style="display: ${currentTopicFilter ? 'flex' : 'none'}; padding: 8px 12px; font-size: 13px;">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M2 4h12M5.5 4V2.5A1.5 1.5 0 0 1 7 1h2a1.5 1.5 0 0 1 1.5 1.5V4m2 0v9.5A1.5 1.5 0 0 1 11 15H5a1.5 1.5 0 0 1-1.5-1.5V4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Eliminar Tema
+        </button>
       </div>
     </div>
 
@@ -1585,10 +1633,11 @@ function renderQuestions() {
     });
   });
 
-  // Process JSON, Reset Stats and Delete Database buttons
+  // Process JSON, Reset Stats, Delete Database and Delete Topic buttons
   document.getElementById('process-json-btn')?.addEventListener('click', openProcessJsonModal);
   document.getElementById('reset-stats-btn')?.addEventListener('click', openResetStatsModal);
   document.getElementById('delete-database-btn')?.addEventListener('click', openDeleteDatabaseModal);
+  document.getElementById('delete-topic-btn')?.addEventListener('click', openDeleteTopicModal);
 }
 
 function filterQuestions() {
@@ -2327,6 +2376,75 @@ async function resetStatistics() {
         <path d="M13 8c0 2.76-2.24 5-5 5s-5-2.24-5-5 2.24-5 5-5v3l4-4-4-4v3c-3.86 0-7 3.14-7 7s3.14 7 7 7 7-3.14 7-7z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
       Restablecer Estadísticas
+    `;
+  }
+}
+
+// Delete Topic Modal Functions
+function openDeleteTopicModal() {
+  if (!currentTopicFilter) {
+    showToast('Selecciona un tema primero', 'error');
+    return;
+  }
+
+  // Count questions in this topic
+  const questionsInTopic = allQuestions.filter(q => getLocalizedText(q.topic) === currentTopicFilter);
+
+  document.getElementById('delete-topic-name').textContent = currentTopicFilter;
+  document.getElementById('delete-topic-count').textContent = questionsInTopic.length;
+  document.getElementById('delete-topic-confirmation-input').value = '';
+  document.getElementById('confirm-delete-topic').disabled = true;
+
+  document.getElementById('delete-topic-modal').classList.add('active');
+
+  // Event listeners
+  document.getElementById('close-delete-topic-modal').addEventListener('click', closeDeleteTopicModal);
+  document.getElementById('cancel-delete-topic').addEventListener('click', closeDeleteTopicModal);
+
+  const confirmInput = document.getElementById('delete-topic-confirmation-input');
+  confirmInput.addEventListener('input', () => {
+    document.getElementById('confirm-delete-topic').disabled = confirmInput.value !== 'ELIMINAR';
+  });
+
+  document.getElementById('confirm-delete-topic').addEventListener('click', deleteTopicQuestions);
+}
+
+function closeDeleteTopicModal() {
+  document.getElementById('delete-topic-modal').classList.remove('active');
+}
+
+async function deleteTopicQuestions() {
+  const confirmBtn = document.getElementById('confirm-delete-topic');
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = 'Eliminando...';
+
+  try {
+    // Get all questions in this topic
+    const questionsToDelete = allQuestions.filter(q => getLocalizedText(q.topic) === currentTopicFilter);
+
+    let deletedCount = 0;
+    for (const question of questionsToDelete) {
+      await deleteDoc(doc(db, selectedDatabase.id, question.id));
+      deletedCount++;
+    }
+
+    showToast(`${deletedCount} preguntas del tema "${currentTopicFilter}" eliminadas`, 'success');
+
+    // Reset filter and reload
+    currentTopicFilter = '';
+    closeDeleteTopicModal();
+    await loadQuestions(selectedDatabase.id);
+    await loadDatabases(); // Refresh counts
+
+  } catch (error) {
+    console.error('Error deleting topic questions:', error);
+    showToast('Error al eliminar preguntas: ' + error.message, 'error');
+    confirmBtn.disabled = false;
+    confirmBtn.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M2 4h12M5.5 4V2.5A1.5 1.5 0 0 1 7 1h2a1.5 1.5 0 0 1 1.5 1.5V4m2 0v9.5A1.5 1.5 0 0 1 11 15H5a1.5 1.5 0 0 1-1.5-1.5V4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      Eliminar Preguntas del Tema
     `;
   }
 }
