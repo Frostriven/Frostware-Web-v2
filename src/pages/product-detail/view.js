@@ -69,13 +69,16 @@ export async function renderProductDetailView(productId) {
                       ${product.category === 'aviation' ? t('productDetail.category.aviation') : t('productDetail.category.premium')}
                     </span>
                     <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
-                      ${typeof product.title === 'object' ? product.title[i18n.currentLanguage] || product.title.es || product.title : product.title}
+                      ${(() => {
+                        const name = product.name || product.title;
+                        return typeof name === 'object' ? name[i18n.currentLanguage] || name.es || name.en || '' : name || '';
+                      })()}
                     </h1>
                     <p class="text-xl text-blue-100 mb-8">
                       ${(() => {
-        const desc = product.longDescription || product.shortDescription;
-        return typeof desc === 'object' ? desc[i18n.currentLanguage] || desc.es || desc : desc;
-      })()}
+                        const desc = product.longDescription || product.description;
+                        return typeof desc === 'object' ? desc[i18n.currentLanguage] || desc.es || desc.en || '' : desc || '';
+                      })()}
                     </p>
                   </div>
 
@@ -119,7 +122,10 @@ export async function renderProductDetailView(productId) {
                 <div class="relative">
                   <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
                     <img src="${product.imageURL}"
-                         alt="${typeof product.title === 'object' ? product.title[i18n.currentLanguage] || product.title.es : product.title}"
+                         alt="${(() => {
+                           const name = product.name || product.title;
+                           return typeof name === 'object' ? name[i18n.currentLanguage] || name.es || name.en || '' : name || '';
+                         })()}"
                          class="rounded-lg shadow-2xl w-full">
 
                     ${product.badge ? `
@@ -143,9 +149,9 @@ export async function renderProductDetailView(productId) {
                 <h3 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">${t('productDetail.everythingYouNeed')}</h3>
                 <p class="text-xl text-gray-600 max-w-3xl mx-auto">
                   ${(() => {
-        const desc = product.longDescription || product.shortDescription;
-        return typeof desc === 'object' ? desc[i18n.currentLanguage] || desc.es || desc : desc;
-      })()}
+                    const desc = product.longDescription || product.description;
+                    return typeof desc === 'object' ? desc[i18n.currentLanguage] || desc.es || desc.en || '' : desc || '';
+                  })()}
                 </p>
               </div>
 
@@ -247,9 +253,9 @@ export async function renderProductDetailView(productId) {
               <h2 class="text-3xl md:text-4xl font-extrabold mb-4">${t('productDetail.getFullAccess')}</h2>
               <p class="text-xl mb-8 text-blue-100">
                 ${(() => {
-        const desc = product.longDescription || product.shortDescription;
-        return typeof desc === 'object' ? desc[i18n.currentLanguage] || desc.es || desc : desc;
-      })()}
+                  const desc = product.longDescription || product.description;
+                  return typeof desc === 'object' ? desc[i18n.currentLanguage] || desc.es || desc.en || '' : desc || '';
+                })()}
               </p>
 
               ${hasPurchased ? `

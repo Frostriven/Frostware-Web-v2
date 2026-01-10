@@ -354,7 +354,8 @@ async function initializeProductButtons() {
             this.classList.remove('bg-[#22a7d0]', 'opacity-75');
             this.classList.add('bg-green-500');
 
-            showToast(t('productsPage.messages.productAdded'), 'success');
+            // Show toast with dashboard link
+            showPurchaseSuccessToast();
 
             // Update button state
             setTimeout(() => {
@@ -447,8 +448,8 @@ function showPurchaseToast() {
   showToast(t('productsPage.messages.productAddedSuccess'), 'success');
 }
 
-function showPurchaseToastWithApp(appUrl) {
-  // Create interactive toast with app access button
+function showPurchaseSuccessToast() {
+  // Create interactive toast with dashboard access button
   const toast = document.createElement('div');
   toast.className = 'fixed top-4 right-4 z-50 transform transition-all duration-500 translate-x-full';
 
@@ -462,10 +463,6 @@ function showPurchaseToastWithApp(appUrl) {
           <p class="font-medium mb-2">${t('productsPage.messages.productAddedSuccess')}</p>
           <p class="text-sm mb-3">${t('productsPage.messages.productAddedDescription')}</p>
           <div class="flex space-x-2">
-            <button onclick="window.open('${appUrl}', '_blank')"
-              class="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded text-sm font-medium transition-colors">
-              ${t('productsPage.toast.openGuide')}
-            </button>
             <button onclick="window.location.hash = '#/account'"
               class="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded text-sm font-medium transition-colors">
               ${t('productsPage.toast.viewMyApps')}

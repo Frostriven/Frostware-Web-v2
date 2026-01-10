@@ -66,11 +66,7 @@ export async function renderProductFormView(productId = null) {
         const data = productDoc.data();
         currentProduct = {
           id: productDoc.id,
-          ...data,
-          // Ensure strings are actual strings, not objects
-          name: typeof data.name === 'string' ? data.name : '',
-          description: typeof data.description === 'string' ? data.description : '',
-          title: typeof data.title === 'string' ? data.title : (typeof data.name === 'string' ? data.name : ''),
+          ...data
         };
         console.log('Loaded product:', currentProduct);
       } else {
@@ -98,13 +94,38 @@ async function renderProductFormPage() {
   // Helper functions to get current values
   const getValue = (field, subfield = null, lang = null) => {
     if (!currentProduct) return '';
+    const value = currentProduct[field];
+
     if (lang && subfield) {
-      return currentProduct[field]?.[lang]?.[subfield] || '';
+      return value?.[lang]?.[subfield] || '';
     }
     if (lang) {
-      return currentProduct[field]?.[lang] || '';
+      // If value is an object with language keys
+      if (typeof value === 'object' && value !== null) {
+        return value[lang] || '';
+      }
+      return '';
     }
-    return currentProduct[field] || '';
+    // If no lang specified, return string directly or empty
+    if (typeof value === 'string') {
+      return value;
+    }
+    if (typeof value === 'object' && value !== null) {
+      // Return Spanish version as default for simple fields
+      return value.es || value.en || '';
+    }
+    return value || '';
+  };
+
+  // Helper to get simple string value (for backward compatibility fields)
+  const getSimpleValue = (field) => {
+    if (!currentProduct) return '';
+    const value = currentProduct[field];
+    if (typeof value === 'string') return value;
+    if (typeof value === 'object' && value !== null) {
+      return value.es || value.en || '';
+    }
+    return '';
   };
 
   const getArrayValue = (field) => {
@@ -162,13 +183,6 @@ async function renderProductFormPage() {
               </svg>
               Información Básica
             </button>
-            <button type="button" class="tab-btn" data-tab="multilingual">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="2"/>
-                <path d="M2 10h16M10 2a8 8 0 018 8M10 18a8 8 0 01-8-8" stroke="currentColor" stroke-width="2"/>
-              </svg>
-              Multilingüe
-            </button>
             <button type="button" class="tab-btn" data-tab="visual">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <path d="M4 4h12v12H4z" stroke="currentColor" stroke-width="2"/>
@@ -202,6 +216,24 @@ async function renderProductFormPage() {
 
             <!-- Tab Content: Basic -->
             <div class="tab-content active" data-tab-content="basic">
+              <!-- Auto-translate toggle -->
+              <div class="auto-translate-bar">
+                <div class="translate-info">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="2"/>
+                    <path d="M2 10h16M10 2a8 8 0 018 8M10 18a8 8 0 01-8-8" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                  <span>Completa los campos en español y traduce automáticamente al inglés</span>
+                </div>
+                <button type="button" id="auto-translate-btn" class="btn-translate">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M2 4h8M6 2v2M4 4c0 2 1.5 4 4 5M8 4c0 2-1.5 4-4 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M9 14l2-5 2 5M9.5 12.5h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  Traducir a Inglés
+                </button>
+              </div>
+
               <div class="form-group">
                 <label class="form-label" for="product-id">
                   ID del Producto
@@ -218,35 +250,109 @@ async function renderProductFormPage() {
                 <p class="form-hint">ID único para Firestore ${isEditing ? '(no se puede modificar)' : '(se generará automáticamente si está vacío)'}</p>
               </div>
 
-              <div class="form-group">
-                <label class="form-label" for="product-name-simple">
-                  Nombre del Producto (Simple)
+              <!-- Nombre del Producto (Bilingüe) -->
+              <div class="form-group bilingual-field">
+                <label class="form-label">
+                  Nombre del Producto
                   <span class="required">*</span>
                 </label>
-                <input
-                  type="text"
-                  id="product-name-simple"
-                  class="form-input form-input-large"
-                  placeholder="NAT OPS Guide"
-                  value="${typeof currentProduct?.name === 'string' ? currentProduct.name : ''}"
-                  required
-                />
-                <p class="form-hint">Nombre simple del producto (para compatibilidad)</p>
+                <div class="lang-tabs">
+                  <button type="button" class="lang-tab active" data-lang-target="name-es-wrapper">
+                    <img src="https://flagcdn.com/es.svg" alt="ES" /> ES
+                  </button>
+                  <button type="button" class="lang-tab" data-lang-target="name-en-wrapper">
+                    <img src="https://flagcdn.com/us.svg" alt="EN" /> EN
+                  </button>
+                </div>
+                <div id="name-es-wrapper" class="lang-input-wrapper active">
+                  <input
+                    type="text"
+                    id="name-es"
+                    class="form-input form-input-large"
+                    placeholder="NAT OPS - Guía de Operaciones"
+                    value="${getValue('name', null, 'es')}"
+                    data-translate-field="name"
+                    required
+                  />
+                </div>
+                <div id="name-en-wrapper" class="lang-input-wrapper">
+                  <input
+                    type="text"
+                    id="name-en"
+                    class="form-input form-input-large"
+                    placeholder="NAT OPS - Operations Guide"
+                    value="${getValue('name', null, 'en')}"
+                  />
+                </div>
+                <p class="form-hint">Nombre que aparece en la tarjeta del producto</p>
               </div>
 
-              <div class="form-group">
-                <label class="form-label" for="product-description-simple">
-                  Descripción (Simple)
+              <!-- Descripción Tarjeta (Bilingüe) -->
+              <div class="form-group bilingual-field">
+                <label class="form-label">
+                  Descripción Tarjeta
                   <span class="required">*</span>
                 </label>
-                <textarea
-                  id="product-description-simple"
-                  class="form-textarea"
-                  rows="3"
-                  placeholder="Guía completa de operaciones en el Atlántico Norte..."
-                  required
-                >${typeof currentProduct?.description === 'string' ? currentProduct.description : ''}</textarea>
-                <p class="form-hint">Descripción simple (para compatibilidad)</p>
+                <div class="lang-tabs">
+                  <button type="button" class="lang-tab active" data-lang-target="desc-es-wrapper">
+                    <img src="https://flagcdn.com/es.svg" alt="ES" /> ES
+                  </button>
+                  <button type="button" class="lang-tab" data-lang-target="desc-en-wrapper">
+                    <img src="https://flagcdn.com/us.svg" alt="EN" /> EN
+                  </button>
+                </div>
+                <div id="desc-es-wrapper" class="lang-input-wrapper active">
+                  <textarea
+                    id="description-es"
+                    class="form-textarea"
+                    rows="3"
+                    placeholder="Guía completa de operaciones en el Atlántico Norte..."
+                    data-translate-field="description"
+                    required
+                  >${getValue('description', null, 'es')}</textarea>
+                </div>
+                <div id="desc-en-wrapper" class="lang-input-wrapper">
+                  <textarea
+                    id="description-en"
+                    class="form-textarea"
+                    rows="3"
+                    placeholder="Complete guide for North Atlantic operations..."
+                  >${getValue('description', null, 'en')}</textarea>
+                </div>
+                <p class="form-hint">Descripción corta que aparece en la tarjeta del producto</p>
+              </div>
+
+              <!-- Descripción Detallada (Bilingüe) -->
+              <div class="form-group bilingual-field">
+                <label class="form-label">
+                  Descripción Detallada
+                </label>
+                <div class="lang-tabs">
+                  <button type="button" class="lang-tab active" data-lang-target="longdesc-es-wrapper">
+                    <img src="https://flagcdn.com/es.svg" alt="ES" /> ES
+                  </button>
+                  <button type="button" class="lang-tab" data-lang-target="longdesc-en-wrapper">
+                    <img src="https://flagcdn.com/us.svg" alt="EN" /> EN
+                  </button>
+                </div>
+                <div id="longdesc-es-wrapper" class="lang-input-wrapper active">
+                  <textarea
+                    id="longDescription-es"
+                    class="form-textarea"
+                    rows="5"
+                    placeholder="Descripción extendida con todos los detalles del producto..."
+                    data-translate-field="longDescription"
+                  >${getValue('longDescription', null, 'es')}</textarea>
+                </div>
+                <div id="longdesc-en-wrapper" class="lang-input-wrapper">
+                  <textarea
+                    id="longDescription-en"
+                    class="form-textarea"
+                    rows="5"
+                    placeholder="Extended description with all product details..."
+                  >${getValue('longDescription', null, 'en')}</textarea>
+                </div>
+                <p class="form-hint">Texto largo para la página de detalle del producto</p>
               </div>
 
               <div class="form-row">
@@ -299,73 +405,6 @@ async function renderProductFormPage() {
                     value="${getValue('badgeColor') || '#22a7d0'}"
                   />
                   <div class="color-preview" style="background: ${getValue('badgeColor') || '#22a7d0'}"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Tab Content: Multilingual -->
-            <div class="tab-content" data-tab-content="multilingual">
-              <div class="lang-section">
-                <h3 class="lang-title">
-                  <img src="https://flagcdn.com/es.svg" alt="ES" class="lang-flag" />
-                  Español (ES)
-                </h3>
-
-                <div class="form-group">
-                  <label class="form-label">Nombre (ES)</label>
-                  <input type="text" id="name-es" class="form-input" placeholder="NAT OPS - Guía de Operaciones" value="${getValue('name', null, 'es')}" />
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label">Título (ES)</label>
-                  <input type="text" id="title-es" class="form-input" placeholder="Operaciones en el Atlántico Norte" value="${getValue('title', null, 'es')}" />
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label">Descripción Corta (ES)</label>
-                  <textarea id="shortDescription-es" class="form-textarea" rows="2" placeholder="Descripción breve...">${getValue('shortDescription', null, 'es')}</textarea>
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label">Descripción (ES)</label>
-                  <textarea id="description-es" class="form-textarea" rows="3" placeholder="Descripción completa...">${getValue('description', null, 'es')}</textarea>
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label">Descripción Larga (ES)</label>
-                  <textarea id="longDescription-es" class="form-textarea" rows="5" placeholder="Descripción detallada del producto...">${getValue('longDescription', null, 'es')}</textarea>
-                </div>
-              </div>
-
-              <div class="lang-section">
-                <h3 class="lang-title">
-                  <img src="https://flagcdn.com/us.svg" alt="EN" class="lang-flag" />
-                  English (EN)
-                </h3>
-
-                <div class="form-group">
-                  <label class="form-label">Name (EN)</label>
-                  <input type="text" id="name-en" class="form-input" placeholder="NAT OPS - Operations Guide" value="${getValue('name', null, 'en')}" />
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label">Title (EN)</label>
-                  <input type="text" id="title-en" class="form-input" placeholder="North Atlantic Operations" value="${getValue('title', null, 'en')}" />
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label">Short Description (EN)</label>
-                  <textarea id="shortDescription-en" class="form-textarea" rows="2" placeholder="Brief description...">${getValue('shortDescription', null, 'en')}</textarea>
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label">Description (EN)</label>
-                  <textarea id="description-en" class="form-textarea" rows="3" placeholder="Full description...">${getValue('description', null, 'en')}</textarea>
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label">Long Description (EN)</label>
-                  <textarea id="longDescription-en" class="form-textarea" rows="5" placeholder="Detailed product description...">${getValue('longDescription', null, 'en')}</textarea>
                 </div>
               </div>
             </div>
@@ -628,20 +667,6 @@ async function renderProductFormPage() {
             <!-- Tab Content: Advanced -->
             <div class="tab-content" data-tab-content="advanced">
               <div class="form-group">
-                <label class="form-label" for="product-app-url">
-                  URL de App/Guía (Post-Compra)
-                </label>
-                <input
-                  type="url"
-                  id="product-app-url"
-                  class="form-input"
-                  placeholder="https://apps.frostware.com/nat-ops/"
-                  value="${getValue('appUrl')}"
-                />
-                <p class="form-hint">URL donde el usuario accederá después de comprar</p>
-              </div>
-
-              <div class="form-group">
                 <label class="form-label" for="product-database-id">
                   ID de Base de Datos
                 </label>
@@ -732,6 +757,8 @@ async function renderProductFormPage() {
 async function initializeProductForm() {
   // Initialize all interactions
   initializeTabs();
+  initializeLangTabs();
+  initializeAutoTranslate();
   initializeStarRating();
   initializeImagePreview();
   initializeLivePreview();
@@ -784,6 +811,117 @@ function initializeTabs() {
       activeTab = tabName;
     });
   });
+}
+
+function initializeLangTabs() {
+  // Handle language toggle tabs within bilingual fields
+  document.querySelectorAll('.lang-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const targetId = tab.dataset.langTarget;
+      const parentField = tab.closest('.bilingual-field');
+
+      if (!parentField) return;
+
+      // Update active tab
+      parentField.querySelectorAll('.lang-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+
+      // Show/hide input wrappers
+      parentField.querySelectorAll('.lang-input-wrapper').forEach(wrapper => {
+        wrapper.classList.remove('active');
+      });
+
+      const targetWrapper = document.getElementById(targetId);
+      if (targetWrapper) {
+        targetWrapper.classList.add('active');
+      }
+    });
+  });
+}
+
+function initializeAutoTranslate() {
+  const translateBtn = document.getElementById('auto-translate-btn');
+  if (!translateBtn) return;
+
+  translateBtn.addEventListener('click', async () => {
+    const originalText = translateBtn.innerHTML;
+    translateBtn.disabled = true;
+    translateBtn.innerHTML = `
+      <svg class="animate-spin" width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2" stroke-dasharray="30" stroke-linecap="round"/>
+      </svg>
+      Traduciendo...
+    `;
+
+    try {
+      // Get Spanish values
+      const nameEs = document.getElementById('name-es')?.value || '';
+      const descriptionEs = document.getElementById('description-es')?.value || '';
+      const longDescriptionEs = document.getElementById('longDescription-es')?.value || '';
+
+      // Translate each field
+      const translations = await Promise.all([
+        translateText(nameEs, 'es', 'en'),
+        translateText(descriptionEs, 'es', 'en'),
+        translateText(longDescriptionEs, 'es', 'en')
+      ]);
+
+      // Set English values
+      const nameEn = document.getElementById('name-en');
+      const descriptionEn = document.getElementById('description-en');
+      const longDescriptionEn = document.getElementById('longDescription-en');
+
+      if (nameEn && translations[0]) nameEn.value = translations[0];
+      if (descriptionEn && translations[1]) descriptionEn.value = translations[1];
+      if (longDescriptionEn && translations[2]) longDescriptionEn.value = translations[2];
+
+      // Show success
+      translateBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M3 8l3 3 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Traducido
+      `;
+      translateBtn.classList.add('btn-translate-success');
+
+      updateSaveStatus('unsaved');
+      showToast('Campos traducidos al inglés', 'success');
+
+      setTimeout(() => {
+        translateBtn.innerHTML = originalText;
+        translateBtn.classList.remove('btn-translate-success');
+        translateBtn.disabled = false;
+      }, 2000);
+
+    } catch (error) {
+      console.error('Translation error:', error);
+      translateBtn.innerHTML = originalText;
+      translateBtn.disabled = false;
+      showToast('Error al traducir. Intenta de nuevo.', 'error');
+    }
+  });
+}
+
+// Translation function using Google Translate API (free tier via proxy)
+async function translateText(text, from, to) {
+  if (!text || text.trim() === '') return '';
+
+  try {
+    // Using LibreTranslate or similar free API
+    // Fallback: Use a simple translation proxy
+    const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`);
+    const data = await response.json();
+
+    if (data.responseStatus === 200 && data.responseData?.translatedText) {
+      return data.responseData.translatedText;
+    }
+
+    // Fallback to original if translation fails
+    return text;
+  } catch (error) {
+    console.error('Translation API error:', error);
+    return text;
+  }
 }
 
 function initializeStarRating() {
@@ -1153,8 +1291,8 @@ function updateLivePreview() {
   if (previewUpdateTimeout) clearTimeout(previewUpdateTimeout);
 
   previewUpdateTimeout = setTimeout(() => {
-    const name = document.getElementById('product-name-simple')?.value || 'Nombre del Producto';
-    const description = document.getElementById('product-description-simple')?.value || 'Descripción del producto';
+    const name = document.getElementById('name-es')?.value || 'Nombre del Producto';
+    const description = document.getElementById('description-es')?.value || 'Descripción del producto';
     const price = document.getElementById('product-price')?.value || '99';
     const originalPrice = document.getElementById('product-original-price')?.value;
     const rating = document.getElementById('product-rating')?.value || '4.5';
@@ -1267,10 +1405,57 @@ async function saveProduct(e) {
   e.preventDefault();
 
   const form = document.getElementById('product-form');
+  const tabContents = document.querySelectorAll('.tab-content');
+  const tabButtons = document.querySelectorAll('.tab-btn');
+
+  // Temporarily show all tabs to allow validation of hidden fields
+  tabContents.forEach(tab => {
+    tab.style.display = 'block';
+    tab.style.position = 'absolute';
+    tab.style.visibility = 'hidden';
+    tab.style.pointerEvents = 'none';
+  });
+
+  // Keep the active tab visible
+  const activeTab = document.querySelector('.tab-content.active');
+  if (activeTab) {
+    activeTab.style.position = 'relative';
+    activeTab.style.visibility = 'visible';
+    activeTab.style.pointerEvents = 'auto';
+  }
+
   if (!form.checkValidity()) {
+    // Find the first invalid field and switch to its tab
+    const invalidField = form.querySelector(':invalid');
+    if (invalidField) {
+      const parentTab = invalidField.closest('.tab-content');
+      if (parentTab) {
+        const tabName = parentTab.dataset.tabContent;
+        // Switch to the tab containing the invalid field
+        tabContents.forEach(tab => {
+          tab.style.display = '';
+          tab.style.position = '';
+          tab.style.visibility = '';
+          tab.style.pointerEvents = '';
+          tab.classList.remove('active');
+        });
+        parentTab.classList.add('active');
+        tabButtons.forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.tab === tabName);
+        });
+      }
+    }
     form.reportValidity();
     return;
   }
+
+  // Restore original tab visibility
+  tabContents.forEach(tab => {
+    tab.style.display = '';
+    tab.style.position = '';
+    tab.style.visibility = '';
+    tab.style.pointerEvents = '';
+  });
 
   const saveBtn = document.getElementById('save-product-btn');
   const originalHTML = saveBtn.innerHTML;
@@ -1286,19 +1471,9 @@ async function saveProduct(e) {
       en: document.getElementById('name-en')?.value || ''
     };
 
-    const title = {
-      es: document.getElementById('title-es')?.value || '',
-      en: document.getElementById('title-en')?.value || ''
-    };
-
     const description = {
       es: document.getElementById('description-es')?.value || '',
       en: document.getElementById('description-en')?.value || ''
-    };
-
-    const shortDescription = {
-      es: document.getElementById('shortDescription-es')?.value || '',
-      en: document.getElementById('shortDescription-en')?.value || ''
     };
 
     const longDescription = {
@@ -1357,24 +1532,18 @@ async function saveProduct(e) {
     // Product ID
     let productId = document.getElementById('product-id')?.value?.trim();
     if (!productId && !currentProduct) {
-      // Generate from simple name
-      const simpleName = document.getElementById('product-name-simple')?.value || 'product';
-      productId = simpleName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      // Generate from Spanish name
+      const nameForId = document.getElementById('name-es')?.value || 'product';
+      productId = nameForId.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     } else if (!productId && currentProduct) {
       productId = currentProduct.id;
     }
-
-    // Simple string values for backward compatibility
-    const simpleName = document.getElementById('product-name-simple')?.value || '';
-    const simpleDescription = document.getElementById('product-description-simple')?.value || '';
 
     const productData = {
       id: productId,
       // Multilingual fields (primary)
       name: name,
-      title: title,
       description: description,
-      shortDescription: shortDescription,
       longDescription: longDescription,
       // Images and visual
       image: document.getElementById('product-image')?.value || '',
@@ -1397,7 +1566,6 @@ async function saveProduct(e) {
       features: features,
       detailedFeatures: detailedFeatures,
       // Advanced
-      appUrl: document.getElementById('product-app-url')?.value || '',
       databaseId: document.getElementById('product-database-id')?.value || null,
       showOnHomepage: document.getElementById('product-homepage')?.checked || false,
       // Timestamps
@@ -1523,6 +1691,118 @@ function injectStyles() {
       padding-bottom: 100px;
     }
 
+    /* Auto-translate Bar */
+    .auto-translate-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+      border: 1px solid #bae6fd;
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .translate-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: #0369a1;
+      font-size: 0.875rem;
+    }
+
+    .translate-info svg {
+      flex-shrink: 0;
+    }
+
+    .btn-translate {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: #0ea5e9;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-translate:hover {
+      background: #0284c7;
+    }
+
+    .btn-translate:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .btn-translate-success {
+      background: #10b981 !important;
+    }
+
+    .btn-translate .animate-spin {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Bilingual Field Styles */
+    .bilingual-field {
+      position: relative;
+    }
+
+    .lang-tabs {
+      display: flex;
+      gap: 0.25rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .lang-tab {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .lang-tab img {
+      width: 16px;
+      height: 12px;
+      border-radius: 2px;
+      object-fit: cover;
+    }
+
+    .lang-tab:hover {
+      background: #e5e7eb;
+    }
+
+    .lang-tab.active {
+      background: #22a7d0;
+      border-color: #22a7d0;
+      color: white;
+    }
+
+    .lang-input-wrapper {
+      display: none;
+    }
+
+    .lang-input-wrapper.active {
+      display: block;
+    }
+
     /* Floating Save Bar */
     .floating-save-bar {
       position: fixed;
@@ -1532,7 +1812,7 @@ function injectStyles() {
       background: white;
       border-top: 1px solid #e1e4e8;
       box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
-      z-index: 100;
+      z-index: 40;
       padding: 1rem 2rem;
     }
 

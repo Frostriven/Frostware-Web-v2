@@ -1,4 +1,5 @@
-import { auth } from '../../js/firebase.js';
+import { auth, db } from '../../js/firebase.js';
+import { collection, getDocs } from 'firebase/firestore';
 import { waitForAuthReady } from '../../js/auth.js';
 import { verifyUserAppAccess, getProductsFromFirebase, getUserProducts } from '../../js/userProfile.js';
 import {
@@ -10,6 +11,73 @@ import {
   formatTime
 } from '../../js/sessionManager.js';
 import { t, i18n } from '../../i18n/index.js';
+
+// Cache para los temas cargados de cada producto
+let topicsCache = {};
+
+// Función para cargar temas desde Firebase basado en el databaseId del producto
+async function loadTopicsFromDatabase(product) {
+  const databaseId = product.databaseId;
+  if (!databaseId) {
+    console.warn(`⚠️ Producto ${product.id} no tiene databaseId`);
+    return [];
+  }
+
+  // Verificar cache
+  if (topicsCache[databaseId]) {
+    return topicsCache[databaseId];
+  }
+
+  try {
+    const questionsRef = collection(db, databaseId);
+    const snapshot = await getDocs(questionsRef);
+
+    if (snapshot.empty) {
+      console.warn(`⚠️ No se encontraron preguntas en ${databaseId}`);
+      return [];
+    }
+
+    // Extraer temas únicos y contar preguntas por tema
+    const topicCounts = {};
+    const currentLang = i18n.getCurrentLanguage();
+
+    snapshot.docs.forEach(doc => {
+      const data = doc.data();
+      let topicName = data.topic;
+
+      // Manejar temas multilingües
+      if (typeof topicName === 'object' && topicName !== null) {
+        topicName = topicName[currentLang] || topicName.es || topicName.en || 'Sin tema';
+      }
+
+      if (topicName) {
+        if (!topicCounts[topicName]) {
+          topicCounts[topicName] = 0;
+        }
+        topicCounts[topicName]++;
+      }
+    });
+
+    // Convertir a array de objetos
+    const topics = Object.entries(topicCounts).map(([name, questions]) => ({
+      id: name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+      name: name,
+      questions: questions
+    }));
+
+    // Ordenar alfabéticamente
+    topics.sort((a, b) => a.name.localeCompare(b.name));
+
+    // Guardar en cache
+    topicsCache[databaseId] = topics;
+
+    console.log(`✅ Cargados ${topics.length} temas de ${databaseId}:`, topics);
+    return topics;
+  } catch (error) {
+    console.error(`❌ Error cargando temas de ${databaseId}:`, error);
+    return [];
+  }
+}
 
 export async function renderDashboardView(productId) {
   const spaRoot = document.getElementById('spa-root');
@@ -236,6 +304,30 @@ export async function renderDashboardView(productId) {
       id: p.id,
       displayName: p.displayName
     })));
+
+    // Cargar temas desde Firebase para cada producto comprado
+    console.log('📂 Cargando temas de Firebase para productos comprados...');
+    for (const prod of userPurchasedProducts) {
+      const fullProduct = allProducts.find(p => p.id === prod.id);
+      if (fullProduct && fullProduct.databaseId) {
+        const topics = await loadTopicsFromDatabase(fullProduct);
+        prod.topics = topics;
+        prod.totalQuestions = topics.reduce((sum, t) => sum + t.questions, 0);
+        console.log(`📚 ${prod.displayName}: ${topics.length} temas, ${prod.totalQuestions} preguntas`);
+      }
+    }
+
+    // También cargar temas para todos los productos (para mostrar info en los no comprados)
+    for (const prod of allProducts) {
+      if (prod.databaseId && !topicsCache[prod.databaseId]) {
+        const topics = await loadTopicsFromDatabase(prod);
+        prod.topics = topics;
+        prod.totalQuestions = topics.reduce((sum, t) => sum + t.questions, 0);
+      } else if (topicsCache[prod.databaseId]) {
+        prod.topics = topicsCache[prod.databaseId];
+        prod.totalQuestions = prod.topics.reduce((sum, t) => sum + t.questions, 0);
+      }
+    }
   } catch (error) {
     console.error('Error loading product:', error);
     spaRoot.innerHTML = `
@@ -531,23 +623,37 @@ export async function renderDashboardView(productId) {
         position: relative;
         width: 24px;
         height: 24px;
+        min-width: 24px;
         border: 2px solid #cbd5e1;
         border-radius: 6px;
         background: white;
         transition: all 0.3s ease;
         flex-shrink: 0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .custom-checkbox:hover {
+        border-color: #22a7d0;
+        transform: scale(1.05);
       }
 
       .custom-checkbox svg {
+        width: 14px;
+        height: 14px;
         opacity: 0;
         transform: scale(0);
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
       }
 
+      /* Estado seleccionado */
       .topic-item.selected .custom-checkbox,
       .database-item.selected .custom-checkbox {
         background: linear-gradient(135deg, #22a7d0 0%, #1e96bc 100%);
         border-color: #22a7d0;
+        box-shadow: 0 2px 8px rgba(34, 167, 208, 0.4);
       }
 
       .topic-item.selected .custom-checkbox svg,
@@ -556,9 +662,36 @@ export async function renderDashboardView(productId) {
         transform: scale(1);
       }
 
+      /* Estado no seleccionado - más visible */
+      .topic-item:not(.selected) .custom-checkbox {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+      }
+
+      .topic-item:not(.selected) .custom-checkbox:hover {
+        background: #e2e8f0;
+        border-color: #94a3b8;
+      }
+
+      /* Dark mode */
       html.dark .custom-checkbox {
-        background: var(--color-bg-secondary);
-        border-color: #475569;
+        background: #374151;
+        border-color: #4b5563;
+      }
+
+      html.dark .topic-item:not(.selected) .custom-checkbox {
+        background: #1f2937;
+        border-color: #4b5563;
+      }
+
+      html.dark .topic-item:not(.selected) .custom-checkbox:hover {
+        background: #374151;
+        border-color: #6b7280;
+      }
+
+      html.dark .topic-item.selected .custom-checkbox {
+        background: linear-gradient(135deg, #22a7d0 0%, #1e96bc 100%);
+        border-color: #22a7d0;
       }
     </style>
     <div class="min-h-screen relative">
@@ -662,27 +795,75 @@ export async function renderDashboardView(productId) {
                         <!-- Topics -->
                         ${isPurchased ? `
                           <div class="topics-section mt-4 pt-4 border-t border-dashed" style="border-color: var(--color-border-primary);" id="topics-${prod.id}">
-                            <div class="grid grid-cols-2 gap-3">
-                              ${(prod.topics || [
-          { id: 'communications', name: 'Communications', questions: 45 },
-          { id: 'navigation', name: 'Navigation & Tracks', questions: 38 },
-          { id: 'weather', name: 'Weather & Environmental', questions: 32 },
-          { id: 'emergency', name: 'Emergency Procedures', questions: 25 }
-        ]).map((topic, index) => `
-                                <div class="topic-item ${index < 2 ? 'selected' : ''}" onclick="event.stopPropagation(); toggleTopic(this, '${prod.id}', '${topic.id}')">
-                                  <div class="flex items-center gap-3">
-                                    <div class="custom-checkbox">
-                                      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
-                                        <polyline points="20 6 9 17 4 12"/>
-                                      </svg>
-                                    </div>
-                                    <div class="flex-1">
-                                      <div class="font-semibold text-sm" style="color: var(--color-text-primary);">${topic.name}</div>
-                                      <div class="text-xs" style="color: var(--color-text-secondary);">${topic.questions} ${t('dashboard.databases.questions')}</div>
-                                    </div>
-                                  </div>
+                            <!-- Header colapsable -->
+                            <div class="topics-header flex items-center justify-between gap-3 cursor-pointer select-none py-2 px-3 -mx-1 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors" onclick="toggleTopicsCollapse('${prod.id}')">
+                              <!-- Lado izquierdo: Chevron + Stats -->
+                              <div class="flex items-center gap-3">
+                                <svg id="collapse-icon-${prod.id}" class="w-4 h-4 text-cyan-600 dark:text-cyan-400 transition-transform duration-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                  <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">${t('dashboard.topics.availableTopics') || 'Temas Disponibles'}:</span>
+                                  <span class="text-sm font-bold text-cyan-700 dark:text-cyan-300">
+                                    <span id="selected-topics-count-${prod.id}">${prod.topics?.length || 0}</span> ${t('dashboard.topics.of') || 'de'} <span id="topics-count-${prod.id}">${prod.topics?.length || 0}</span>
+                                  </span>
+                                  <span class="text-gray-400 dark:text-gray-500">|</span>
+                                  <span class="text-sm text-gray-600 dark:text-gray-300">
+                                    <span id="questions-count-${prod.id}" class="font-bold text-cyan-700 dark:text-cyan-300">${prod.totalQuestions || 0}</span> ${t('dashboard.topics.of') || 'de'} ${prod.totalQuestions || 0} ${t('dashboard.databases.questions')}
+                                  </span>
                                 </div>
-                              `).join('')}
+                              </div>
+                              <!-- Lado derecho: Toggle -->
+                              <label class="inline-flex items-center cursor-pointer flex-shrink-0" onclick="event.stopPropagation();">
+                                <span class="me-2 text-xs font-semibold text-gray-600 dark:text-gray-400 hidden sm:inline">${t('dashboard.topics.selectAll')}</span>
+                                <input type="checkbox" id="toggle-all-${prod.id}" class="sr-only peer" checked onchange="toggleAllTopicsCheckbox('${prod.id}', this.checked)">
+                                <div class="relative w-10 h-5 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-cyan-300 dark:peer-focus:ring-cyan-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-500 peer-checked:bg-cyan-600"></div>
+                              </label>
+                            </div>
+
+                            <!-- Contenido colapsable -->
+                            <div id="topics-content-${prod.id}" class="topics-content mt-3 overflow-hidden transition-all duration-300" style="max-height: 0; opacity: 0;">
+                              ${prod.topics && prod.topics.length > 0 ? `
+                                <div class="space-y-2 pt-2">
+                                  ${prod.topics.map((topic) => `
+                                    <div class="topic-item selected" data-topic-id="${topic.id}" data-product-id="${prod.id}" data-questions="${topic.questions}" data-max-questions="${topic.questions}">
+                                      <div class="flex items-center gap-3">
+                                        <div class="custom-checkbox" onclick="event.stopPropagation(); toggleTopicCheckbox(this.parentElement.parentElement, '${prod.id}', '${topic.id}')">
+                                          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                                            <polyline points="20 6 9 17 4 12"/>
+                                          </svg>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                          <div class="font-semibold text-sm truncate" style="color: var(--color-text-primary);" title="${topic.name}">${topic.name}</div>
+                                          <div class="text-xs topic-questions-label" style="color: var(--color-text-secondary);">${topic.questions} ${t('dashboard.databases.questions')}</div>
+                                        </div>
+                                        <div class="flex items-center gap-2" onclick="event.stopPropagation();">
+                                          <input type="number"
+                                            class="topic-question-input w-16 px-2 py-1 text-sm text-center border rounded-lg focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 outline-none transition"
+                                            style="border-color: var(--color-border-primary); background: var(--color-bg-primary); color: var(--color-text-primary);"
+                                            value="${topic.questions}"
+                                            min="1"
+                                            max="${topic.questions}"
+                                            data-topic-id="${topic.id}"
+                                            data-product-id="${prod.id}"
+                                            data-max="${topic.questions}"
+                                            onchange="updateTopicQuestionCount(this, '${prod.id}', '${topic.id}')"
+                                            oninput="validateTopicInput(this)">
+                                          <span class="text-xs text-gray-500 dark:text-gray-400">/ ${topic.questions}</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  `).join('')}
+                                </div>
+                              ` : `
+                                <div class="text-center py-6 text-gray-500 dark:text-gray-400">
+                                  <svg class="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                  </svg>
+                                  <p class="font-semibold">${t('dashboard.topics.noTopics')}</p>
+                                  <p class="text-xs mt-1">${t('dashboard.topics.noTopicsDesc')}</p>
+                                </div>
+                              `}
                             </div>
                           </div>
                         ` : ''}
@@ -759,17 +940,9 @@ export async function renderDashboardView(productId) {
                   </div>
                 </div>
 
-                <!-- Question Count -->
-                <div class="mb-6">
-                  <label class="block font-semibold mb-3" style="color: var(--color-text-primary);">${t('dashboard.configuration.questionCount')}</label>
-                  <select id="question-count" class="w-full p-3 border-2 rounded-xl font-medium focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/20 outline-none transition" style="border-color: var(--color-border-primary); background: var(--color-bg-primary); color: var(--color-text-primary);">
-                    <option value="10">10 ${t('dashboard.configuration.questionCountQuick')}</option>
-                    <option value="25">25 ${t('dashboard.configuration.questionCountShort')}</option>
-                    <option value="50" selected>50 ${t('dashboard.configuration.questionCountStandard')}</option>
-                    <option value="100">100 ${t('dashboard.configuration.questionCountExtended')}</option>
-                    <option value="all">${t('dashboard.configuration.questionCountAll')}</option>
-                  </select>
-                </div>
+                <!-- Hidden input para mantener compatibilidad con el código existente -->
+                <input type="hidden" id="question-count" value="9999">
+                <input type="hidden" id="use-all-questions-toggle" checked>
 
                 <!-- Timer (hidden by default) -->
                 <div id="timer-section" class="mb-6 hidden">
@@ -999,9 +1172,9 @@ export async function renderDashboardView(productId) {
   }
 
   // Question count change listener
-  const questionCountSelect = document.getElementById('question-count');
-  if (questionCountSelect) {
-    questionCountSelect.addEventListener('change', () => {
+  const questionCountInput = document.getElementById('question-count');
+  if (questionCountInput) {
+    questionCountInput.addEventListener('input', () => {
       updateSessionSummary();
     });
   }
@@ -1011,9 +1184,209 @@ export async function renderDashboardView(productId) {
     element.classList.toggle('selected');
   };
 
-  window.toggleTopic = function (element, productId, topicId) {
-    element.classList.toggle('selected');
+  // Toggle individual del checkbox de tema con animación
+  window.toggleTopicCheckbox = function (element, productId, topicId) {
+    const isSelected = element.classList.contains('selected');
+
+    if (isSelected) {
+      // Desmarcar con animación
+      element.classList.remove('selected');
+      element.style.transition = 'all 0.3s ease';
+      element.style.opacity = '0.6';
+      setTimeout(() => {
+        element.style.opacity = '1';
+      }, 150);
+
+      // Deshabilitar input de preguntas
+      const input = element.querySelector('.topic-question-input');
+      if (input) {
+        input.disabled = true;
+        input.style.opacity = '0.5';
+      }
+    } else {
+      // Marcar con animación
+      element.classList.add('selected');
+      element.style.transition = 'all 0.3s ease';
+      element.style.transform = 'scale(1.02)';
+      setTimeout(() => {
+        element.style.transform = 'scale(1)';
+      }, 150);
+
+      // Habilitar input de preguntas
+      const input = element.querySelector('.topic-question-input');
+      if (input) {
+        input.disabled = false;
+        input.style.opacity = '1';
+      }
+    }
+
+    // Actualizar el toggle principal si es necesario
+    updateMainToggleState(productId);
     updateAllCounts();
+  };
+
+  // Legacy function para compatibilidad
+  window.toggleTopic = function (element, productId, topicId) {
+    toggleTopicCheckbox(element, productId, topicId);
+  };
+
+  // Toggle de todos los temas con el switch
+  window.toggleAllTopicsCheckbox = function (prodId, isChecked) {
+    const topicsSection = document.getElementById(`topics-${prodId}`);
+    if (topicsSection) {
+      topicsSection.querySelectorAll('.topic-item').forEach(item => {
+        if (isChecked) {
+          item.classList.add('selected');
+          const input = item.querySelector('.topic-question-input');
+          if (input) {
+            input.disabled = false;
+            input.style.opacity = '1';
+            // Restaurar al máximo
+            input.value = input.dataset.max || input.max;
+          }
+        } else {
+          item.classList.remove('selected');
+          const input = item.querySelector('.topic-question-input');
+          if (input) {
+            input.disabled = true;
+            input.style.opacity = '0.5';
+          }
+        }
+      });
+      updateAllCounts();
+    }
+  };
+
+  // Actualizar estado del toggle principal basado en los items
+  function updateMainToggleState(prodId) {
+    const topicsSection = document.getElementById(`topics-${prodId}`);
+    const mainToggle = document.getElementById(`toggle-all-${prodId}`);
+    if (topicsSection && mainToggle) {
+      const allItems = topicsSection.querySelectorAll('.topic-item');
+      const selectedItems = topicsSection.querySelectorAll('.topic-item.selected');
+      mainToggle.checked = allItems.length > 0 && selectedItems.length === allItems.length;
+    }
+  }
+
+  // Toggle para colapsar/expandir los temas de un producto
+  window.toggleTopicsCollapse = function (prodId) {
+    const content = document.getElementById(`topics-content-${prodId}`);
+    const icon = document.getElementById(`collapse-icon-${prodId}`);
+
+    if (!content) return;
+
+    const isCollapsed = content.style.maxHeight === '0px' || content.style.maxHeight === '';
+
+    if (isCollapsed) {
+      // Expandir
+      content.style.maxHeight = content.scrollHeight + 'px';
+      content.style.opacity = '1';
+      if (icon) {
+        icon.style.transform = 'rotate(180deg)';
+      }
+    } else {
+      // Colapsar
+      content.style.maxHeight = '0px';
+      content.style.opacity = '0';
+      if (icon) {
+        icon.style.transform = 'rotate(0deg)';
+      }
+    }
+  };
+
+  // Legacy functions
+  window.selectAllTopics = function (prodId) {
+    const toggle = document.getElementById(`toggle-all-${prodId}`);
+    if (toggle) {
+      toggle.checked = true;
+      toggleAllTopicsCheckbox(prodId, true);
+    }
+  };
+
+  window.deselectAllTopics = function (prodId) {
+    const toggle = document.getElementById(`toggle-all-${prodId}`);
+    if (toggle) {
+      toggle.checked = false;
+      toggleAllTopicsCheckbox(prodId, false);
+    }
+  };
+
+  // Actualizar preguntas por tema individual
+  window.updateTopicQuestionCount = function (input, productId, topicId) {
+    const max = parseInt(input.dataset.max) || parseInt(input.max) || 100;
+    let value = parseInt(input.value) || 1;
+    value = Math.max(1, Math.min(value, max));
+    input.value = value;
+
+    // Actualizar el data attribute
+    const topicItem = input.closest('.topic-item');
+    if (topicItem) {
+      topicItem.dataset.questions = value;
+    }
+
+    updateAllCounts();
+  };
+
+  // Validar input de tema
+  window.validateTopicInput = function (input) {
+    const max = parseInt(input.dataset.max) || parseInt(input.max) || 100;
+    let value = parseInt(input.value) || 0;
+    if (value > max) {
+      input.value = max;
+    }
+    if (value < 1 && input.value !== '') {
+      input.value = 1;
+    }
+  };
+
+  // Toggle de "Todas las preguntas"
+  window.toggleAllQuestions = function (useAll) {
+    const customSection = document.getElementById('custom-questions-section');
+    const questionInput = document.getElementById('question-count');
+
+    if (useAll) {
+      // Ocultar input personalizado
+      if (customSection) customSection.classList.add('hidden');
+      // Establecer el valor al total de preguntas seleccionadas
+      const { totalQuestions } = getSelectedTopics();
+      if (questionInput) questionInput.value = totalQuestions;
+    } else {
+      // Mostrar input personalizado
+      if (customSection) customSection.classList.remove('hidden');
+    }
+
+    updateSessionSummary();
+  };
+
+  // Actualizar el conteo de preguntas
+  window.updateQuestionCount = function (value) {
+    const input = document.getElementById('question-count');
+    const { totalQuestions } = getSelectedTopics();
+
+    if (input) {
+      let numValue = parseInt(value) || 1;
+      numValue = Math.max(1, Math.min(numValue, totalQuestions || 9999));
+      input.value = numValue;
+    }
+
+    // Desactivar el toggle de "todas" si se personaliza
+    const allToggle = document.getElementById('use-all-questions-toggle');
+    if (allToggle && parseInt(input?.value) !== totalQuestions) {
+      allToggle.checked = false;
+      const customSection = document.getElementById('custom-questions-section');
+      if (customSection) customSection.classList.remove('hidden');
+    }
+
+    updateSessionSummary();
+  };
+
+  // Legacy - Usar todas las preguntas disponibles
+  window.useAllQuestions = function () {
+    const toggle = document.getElementById('use-all-questions-toggle');
+    if (toggle) {
+      toggle.checked = true;
+      toggleAllQuestions(true);
+    }
   };
 
   window.selectMode = function (element, mode) {
@@ -1068,6 +1441,19 @@ export async function renderDashboardView(productId) {
     updateAllCounts();
   };
 
+  // Función para formatear tiempo (convierte a horas si es mayor a 59 minutos)
+  function formatEstimatedTime(minutes) {
+    if (minutes > 59) {
+      const hours = Math.floor(minutes / 60);
+      const remainingMins = minutes % 60;
+      if (remainingMins === 0) {
+        return `~${hours}h`;
+      }
+      return `~${hours}h ${remainingMins}m`;
+    }
+    return `~${minutes} ${t('dashboard.configuration.timerMinutes')}`;
+  }
+
   window.addToCartFromDashboard = function (evt, prodId) {
     evt.stopPropagation();
 
@@ -1121,15 +1507,40 @@ export async function renderDashboardView(productId) {
         const selectedTopicItems = topicsSection.querySelectorAll('.topic-item.selected');
         totalTopics += selectedTopicItems.length;
 
-        // Calculate questions from selected topics
+        // Calculate questions from selected topics using input values
         selectedTopicItems.forEach(item => {
-          const questionElement = item.querySelector('.text-xs');
-          if (questionElement) {
-            const match = questionElement.textContent.match(/(\d+)/);
-            const questions = match ? parseInt(match[0]) : 0;
+          // Primero intentar obtener del input individual
+          const input = item.querySelector('.topic-question-input');
+          if (input && !input.disabled) {
+            const questions = parseInt(input.value) || 0;
+            totalQuestions += questions;
+          } else {
+            // Fallback al data attribute
+            const questions = parseInt(item.dataset.questions) || 0;
             totalQuestions += questions;
           }
         });
+
+        // Actualizar contador de temas seleccionados por producto
+        const selectedCountEl = document.getElementById(`selected-topics-count-${prodId}`);
+        if (selectedCountEl) {
+          selectedCountEl.textContent = selectedTopicItems.length;
+        }
+
+        // Actualizar contador de preguntas por producto
+        let prodQuestions = 0;
+        selectedTopicItems.forEach(item => {
+          const input = item.querySelector('.topic-question-input');
+          if (input && !input.disabled) {
+            prodQuestions += parseInt(input.value) || 0;
+          } else {
+            prodQuestions += parseInt(item.dataset.questions) || 0;
+          }
+        });
+        const questionsCountEl = document.getElementById(`questions-count-${prodId}`);
+        if (questionsCountEl) {
+          questionsCountEl.textContent = prodQuestions;
+        }
       }
     });
 
@@ -1137,24 +1548,71 @@ export async function renderDashboardView(productId) {
   }
 
   function updateAllCounts() {
-    const selectedProducts = getSelectedProducts();
     const { totalTopics, totalQuestions } = getSelectedTopics();
 
-    // Update topics count
+    // Calcular total de preguntas de todos los productos activos
+    let totalAvailableQuestions = 0;
+    userPurchasedProducts.forEach(prod => {
+      const checkbox = document.getElementById(`product-${prod.id}`);
+      if (checkbox && checkbox.checked) {
+        totalAvailableQuestions += prod.totalQuestions || 0;
+      }
+    });
+
+    // Update topics count in summary card
     const topicsElement = document.getElementById('selected-topics');
     if (topicsElement) {
       topicsElement.textContent = totalTopics;
+    }
+
+    // Update total questions display
+    const totalQuestionsElement = document.getElementById('total-questions');
+    if (totalQuestionsElement) {
+      totalQuestionsElement.textContent = totalQuestions;
+    }
+
+    // Update selected topics questions count
+    const selectedTopicsQuestionsElement = document.getElementById('selected-topics-questions');
+    if (selectedTopicsQuestionsElement) {
+      selectedTopicsQuestionsElement.textContent = totalQuestions;
+    }
+
+    // Update selected topics display
+    const selectedTopicsDisplayElement = document.getElementById('selected-topics-display');
+    if (selectedTopicsDisplayElement) {
+      selectedTopicsDisplayElement.textContent = totalTopics;
+    }
+
+    // Update max questions display
+    const maxQuestionsDisplayElement = document.getElementById('max-questions-display');
+    if (maxQuestionsDisplayElement) {
+      maxQuestionsDisplayElement.textContent = totalQuestions;
+    }
+
+    // Update estimated time
+    const estimatedTimeElement = document.getElementById('estimated-time');
+    if (estimatedTimeElement) {
+      const estimatedMinutes = Math.ceil(totalQuestions * 1.2);
+      estimatedTimeElement.textContent = formatEstimatedTime(estimatedMinutes);
+    }
+
+    // Si el toggle de "todas las preguntas" está activo, actualizar el input
+    const allQuestionsToggle = document.getElementById('use-all-questions-toggle');
+    const questionInput = document.getElementById('question-count');
+    if (allQuestionsToggle?.checked && questionInput) {
+      questionInput.value = totalQuestions;
     }
 
     updateSessionSummary();
   }
 
   function updateSessionSummary() {
-    const { totalTopics } = getSelectedTopics();
+    const { totalTopics, totalQuestions } = getSelectedTopics();
     const selectedModeCard = document.querySelector('.mode-card.selected');
     // Check by looking at the onclick attribute which contains the mode
     const isExamMode = selectedModeCard?.getAttribute('onclick')?.includes("'exam'");
-    const questionCount = document.getElementById('question-count')?.value || '50';
+    const questionCountInput = document.getElementById('question-count');
+    const questionCount = questionCountInput?.value || '50';
     const timerValue = document.getElementById('timer-value')?.textContent || '60';
 
     // Update session mode
@@ -1166,28 +1624,56 @@ export async function renderDashboardView(productId) {
     // Update session questions
     const questionsElement = document.getElementById('session-questions');
     if (questionsElement) {
-      questionsElement.textContent = questionCount === 'all' ? t('dashboard.configuration.questionCountAll') : questionCount;
+      questionsElement.textContent = questionCount;
     }
 
     // Update session time
     const timeElement = document.getElementById('session-time');
     if (timeElement) {
       if (isExamMode) {
-        timeElement.textContent = `~${timerValue} ${t('dashboard.configuration.timerMinutes')}`;
+        const timerMinutes = parseInt(timerValue) || 60;
+        timeElement.textContent = formatEstimatedTime(timerMinutes);
       } else {
-        const estimatedMinutes = Math.ceil(parseInt(questionCount || 50) * 1.2);
-        timeElement.textContent = `~${estimatedMinutes} ${t('dashboard.configuration.timerMinutes')}`;
+        const numQuestions = parseInt(questionCount) || 50;
+        const estimatedMinutes = Math.ceil(numQuestions * 1.2);
+        timeElement.textContent = formatEstimatedTime(estimatedMinutes);
       }
     }
 
     // Update topics count
-    const topicsElement = document.getElementById('selected-topics');
-    if (topicsElement) {
-      topicsElement.textContent = totalTopics;
+    const topicsCountElements = document.querySelectorAll('#selected-topics');
+    topicsCountElements.forEach(el => {
+      el.textContent = totalTopics;
+    });
+
+    // Validar que el número de preguntas no exceda las disponibles
+    if (questionCountInput && totalQuestions > 0) {
+      const currentValue = parseInt(questionCountInput.value) || 0;
+      if (currentValue > totalQuestions) {
+        questionCountInput.value = totalQuestions;
+      }
+      questionCountInput.max = totalQuestions;
     }
   }
 
   // Initialize counts, summary, and timer
   updateAllCounts();
   updateTimer(60);
+
+  // Listener para cambio de idioma - recargar la página
+  const languageChangeHandler = () => {
+    console.log('🌍 Idioma cambiado, recargando dashboard...');
+    // Limpiar cache de temas para que se recarguen con el nuevo idioma
+    topicsCache = {};
+    // Recargar la vista
+    renderDashboardView(productId);
+  };
+
+  // Registrar el listener
+  if (typeof i18n !== 'undefined' && i18n.onLanguageChange) {
+    i18n.onLanguageChange(languageChangeHandler);
+  }
+
+  // Escuchar también el evento personalizado de cambio de idioma
+  window.addEventListener('languageChanged', languageChangeHandler, { once: true });
 }
