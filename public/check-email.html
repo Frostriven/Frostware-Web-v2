@@ -97,15 +97,24 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 
-    // Configuración de Firebase (usa las variables de tu .env)
+    // Configuración de Firebase
+    // IMPORTANTE: Reemplaza estos valores con los de tu proyecto o usa variables de entorno
+    // Ver: Firebase Console > Project Settings > General > Your apps
     const firebaseConfig = {
-      apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBZO2H0VqIECVREKxAIPYDlshB9aeJcPUE",
-      authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "frostware-website.firebaseapp.com",
-      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "frostware-website",
-      storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "frostware-website.firebasestorage.app",
-      messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "638022006334",
-      appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:638022006334:web:6fa7cf93d7dbcf9088d08c"
+      apiKey: "TU_API_KEY_AQUI",
+      authDomain: "TU_PROYECTO.firebaseapp.com",
+      projectId: "TU_PROYECTO",
+      storageBucket: "TU_PROYECTO.firebasestorage.app",
+      messagingSenderId: "TU_SENDER_ID",
+      appId: "TU_APP_ID"
     };
+
+    // Validar configuración
+    if (firebaseConfig.apiKey === "TU_API_KEY_AQUI") {
+      document.getElementById('user-email').textContent = "Error: Configura las credenciales de Firebase en el archivo";
+      document.getElementById('user-email').style.color = '#ff7b72';
+      throw new Error("Firebase no configurado - edita check-email.html con tus credenciales");
+    }
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);

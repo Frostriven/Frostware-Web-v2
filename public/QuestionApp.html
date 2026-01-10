@@ -1339,15 +1339,23 @@
         import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
         // Firebase config
+        // IMPORTANTE: Reemplaza estos valores con los de tu proyecto
+        // Ver: Firebase Console > Project Settings > General > Your apps
         const firebaseConfig = {
-            apiKey: "AIzaSyAWu3dkO1hPWxFajvpPmFvxrhK-YVcqMR8",
-            authDomain: "frostware-website.firebaseapp.com",
-            projectId: "frostware-website",
-            storageBucket: "frostware-website.firebasestorage.app",
-            messagingSenderId: "877959550313",
-            appId: "1:877959550313:web:1fde3d91d76df2e1e50a99",
-            measurementId: "G-SNPYXQXJCZ"
+            apiKey: "TU_API_KEY_AQUI",
+            authDomain: "TU_PROYECTO.firebaseapp.com",
+            projectId: "TU_PROYECTO",
+            storageBucket: "TU_PROYECTO.firebasestorage.app",
+            messagingSenderId: "TU_SENDER_ID",
+            appId: "TU_APP_ID",
+            measurementId: "TU_MEASUREMENT_ID"
         };
+
+        // Validar configuración
+        if (firebaseConfig.apiKey === "TU_API_KEY_AQUI") {
+            document.body.innerHTML = '<div style="padding:50px;text-align:center;color:#ff4444;font-size:20px;">Error: Configura las credenciales de Firebase en QuestionApp.html</div>';
+            throw new Error("Firebase no configurado");
+        }
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);

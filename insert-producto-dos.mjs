@@ -2,19 +2,32 @@
 /**
  * Script Node.js para insertar "Producto Dos" en Firebase
  * Ejecutar: node insert-producto-dos.mjs
+ *
+ * IMPORTANTE: Requiere archivo .env con las variables de Firebase
  */
 
 import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { config } from 'dotenv';
+
+// Cargar variables de entorno
+config();
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyDinqSKWJfwHCYDE9R6dojcfpMJzq_yNFk',
-  authDomain: 'frostware-website.firebaseapp.com',
-  projectId: 'frostware-website',
-  storageBucket: 'frostware-website.firebasestorage.app',
-  messagingSenderId: '982396359232',
-  appId: '1:982396359232:web:2dd91562af60222e3745a5'
+  apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VITE_FIREBASE_APP_ID
 };
+
+// Validar que las variables de entorno existan
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  console.error('❌ Error: Variables de entorno de Firebase no encontradas.');
+  console.error('   Asegúrate de tener un archivo .env con las variables VITE_FIREBASE_*');
+  process.exit(1);
+}
 
 console.log('🚀 Iniciando inserción de Producto Dos...');
 
