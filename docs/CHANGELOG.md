@@ -1,10 +1,51 @@
-# 📝 Changelog
+# Changelog
 
 Registro de cambios, fixes y mejoras implementadas en el proyecto Frostware.
 
 ---
 
-## 🎨 [Formulario de Productos Expandido - Enero 9, 2026]
+## [Dashboard Financiero - Enero 10, 2026]
+
+### Nueva funcionalidad: Panel de Finanzas
+
+**Descripcion**: Dashboard financiero completo para administradores con estadisticas de ventas, usuarios y productos.
+
+#### Caracteristicas principales
+
+**Dashboard Financiero (`#/admin/finances`)**
+- Cards de estadisticas: Ingresos totales, mes, usuarios registrados, activos
+- Grafico de barras: Ingresos por dia/mes/ano con tabs interactivos
+- Grafico donut: Distribucion de usuarios activos vs inactivos
+- Tabla: Top 10 productos mas vendidos con barras de progreso
+- Diseno dark mode con efectos glassmorphism
+
+**Sistema de Ordenes Centralizado**
+- Nueva coleccion `orders` en Firebase para tracking de ventas
+- Funcion `createOrder()` ejecutada automaticamente al comprar
+- Funciones `getFinancialStats()` y `getUserStats()` optimizadas
+- Migracion de datos existentes con `migrateExistingPurchasesToOrders()`
+
+**Archivos creados/modificados**
+- `src/pages/finances/view.js` - Vista del dashboard
+- `src/js/userProfile.js` - Funciones de orders
+- `src/js/cart.js` - Integracion con createOrder
+- `src/pages/admin/view.js` - Link "Finanzas" en tabs
+- `src/js/main.js` - Ruta `#/admin/finances`
+- `firestore.rules` - Reglas para coleccion orders
+- `docs/FINANCIAL_DASHBOARD.md` - Documentacion
+
+#### Reglas de Firestore para orders
+```javascript
+match /orders/{orderId} {
+  allow create: if request.auth != null;
+  allow read: if isAdmin();
+  allow update, delete: if isAdmin();
+}
+```
+
+---
+
+## [Formulario de Productos Expandido - Enero 9, 2026]
 
 ### ✨ Formulario completo con todos los campos del producto
 

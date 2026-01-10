@@ -166,6 +166,12 @@ export async function renderAdminView() {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7M4 7c0-2 1-3 3-3h10c2 0 3 1 3 3M4 7h16M10 11v6m4-6v6"></path>
                   </svg>
                 </a>
+                <a href="#/admin/finances" class="admin-tab-link py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center gap-2">
+                  Finanzas
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </a>
               </nav>
             </div>
 
@@ -245,12 +251,6 @@ export async function renderAdminView() {
                     <div>
                       <label class="block text-sm font-medium text-gray-700 mb-2">URL de Imagen</label>
                       <input type="url" id="product-image" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#22a7d0] focus:border-[#22a7d0]" placeholder="https://ejemplo.com/imagen.jpg">
-                    </div>
-
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-2">URL de la App/Guía (para acceso post-compra)</label>
-                      <input type="url" id="product-app-url" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#22a7d0] focus:border-[#22a7d0]" placeholder="https://apps.frostware.com/mi-guia/">
-                      <p class="text-xs text-gray-500 mt-1">URL donde el usuario accederá después de comprar el producto</p>
                     </div>
 
                     <div>
@@ -1171,7 +1171,6 @@ function initializeProductForm() {
         offerId: document.getElementById('product-offer').value || null,
         image: document.getElementById('product-image').value,
         imageURL: document.getElementById('product-image').value, // Alias for homepage
-        appUrl: document.getElementById('product-app-url').value,
         databaseId: document.getElementById('product-database-id').value || null,
         showOnHomepage: document.getElementById('product-show-on-homepage').checked,
         reviews: Math.floor(Math.random() * 400) + 50,
@@ -1379,7 +1378,6 @@ window.editProduct = async function (productId) {
     // Apply category and badge colors
     await applySelectColors(product.category, product.badge);
     document.getElementById('product-image').value = product.imageURL || product.image || '';
-    document.getElementById('product-app-url').value = product.appUrl || '';
     document.getElementById('product-database-id').value = product.databaseId || '';
     document.getElementById('product-show-on-homepage').checked = product.showOnHomepage || false;
 

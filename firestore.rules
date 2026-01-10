@@ -95,6 +95,20 @@ service cloud.firestore {
     }
 
     // ============================================
+    // REGLAS PARA ÓRDENES/VENTAS (DASHBOARD FINANCIERO)
+    // ============================================
+    match /orders/{orderId} {
+      // Usuarios autenticados pueden crear órdenes (al comprar)
+      allow create: if request.auth != null;
+
+      // Solo admins pueden leer todas las órdenes (para el dashboard)
+      allow read: if isAdmin();
+
+      // Solo admins pueden actualizar/eliminar órdenes
+      allow update, delete: if isAdmin();
+    }
+
+    // ============================================
     // REGLAS PARA BASES DE DATOS DE PREGUNTAS
     // ============================================
     // IMPORTANTE: Esta regla es amplia y permite acceso a cualquier colección

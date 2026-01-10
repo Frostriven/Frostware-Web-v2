@@ -1,5 +1,5 @@
 import { db } from './firebase.js';
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, serverTimestamp, query } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, serverTimestamp, query, addDoc, orderBy, limit as firestoreLimit, where } from 'firebase/firestore';
 
 // Obtener perfil del usuario
 export async function getUserProfile(userId) {
@@ -107,7 +107,6 @@ export async function addUserProduct(userId, productData) {
     price: productData.price,
     image: productData.image,
     category: productData.category || 'general',
-    appUrl: productData.appUrl || null,
     // Eliminar accessToken redundante - la existencia del doc es suficiente
     purchaseDate: serverTimestamp(), // Usar timestamp del servidor
     status: 'active'
@@ -121,6 +120,342 @@ export async function addUserProduct(userId, productData) {
 }
 
 // Nota: El accessToken fue eliminado - la existencia del documento es suficiente para verificar acceso
+
+// =====================================================================================
+// ORDERS SYSTEM - Colección centralizada de órdenes/ventas
+// =====================================================================================
+
+/**
+ * Crear una orden en la colección centralizada 'orders'
+ * @param {string} userId - ID del usuario que compra
+ * @param {string} userEmail - Email del usuario
+ * @param {Object} productData - Datos del producto comprado
+ * @returns {Object} - Orden creada con ID
+ */
+export async function createOrder(userId, userEmail, productData) {
+  if (!db) throw new Error('Firestore no inicializado');
+
+  // Obtener nombre del producto (manejar bilingüe)
+  let productName = productData.name || productData.title || productData.id;
+  if (typeof productName === 'object' && productName !== null) {
+    productName = productName.es || productName.en || productData.id;
+  }
+
+  const orderData = {
+    // Usuario
+    userId: userId,
+    userEmail: userEmail,
+
+    // Producto
+    productId: productData.id,
+    productName: productName,
+    productCategory: productData.category || 'general',
+
+    // Precio
+    price: parseFloat(productData.price) || 0,
+    originalPrice: parseFloat(productData.originalPrice) || parseFloat(productData.price) || 0,
+    currency: 'USD',
+
+    // Estado
+    status: 'completed',
+    paymentMethod: 'demo', // Cambiar cuando tengas pasarela real
+
+    // Timestamps
+    createdAt: serverTimestamp(),
+    completedAt: serverTimestamp()
+  };
+
+  try {
+    const ordersRef = collection(db, 'orders');
+    const docRef = await addDoc(ordersRef, orderData);
+
+    console.log('✅ Orden creada:', docRef.id, orderData);
+
+    return {
+      id: docRef.id,
+      ...orderData
+    };
+  } catch (error) {
+    console.error('Error creando orden:', error);
+    throw error;
+  }
+}
+
+/**
+ * Obtener todas las órdenes (para admin)
+ * @param {number} limitCount - Límite de órdenes a obtener
+ * @returns {Array} - Lista de órdenes
+ */
+export async function getAllOrders(limitCount = 100) {
+  if (!db) throw new Error('Firestore no inicializado');
+
+  try {
+    const ordersRef = collection(db, 'orders');
+    const q = query(ordersRef, orderBy('createdAt', 'desc'), firestoreLimit(limitCount));
+    const snapshot = await getDocs(q);
+
+    const orders = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      orders.push({
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate() || new Date()
+      });
+    });
+
+    return orders;
+  } catch (error) {
+    console.error('Error obteniendo órdenes:', error);
+    return [];
+  }
+}
+
+/**
+ * Obtener estadísticas financieras desde la colección orders
+ * @returns {Object} - Estadísticas financieras
+ */
+export async function getFinancialStats() {
+  if (!db) throw new Error('Firestore no inicializado');
+
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+  try {
+    // Obtener todas las órdenes completadas
+    const ordersRef = collection(db, 'orders');
+    const q = query(ordersRef, where('status', '==', 'completed'));
+    const snapshot = await getDocs(q);
+
+    let totalRevenue = 0;
+    let todayRevenue = 0;
+    let monthRevenue = 0;
+    let yearRevenue = 0;
+    const productSales = {};
+    const dailyRevenue = {};
+    const monthlyRevenue = {};
+
+    snapshot.forEach(doc => {
+      const order = doc.data();
+      const price = parseFloat(order.price) || 0;
+      const date = order.createdAt?.toDate() || new Date();
+
+      totalRevenue += price;
+
+      if (date >= startOfDay) {
+        todayRevenue += price;
+      }
+      if (date >= startOfMonth) {
+        monthRevenue += price;
+      }
+      if (date >= startOfYear) {
+        yearRevenue += price;
+      }
+
+      // Ventas por producto
+      const productName = order.productName || order.productId;
+      if (!productSales[productName]) {
+        productSales[productName] = {
+          name: productName,
+          productId: order.productId,
+          sales: 0,
+          revenue: 0
+        };
+      }
+      productSales[productName].sales++;
+      productSales[productName].revenue += price;
+
+      // Revenue por día
+      const dayKey = date.toISOString().split('T')[0];
+      dailyRevenue[dayKey] = (dailyRevenue[dayKey] || 0) + price;
+
+      // Revenue por mes
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      monthlyRevenue[monthKey] = (monthlyRevenue[monthKey] || 0) + price;
+    });
+
+    // Top productos
+    const topProducts = Object.values(productSales)
+      .sort((a, b) => b.sales - a.sales)
+      .slice(0, 10);
+
+    // Revenue por día (últimos 7 días)
+    const revenueByDay = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split('T')[0];
+      revenueByDay.push({
+        date: key,
+        label: d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' }),
+        revenue: dailyRevenue[key] || 0
+      });
+    }
+
+    // Revenue por mes (últimos 12 meses)
+    const revenueByMonth = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      revenueByMonth.push({
+        month: key,
+        label: d.toLocaleDateString('es-ES', { month: 'short' }),
+        revenue: monthlyRevenue[key] || 0
+      });
+    }
+
+    return {
+      totalRevenue,
+      todayRevenue,
+      monthRevenue,
+      yearRevenue,
+      totalOrders: snapshot.size,
+      topProducts,
+      revenueByDay,
+      revenueByMonth
+    };
+  } catch (error) {
+    console.error('Error obteniendo estadísticas financieras:', error);
+    return {
+      totalRevenue: 0,
+      todayRevenue: 0,
+      monthRevenue: 0,
+      yearRevenue: 0,
+      totalOrders: 0,
+      topProducts: [],
+      revenueByDay: [],
+      revenueByMonth: []
+    };
+  }
+}
+
+/**
+ * Obtener estadísticas de usuarios
+ * @returns {Object} - Estadísticas de usuarios
+ */
+export async function getUserStats() {
+  if (!db) throw new Error('Firestore no inicializado');
+
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  try {
+    const usersRef = collection(db, 'users');
+    const snapshot = await getDocs(usersRef);
+
+    let totalUsers = snapshot.size;
+    let activeUsers = 0;
+
+    snapshot.forEach(doc => {
+      const user = doc.data();
+      const lastLogin = user.lastLogin?.toDate?.() || user.updatedAt?.toDate?.();
+
+      if (lastLogin && lastLogin > thirtyDaysAgo) {
+        activeUsers++;
+      }
+    });
+
+    // Si no hay datos de lastLogin, estimar usuarios activos
+    if (activeUsers === 0 && totalUsers > 0) {
+      activeUsers = Math.floor(totalUsers * 0.6);
+    }
+
+    return {
+      totalUsers,
+      activeUsers
+    };
+  } catch (error) {
+    console.error('Error obteniendo estadísticas de usuarios:', error);
+    return {
+      totalUsers: 0,
+      activeUsers: 0
+    };
+  }
+}
+
+/**
+ * Migrar datos existentes de purchasedProducts a orders
+ * Ejecutar una sola vez para migrar datos históricos
+ */
+export async function migrateExistingPurchasesToOrders() {
+  if (!db) throw new Error('Firestore no inicializado');
+
+  console.log('🔄 Iniciando migración de compras existentes a orders...');
+
+  try {
+    const usersRef = collection(db, 'users');
+    const usersSnapshot = await getDocs(usersRef);
+
+    let migratedCount = 0;
+    let skippedCount = 0;
+
+    for (const userDoc of usersSnapshot.docs) {
+      const userId = userDoc.id;
+      const userData = userDoc.data();
+      const userEmail = userData.email || 'unknown@email.com';
+
+      // Obtener productos comprados del usuario
+      const purchasedRef = collection(db, `users/${userId}/purchasedProducts`);
+      const purchasedSnapshot = await getDocs(purchasedRef);
+
+      for (const purchaseDoc of purchasedSnapshot.docs) {
+        const purchase = purchaseDoc.data();
+        const productId = purchaseDoc.id;
+
+        // Verificar si ya existe una orden para este usuario/producto
+        const ordersRef = collection(db, 'orders');
+        const existingQuery = query(
+          ordersRef,
+          where('userId', '==', userId),
+          where('productId', '==', productId)
+        );
+        const existingOrders = await getDocs(existingQuery);
+
+        if (existingOrders.empty) {
+          // Crear orden para esta compra histórica
+          let productName = purchase.name || productId;
+          if (typeof productName === 'object' && productName !== null) {
+            productName = productName.es || productName.en || productId;
+          }
+
+          await addDoc(ordersRef, {
+            userId,
+            userEmail,
+            productId,
+            productName,
+            productCategory: purchase.category || 'general',
+            price: parseFloat(purchase.price) || 0,
+            originalPrice: parseFloat(purchase.price) || 0,
+            currency: 'USD',
+            status: 'completed',
+            paymentMethod: 'migrated',
+            createdAt: purchase.purchaseDate || serverTimestamp(),
+            completedAt: purchase.purchaseDate || serverTimestamp(),
+            migratedAt: serverTimestamp()
+          });
+
+          migratedCount++;
+          console.log(`✅ Migrada orden: ${productName} para usuario ${userId}`);
+        } else {
+          skippedCount++;
+        }
+      }
+    }
+
+    console.log(`🎉 Migración completada: ${migratedCount} órdenes migradas, ${skippedCount} omitidas (ya existían)`);
+    return { migratedCount, skippedCount };
+
+  } catch (error) {
+    console.error('Error en migración:', error);
+    throw error;
+  }
+}
+
+// Hacer función de migración disponible globalmente para ejecutar desde consola
+window.migrateExistingPurchasesToOrders = migrateExistingPurchasesToOrders;
 
 // Verificar acceso del usuario a una app específica
 export async function verifyUserAppAccess(userId, productId) {
@@ -136,7 +471,6 @@ export async function verifyUserAppAccess(userId, productId) {
     if (productData.status === 'active') {
       return {
         hasAccess: true,
-        appUrl: productData.appUrl,
         purchaseDate: productData.purchaseDate,
         productName: productData.name
       };
@@ -155,17 +489,14 @@ export async function getUserApps(userId) {
 
   const userProducts = await getUserProducts(userId);
 
-  // Filter only products that have an associated app
-  const userApps = userProducts
-    .filter(product => product.appUrl)
-    .map(product => ({
-      id: product.id, // El productId
-      name: product.name,
-      description: product.description,
-      appUrl: product.appUrl,
-      purchaseDate: product.purchaseDate,
-      image: product.image
-    }));
+  // Return all purchased products - access is implicit through purchase
+  const userApps = userProducts.map(product => ({
+    id: product.id, // El productId
+    name: product.name,
+    description: product.description,
+    purchaseDate: product.purchaseDate,
+    image: product.image
+  }));
 
   return userApps;
 }

@@ -169,10 +169,10 @@ class ShoppingCart {
         // Agregar al carrito usando Firebase field names
         this.cart.push({
             id: product.id,
-            title: product.title,
+            name: product.name || product.title,
             price: product.price || 0,
             imageURL: product.imageURL || product.image,
-            shortDescription: product.shortDescription
+            description: product.description || product.shortDescription
         });
 
         this.saveCart();
@@ -314,20 +314,22 @@ class ShoppingCart {
         itemsDiv.innerHTML = this.cart.map(item => {
             const currentLang = i18n.getCurrentLanguage();
 
-            // Handle title that might be an object or string (Firebase field name)
+            // Handle name that might be an object or string (supports both old 'title' and new 'name' fields)
             let name = '';
-            if (typeof item.title === 'object' && item.title !== null) {
-                name = item.title[currentLang] || item.title['en'] || item.title['es'] || '';
+            const nameField = item.name || item.title;
+            if (typeof nameField === 'object' && nameField !== null) {
+                name = nameField[currentLang] || nameField['es'] || nameField['en'] || '';
             } else {
-                name = item.title || '';
+                name = nameField || '';
             }
 
-            // Handle shortDescription that might be an object or string (Firebase field name)
+            // Handle description that might be an object or string (supports both old 'shortDescription' and new 'description' fields)
             let description = '';
-            if (typeof item.shortDescription === 'object' && item.shortDescription !== null) {
-                description = item.shortDescription[currentLang] || item.shortDescription['en'] || item.shortDescription['es'] || '';
+            const descField = item.description || item.shortDescription;
+            if (typeof descField === 'object' && descField !== null) {
+                description = descField[currentLang] || descField['es'] || descField['en'] || '';
             } else {
-                description = item.shortDescription || '';
+                description = descField || '';
             }
 
             return `
@@ -481,18 +483,27 @@ class ShoppingCart {
             // Update progress: Agregando productos (80%)
             this.updateProgress(progressModal, 80, t('cart.processing.adding'));
 
-            // Agregar productos a la biblioteca del usuario
-            const { addUserProduct } = await import('./userProfile.js');
+            // Agregar productos a la biblioteca del usuario y crear órdenes
+            const { addUserProduct, createOrder } = await import('./userProfile.js');
 
             for (const item of this.cart) {
+                // 1. Agregar producto a la biblioteca del usuario
                 await addUserProduct(auth.currentUser.uid, {
                     id: item.id,
-                    name: item.title,  // title -> name
-                    description: item.shortDescription,  // shortDescription -> description
+                    name: item.name || item.title,
+                    description: item.description || item.shortDescription,
                     price: item.price,
-                    image: item.imageURL,  // imageURL -> image
+                    image: item.imageURL,
                     category: 'purchased',
                     purchaseDate: new Date().toISOString()
+                });
+
+                // 2. Crear orden en la colección centralizada 'orders'
+                await createOrder(auth.currentUser.uid, auth.currentUser.email, {
+                    id: item.id,
+                    name: item.name || item.title,
+                    price: item.price,
+                    category: item.category || 'purchased'
                 });
             }
 

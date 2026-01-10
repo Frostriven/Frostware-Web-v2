@@ -15,6 +15,7 @@ import { renderAdminUsersView } from '../pages/admin-users/view.js';
 import { renderProductFormView } from '../pages/product-form/view.js';
 import { renderUserFormView } from '../pages/user-form/view.js';
 import { renderDatabaseManagementView } from '../pages/database-management/view.js';
+import { renderFinancesView } from '../pages/finances/view.js';
 import { renderProductDetailView } from '../pages/product-detail/view.js';
 import { renderDashboardView } from '../pages/dashboard/view.js';
 import { renderTrainingView } from '../pages/training/view.js';
@@ -505,6 +506,11 @@ const initializeApp = async () => {
   registerRoute('#/admin/databases', () => {
     setMainVisible(false);
     renderDatabaseManagementView();
+  });
+
+  registerRoute('#/admin/finances', () => {
+    setMainVisible(false);
+    renderFinancesView();
   });
 
   // User form routes (creation and editing)
