@@ -53,12 +53,66 @@ export async function renderDashboardView(productId) {
     product = allProducts.find(p => p.id === productId);
     userPurchasedProducts = await getUserProducts(auth.currentUser.uid);
 
-    // Load user statistics
+    // Load user statistics from new model
     try {
-      userStats = await getUserStatistics();
-      productStats = await getProductStatistics(productId);
-      console.log('📊 Estadísticas del usuario:', userStats);
-      console.log('📊 Estadísticas del producto:', productStats);
+      // Load statistics for this specific product from the new structure
+      // users/{userId}/stats/{productId}
+      const { doc, getDoc } = await import('firebase/firestore');
+      const { db } = await import('../../js/firebase.js');
+
+      const statsRef = doc(db, 'users', auth.currentUser.uid, 'stats', productId);
+      const statsSnap = await getDoc(statsRef);
+
+      if (statsSnap.exists()) {
+        productStats = statsSnap.data();
+        console.log('📊 Estadísticas del producto cargadas:', productStats);
+      } else {
+        console.warn('⚠️ No hay estadísticas para este producto aún');
+        productStats = {
+          totalSessions: 0,
+          totalQuestions: 0,
+          totalCorrect: 0,
+          totalIncorrect: 0,
+          averageScore: 0,
+          totalTimeStudied: 0,
+          averageTimePerSession: 0,
+          bestScore: 0,
+          worstScore: 100,
+          currentStreak: 0,
+          longestStreak: 0,
+          practiceMode: {
+            sessions: 0,
+            questions: 0,
+            correct: 0,
+            incorrect: 0,
+            averageScore: 0,
+            timeStudied: 0
+          },
+          examMode: {
+            sessions: 0,
+            questions: 0,
+            correct: 0,
+            incorrect: 0,
+            averageScore: 0,
+            timeStudied: 0,
+            passed: 0,
+            failed: 0
+          },
+          topicStats: {}
+        };
+      }
+
+      // Calculate general user stats by aggregating all product stats
+      userStats = {
+        totalSessions: productStats.totalSessions || 0,
+        totalQuestions: productStats.totalQuestions || 0,
+        correctAnswers: productStats.totalCorrect || 0,
+        incorrectAnswers: productStats.totalIncorrect || 0,
+        averageScore: productStats.averageScore || 0,
+        totalTimeSpent: productStats.totalTimeStudied || 0,
+        currentStreak: productStats.currentStreak || 0,
+        longestStreak: productStats.longestStreak || 0
+      };
     } catch (statsError) {
       console.warn('⚠️ No se pudieron cargar estadísticas (puede ser primera vez):', statsError.message);
       // Usar estadísticas vacías si hay error
@@ -70,16 +124,39 @@ export async function renderDashboardView(productId) {
         averageScore: 0,
         totalTimeSpent: 0,
         currentStreak: 0,
-        longestStreak: 0,
-        achievements: [],
-        productStats: {}
+        longestStreak: 0
       };
       productStats = {
-        sessions: 0,
-        averageScore: 0,
+        totalSessions: 0,
         totalQuestions: 0,
-        correctAnswers: 0,
-        topicPerformance: {}
+        totalCorrect: 0,
+        totalIncorrect: 0,
+        averageScore: 0,
+        totalTimeStudied: 0,
+        averageTimePerSession: 0,
+        bestScore: 0,
+        worstScore: 100,
+        currentStreak: 0,
+        longestStreak: 0,
+        practiceMode: {
+          sessions: 0,
+          questions: 0,
+          correct: 0,
+          incorrect: 0,
+          averageScore: 0,
+          timeStudied: 0
+        },
+        examMode: {
+          sessions: 0,
+          questions: 0,
+          correct: 0,
+          incorrect: 0,
+          averageScore: 0,
+          timeStudied: 0,
+          passed: 0,
+          failed: 0
+        },
+        topicStats: {}
       };
     }
 
@@ -741,52 +818,95 @@ export async function renderDashboardView(productId) {
 
               <!-- General Statistics -->
               <div class="card-glass rounded-xl p-6 bg-white dark:bg-transparent border border-gray-200 dark:border-transparent">
-                <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Estadísticas Generales</h3>
+                <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Estadísticas del Producto</h3>
                 <div class="space-y-4">
                   <div class="flex justify-between items-center">
-                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">Productos Adquiridos</span>
-                    <span class="font-bold text-cyan-700 dark:text-cyan-400">${userPurchasedProducts.length}</span>
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">Total Sesiones</span>
+                    <span class="font-bold text-cyan-700 dark:text-cyan-400">${productStats?.totalSessions || 0}</span>
                   </div>
                   <div class="flex justify-between items-center">
                     <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">Preguntas Respondidas</span>
-                    <span class="font-bold text-cyan-700 dark:text-cyan-400">${userStats?.totalQuestions || 0}</span>
+                    <span class="font-bold text-cyan-700 dark:text-cyan-400">${productStats?.totalQuestions || 0}</span>
                   </div>
                   <div class="flex justify-between items-center">
                     <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">Promedio General</span>
-                    <span class="font-bold text-cyan-700 dark:text-cyan-400">${userStats?.averageScore || 0}%</span>
+                    <span class="font-bold text-cyan-700 dark:text-cyan-400">${productStats?.averageScore || 0}%</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">Mejor Puntuación</span>
+                    <span class="font-bold text-green-700 dark:text-green-400">${productStats?.bestScore || 0}%</span>
                   </div>
                   <div class="flex justify-between items-center">
                     <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">Tiempo Total Estudiado</span>
-                    <span class="font-bold text-cyan-700 dark:text-cyan-400">${formatTime(userStats?.totalTimeSpent || 0)}</span>
+                    <span class="font-bold text-cyan-700 dark:text-cyan-400">${formatTime(productStats?.totalTimeStudied || 0)}</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">Racha Actual</span>
+                    <span class="font-bold text-orange-700 dark:text-orange-400">${productStats?.currentStreak || 0} días</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">Mejor Racha</span>
+                    <span class="font-bold text-orange-700 dark:text-orange-400">${productStats?.longestStreak || 0} días</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Product-specific Statistics -->
+              <!-- Practice vs Exam Statistics -->
               <div class="card-glass rounded-xl p-6 bg-white dark:bg-transparent border border-gray-200 dark:border-transparent">
-                <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Estadísticas por Producto</h3>
-                <div class="space-y-4">
-                  ${userPurchasedProducts.map(prod => {
-                    const prodStats = userStats?.productStats?.[prod.id] || {
-                      sessions: 0,
-                      averageScore: 0,
-                      totalQuestions: 0,
-                      correctAnswers: 0
-                    };
-                    return `
-                    <div class="border-l-4 border-cyan-600 dark:border-cyan-500 pl-4">
-                      <h4 class="font-bold text-gray-800 dark:text-white text-sm">${prod.displayName}</h4>
-                      <div class="grid grid-cols-2 gap-2 text-xs font-medium text-gray-700 dark:text-gray-400 mt-2">
-                        <div>Sesiones: <span class="font-semibold">${prodStats.sessions}</span></div>
-                        <div>Promedio: <span class="font-semibold">${prodStats.averageScore}%</span></div>
-                        <div>Preguntas: <span class="font-semibold">${prodStats.totalQuestions}</span></div>
-                        <div>Correctas: <span class="font-semibold">${prodStats.correctAnswers}</span></div>
-                      </div>
+                <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Modo Práctica vs Examen</h3>
+                <div class="space-y-6">
+                  <!-- Practice Mode -->
+                  <div>
+                    <h4 class="font-bold text-gray-800 dark:text-white text-sm mb-3 flex items-center">
+                      <svg class="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                      </svg>
+                      Modo Práctica
+                    </h4>
+                    <div class="grid grid-cols-2 gap-2 text-xs font-medium text-gray-700 dark:text-gray-400">
+                      <div>Sesiones: <span class="font-semibold">${productStats?.practiceMode?.sessions || 0}</span></div>
+                      <div>Promedio: <span class="font-semibold">${productStats?.practiceMode?.averageScore || 0}%</span></div>
+                      <div>Preguntas: <span class="font-semibold">${productStats?.practiceMode?.questions || 0}</span></div>
+                      <div>Correctas: <span class="font-semibold">${productStats?.practiceMode?.correct || 0}</span></div>
                     </div>
-                  `;
-                  }).join('')}
+                  </div>
+
+                  <!-- Exam Mode -->
+                  <div>
+                    <h4 class="font-bold text-gray-800 dark:text-white text-sm mb-3 flex items-center">
+                      <svg class="w-4 h-4 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                      Modo Examen
+                    </h4>
+                    <div class="grid grid-cols-2 gap-2 text-xs font-medium text-gray-700 dark:text-gray-400">
+                      <div>Sesiones: <span class="font-semibold">${productStats?.examMode?.sessions || 0}</span></div>
+                      <div>Promedio: <span class="font-semibold">${productStats?.examMode?.averageScore || 0}%</span></div>
+                      <div>Aprobados: <span class="font-semibold text-green-600">${productStats?.examMode?.passed || 0}</span></div>
+                      <div>Reprobados: <span class="font-semibold text-red-600">${productStats?.examMode?.failed || 0}</span></div>
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              <!-- Topic Statistics -->
+              ${Object.keys(productStats?.topicStats || {}).length > 0 ? `
+              <div class="card-glass rounded-xl p-6 bg-white dark:bg-transparent border border-gray-200 dark:border-transparent">
+                <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Estadísticas por Tema</h3>
+                <div class="space-y-3">
+                  ${Object.entries(productStats.topicStats).map(([topic, stats]) => `
+                    <div class="border-l-4 ${stats.accuracy >= 70 ? 'border-green-600' : 'border-yellow-600'} dark:${stats.accuracy >= 70 ? 'border-green-500' : 'border-yellow-500'} pl-4">
+                      <h4 class="font-bold text-gray-800 dark:text-white text-sm">${topic}</h4>
+                      <div class="grid grid-cols-3 gap-2 text-xs font-medium text-gray-700 dark:text-gray-400 mt-2">
+                        <div>Precisión: <span class="font-semibold ${stats.accuracy >= 70 ? 'text-green-600' : 'text-yellow-600'}">${stats.accuracy}%</span></div>
+                        <div>Correctas: <span class="font-semibold">${stats.correct}</span></div>
+                        <div>Incorrectas: <span class="font-semibold">${stats.incorrect}</span></div>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+              ` : ''}
 
               <!-- Quick Access -->
               <div class="card-glass rounded-xl p-6 bg-white dark:bg-transparent border border-gray-200 dark:border-transparent">

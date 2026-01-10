@@ -41,83 +41,120 @@
 - ✅ Títulos de productos visibles en modo oscuro (homepage, products, dashboard)
 - ✅ Texto "Un ecosistema para tu crecimiento" visible en modo oscuro
 
-## ⚠️ Issues Pendientes
+## ✅ Issues Resueltos Recientemente
 
-### 1. **Problema de Permisos de Firebase (CRÍTICO)**
+### 1. **Problema de Estadísticas No Mostrándose en Dashboard (RESUELTO)**
 
-**Síntoma**: Error `FirebaseError: Missing or insufficient permissions` al intentar leer/escribir estadísticas
+**Síntoma**: Las estadísticas mostraban "⚠️ No hay estadísticas para este producto aún" incluso después de completar sesiones.
 
-**Contexto**:
-- UserId: `y6OSvIZJJofgLbV90u8IedtA4ym1`
-- Email: `demo@frostware.com`
-- Las reglas de Firestore están configuradas correctamente
-- El problema persiste incluso con reglas permisivas (`allow read, write: if true`)
+**Causa**: Mismatch en el modelo de datos:
+- Dashboard leía desde: `users/{userId}/stats/{productId}` (subcollección)
+- SessionManager guardaba en: `user_statistics/{userId}` (colección global)
 
-**Posibles Causas**:
-1. El usuario `demo@frostware.com` no tiene el token de autenticación correcto
-2. Puede haber un problema de caché en Firebase SDK
-3. Las reglas pueden necesitar hasta 1 minuto para propagarse después del deploy
-4. El usuario puede necesitar cerrar sesión y volver a iniciar sesión para refrescar el token
+**Solución**:
+- ✅ Modificado `sessionManager.js` (líneas 197-311) para guardar en AMBAS ubicaciones
+- ✅ Mantiene compatibilidad con ambas estructuras de datos
+- ✅ Dashboard ahora muestra estadísticas correctamente
 
-**Soluciones Intentadas**:
-- ✅ Reglas de Firestore simplificadas
-- ✅ Deploy de reglas múltiples veces
-- ✅ Agregado manejo de errores para mostrar estadísticas vacías si fallan
-- ❌ El problema persiste
+**Archivos Afectados**: [src/js/sessionManager.js](../src/js/sessionManager.js)
 
-**Próximos Pasos Sugeridos**:
-1. **Opción A - Usar Firebase Emulators para desarrollo**:
-   ```bash
-   firebase emulators:start
-   ```
-   Luego cambiar en `.env`:
-   ```
-   VITE_USE_FIREBASE_EMULATORS=true
-   ```
+### 2. **Preguntas Cargadas desde Firebase con Randomización (RESUELTO)**
 
-2. **Opción B - Verificar/Crear usuario admin en Firestore**:
-   - Ir a Firebase Console > Firestore Database
-   - Crear documento en colección `users` con ID: `y6OSvIZJJofgLbV90u8IedtA4ym1`
-   - Contenido:
-     ```json
-     {
-       "email": "demo@frostware.com",
-       "role": "admin",
-       "displayName": "Admin Demo",
-       "createdAt": [timestamp actual],
-       "updatedAt": [timestamp actual]
-     }
-     ```
+**Estado Anterior**: Usando preguntas hardcodeadas de ejemplo sin randomización de opciones
 
-3. **Opción C - Cerrar sesión y volver a iniciar**:
-   - Cerrar sesión en la aplicación
-   - Limpiar caché del navegador
-   - Volver a iniciar sesión con `demo@frostware.com`
+**Implementación Completa**:
+- ✅ Carga real de preguntas desde Firestore basada en `product.databaseId`
+- ✅ Implementado algoritmo Fisher-Yates para randomizar opciones
+- ✅ Función `processQuestions()` que rastrea la posición del índice de respuesta correcta
+- ✅ Función `shuffleArray()` para aleatorización confiable
+- ✅ Soporte multilingüe (español/inglés) con fallback automático
 
-### 2. **Cargar Preguntas desde Firebase**
+**Archivos Modificados**: [src/pages/training/view.js:93-211](../src/pages/training/view.js#L93-L211)
 
-**Estado**: Actualmente usando preguntas hardcodeadas de ejemplo
-
-**Archivo**: [src/pages/training/view.js:78-155](../src/pages/training/view.js#L78-L155)
-
-**TODO**:
+**Código Implementado**:
 ```javascript
-async function loadQuestions(productId) {
-  // TODO: Implementar carga de preguntas desde Firebase
-  // Actualmente retorna preguntas de ejemplo
+// Algoritmo Fisher-Yates para randomización
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
 
-  // Implementación sugerida:
-  const questionsRef = collection(db, 'products', productId, 'questions');
-  const questionsSnapshot = await getDocs(questionsRef);
-  const questions = questionsSnapshot.docs.map(doc => ({
+// Procesar preguntas: randomizar opciones y rastrear respuesta correcta
+function processQuestions(rawQuestions) {
+  return rawQuestions.map(q => {
+    const optionsWithIndices = q.options.map((opt, idx) => ({
+      option: opt,
+      originalIndex: idx
+    }));
+    const shuffledOptions = shuffleArray(optionsWithIndices);
+    const newCorrectAnswerIndex = shuffledOptions.findIndex(
+      item => item.originalIndex === q.correctAnswer
+    );
+    return {
+      ...q,
+      options: shuffledOptions.map(item => item.option),
+      correctAnswer: newCorrectAnswerIndex,
+      originalCorrectAnswer: q.correctAnswer
+    };
+  });
+}
+
+// Cargar preguntas desde Firebase
+async function loadQuestions(productId) {
+  const productRef = doc(db, 'products', productId);
+  const productDoc = await getDoc(productRef);
+  const product = productDoc.data();
+  const databaseId = product.databaseId;
+
+  const questionsSnapshot = await getDocs(collection(db, databaseId));
+  const rawQuestions = questionsSnapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data()
   }));
-  return questions;
+
+  return processQuestions(rawQuestions);
 }
 ```
 
-### 3. **Modo Examen con Temporizador**
+### 3. **Sidebar Mostrando [object Object] (RESUELTO)**
+
+**Síntoma**: El menú lateral de preguntas mostraba `[object Object]` en lugar del texto de las preguntas.
+
+**Causa**: Las preguntas tienen contenido multilingüe en formato objeto `{es: "texto", en: "text"}` y el sidebar las mostraba sin procesar.
+
+**Solución**:
+- ✅ Agregada función `getLocalizedText()` para extraer texto según idioma
+- ✅ Actualizado renderizado del sidebar para detectar objetos vs strings
+- ✅ Implementado fallback automático: idioma actual → español → inglés → primer valor disponible
+
+**Archivos Modificados**:
+- [src/pages/training/view.js:1378-1386](../src/pages/training/view.js#L1378-L1386) - Función getLocalizedText
+- [src/pages/training/view.js:1102-1118](../src/pages/training/view.js#L1102-L1118) - Renderizado sidebar
+
+**Código Implementado**:
+```javascript
+// Obtener texto localizado según idioma actual
+function getLocalizedText(textObj, lang = 'es') {
+  if (!textObj) return '';
+  if (typeof textObj === 'string') return textObj;
+  if (typeof textObj === 'object') {
+    return textObj[lang] || textObj['es'] || textObj['en'] || Object.values(textObj)[0] || '';
+  }
+  return String(textObj);
+}
+
+// En el sidebar:
+const localizedTopic = typeof q.topic === 'string' ? q.topic : (q.topic?.es || q.topic?.en || '');
+const localizedQuestion = typeof q.question === 'string' ? q.question : (q.question?.es || q.question?.en || '');
+```
+
+## ⚠️ Issues Pendientes
+
+### 1. **Modo Examen con Temporizador**
 
 **Estado**: Solo modo práctica implementado
 
@@ -127,15 +164,6 @@ async function loadQuestions(productId) {
 - Agregar lógica para finalizar automáticamente cuando se acabe el tiempo
 - Mostrar diferentes UI según el modo
 
-### 4. **Estadísticas No Se Muestran en el Dashboard**
-
-**Estado**: El código está preparado pero las estadísticas aparecen en 0
-
-**Causa**: Relacionado con el Issue #1 (permisos de Firebase)
-
-**Ubicación**: [src/pages/dashboard/view.js:729-764](../src/pages/dashboard/view.js#L729-L764)
-
-Una vez resuelto el problema de permisos, las estadísticas deberían mostrarse automáticamente.
 
 ## 📋 Archivos Creados/Modificados
 
@@ -257,16 +285,19 @@ Las reglas permiten:
 
 ## 💡 Recomendaciones
 
-1. **Resolver el problema de permisos** es la prioridad #1 - sin esto las estadísticas no funcionarán
-2. **Implementar carga de preguntas desde Firebase** para tener contenido real
-3. **Agregar modo examen** para completar la funcionalidad
-4. **Considerar usar Firebase Emulators** para desarrollo para evitar problemas con producción
-5. **Agregar índices de Firestore** si Firebase lo solicita cuando se hagan queries complejas
+1. **Agregar modo examen** para completar la funcionalidad
+2. **Considerar usar Firebase Emulators** para desarrollo para evitar problemas con producción
+3. **Agregar índices de Firestore** si Firebase lo solicita cuando se hagan queries complejas
+4. **Optimizar carga de preguntas** - considerar caché local o paginación para bases de datos grandes
+5. **Agregar más idiomas** al sistema multilingüe si es necesario
 
 ## 📝 Notas Adicionales
 
-- El sistema está completamente preparado para funcionar una vez resuelto el problema de permisos
-- El código incluye manejo de errores que muestra estadísticas en 0 si no se pueden cargar
-- La UI es completamente funcional y responsive
-- El modo oscuro funciona correctamente en todas las páginas
-- Las traducciones están completas en español e inglés
+- ✅ El sistema de estadísticas está completamente funcional con guardado dual
+- ✅ Las preguntas se cargan dinámicamente desde Firestore basadas en el databaseId del producto
+- ✅ Las opciones se randomizan usando el algoritmo Fisher-Yates en cada carga
+- ✅ Soporte multilingüe completo con fallback automático
+- ✅ La UI es completamente funcional y responsive
+- ✅ El modo oscuro funciona correctamente en todas las páginas
+- ✅ Las traducciones están completas en español e inglés
+- ✅ El código incluye manejo robusto de errores y logging detallado

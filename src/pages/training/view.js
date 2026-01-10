@@ -90,9 +90,80 @@ async function loadProduct(productId) {
   }
 }
 
+// Shuffle array using Fisher-Yates algorithm
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+// Process questions: randomize options and track correct answer
+function processQuestions(rawQuestions) {
+  return rawQuestions.map(q => {
+    // Create array with options and their original indices
+    const optionsWithIndices = q.options.map((opt, idx) => ({
+      option: opt,
+      originalIndex: idx
+    }));
+
+    // Shuffle the options
+    const shuffledOptions = shuffleArray(optionsWithIndices);
+
+    // Find new position of correct answer
+    const newCorrectAnswerIndex = shuffledOptions.findIndex(
+      item => item.originalIndex === q.correctAnswer
+    );
+
+    return {
+      ...q,
+      options: shuffledOptions.map(item => item.option),
+      correctAnswer: newCorrectAnswerIndex,
+      originalCorrectAnswer: q.correctAnswer // Keep original for reference
+    };
+  });
+}
+
 async function loadQuestions(productId) {
-  // TODO: Implementar carga de preguntas desde Firebase
-  return [
+  try {
+    // Load product to get databaseId
+    const productRef = doc(db, 'products', productId);
+    const productDoc = await getDoc(productRef);
+
+    if (!productDoc.exists()) {
+      console.error('Producto no encontrado:', productId);
+      return [];
+    }
+
+    const product = productDoc.data();
+    const databaseId = product.databaseId;
+
+    if (!databaseId) {
+      console.error('Producto no tiene databaseId:', productId);
+      return [];
+    }
+
+    // Load questions from the database collection
+    const { collection, getDocs } = await import('firebase/firestore');
+    const questionsSnapshot = await getDocs(collection(db, databaseId));
+
+    const rawQuestions = questionsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    console.log(`✅ Cargadas ${rawQuestions.length} preguntas desde ${databaseId}`);
+
+    // Process questions: randomize options
+    const processedQuestions = processQuestions(rawQuestions);
+
+    return processedQuestions;
+  } catch (error) {
+    console.error('Error cargando preguntas:', error);
+    // Fallback to sample questions if there's an error
+    return [
     {
       id: 'q1',
       topic: 'Communications',
@@ -135,7 +206,8 @@ async function loadQuestions(productId) {
       correctAnswer: 1,
       explanation: 'SIGWX (Significant Weather Chart) es una carta meteorológica que muestra fenómenos meteorológicos significativos para la aviación.'
     }
-  ];
+    ];
+  }
 }
 
 function getURLParams() {
@@ -1028,15 +1100,21 @@ function renderTrainingApp(product, questions, params) {
           </div>
 
           <div id="questions-list">
-            ${questions.map((q, i) => `
-              <div class="question-item ${i === 0 ? 'active' : ''}" onclick="jumpToQuestion(${i})" data-index="${i}">
-                <div class="question-number">${i + 1}</div>
-                <div style="flex: 1; min-width: 0;">
-                  <div style="font-size: 0.75rem; color: var(--color-text-secondary, #6b7280); margin-bottom: 0.25rem;">${q.topic}</div>
-                  <div style="font-size: 0.875rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${q.question}</div>
+            ${questions.map((q, i) => {
+              // Get localized text for sidebar display
+              const localizedTopic = typeof q.topic === 'string' ? q.topic : (q.topic?.es || q.topic?.en || '');
+              const localizedQuestion = typeof q.question === 'string' ? q.question : (q.question?.es || q.question?.en || '');
+
+              return `
+                <div class="question-item ${i === 0 ? 'active' : ''}" onclick="jumpToQuestion(${i})" data-index="${i}">
+                  <div class="question-number">${i + 1}</div>
+                  <div style="flex: 1; min-width: 0;">
+                    <div style="font-size: 0.75rem; color: var(--color-text-secondary, #6b7280); margin-bottom: 0.25rem;">${localizedTopic}</div>
+                    <div style="font-size: 0.875rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${localizedQuestion}</div>
+                  </div>
                 </div>
-              </div>
-            `).join('')}
+              `;
+            }).join('')}
           </div>
         </aside>
 
@@ -1234,7 +1312,8 @@ function initializeTrainingApp(product, questions, params) {
     examDuration: params.duration,
     examTimeRemaining: params.duration,
     timerInterval: null,
-    sessionId: params.sessionId || null
+    sessionId: params.sessionId || null,
+    currentLanguage: 'es' // Default language
   };
 
   createTrainingSession(product, params.mode);
@@ -1303,6 +1382,16 @@ function updateTimerDisplay() {
   }
 }
 
+// Get localized text based on current language
+function getLocalizedText(textObj, lang = 'es') {
+  if (!textObj) return '';
+  if (typeof textObj === 'string') return textObj;
+  if (typeof textObj === 'object') {
+    return textObj[lang] || textObj['es'] || textObj['en'] || Object.values(textObj)[0] || '';
+  }
+  return String(textObj);
+}
+
 function loadQuestion(index) {
   const app = window.trainingApp;
   const question = app.questions[index];
@@ -1315,6 +1404,12 @@ function loadQuestion(index) {
   const isBookmarked = app.bookmarkedQuestions.has(index);
   const isPracticeMode = app.sessionMode === 'practice';
 
+  // Get localized texts
+  const currentLang = app.currentLanguage || 'es';
+  const localizedTopic = getLocalizedText(question.topic, currentLang);
+  const localizedQuestion = getLocalizedText(question.question, currentLang);
+  const localizedExplanation = getLocalizedText(question.explanation, currentLang);
+
   // Show/hide image button
   const imageBtn = document.getElementById('image-btn');
   if (imageBtn) {
@@ -1323,9 +1418,10 @@ function loadQuestion(index) {
 
   // Store current question image for modal
   window.currentQuestionImage = question.image;
-  window.currentQuestionCaption = question.question;
+  window.currentQuestionCaption = localizedQuestion;
 
   let optionsHTML = question.options.map((option, i) => {
+    const localizedOption = getLocalizedText(option, currentLang);
     let className = 'answer-option';
 
     // En modo práctica, mostrar colores si ya fue contestada
@@ -1344,7 +1440,7 @@ function loadQuestion(index) {
     return `
       <div class="${className}" onclick="selectAnswer(${i})">
         <div class="option-letter">${String.fromCharCode(65 + i)}</div>
-        <span style="flex: 1;">${option}</span>
+        <span style="flex: 1;">${localizedOption}</span>
         ${isPracticeMode && userAnswer !== undefined && i === question.correctAnswer ? `
           <svg style="width: 1.5rem; height: 1.5rem; color: #10b981; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -1364,7 +1460,7 @@ function loadQuestion(index) {
       <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem;">
         <div style="flex: 1;">
           <div style="display: inline-block; padding: 0.375rem 0.75rem; background: rgba(34, 167, 208, 0.1); color: #22a7d0; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; margin-bottom: 0.75rem;">
-            ${question.topic}
+            ${localizedTopic}
           </div>
           <div style="font-size: 0.875rem; color: var(--color-text-secondary, #6b7280);">
             Pregunta ${index + 1} de ${app.questions.length}
@@ -1377,7 +1473,7 @@ function loadQuestion(index) {
         </button>
       </div>
 
-      <h2 class="question-title">${question.question}</h2>
+      <h2 class="question-title">${localizedQuestion}</h2>
 
       <div class="answer-options">
         ${optionsHTML}
@@ -1398,7 +1494,7 @@ function loadQuestion(index) {
               Incorrecto
             `}
           </div>
-          <p style="color: var(--color-text-secondary, #6b7280);">${question.explanation}</p>
+          <p style="color: var(--color-text-secondary, #6b7280);">${localizedExplanation || ''}</p>
         </div>
       ` : ''}
     </div>

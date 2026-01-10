@@ -193,6 +193,122 @@ async function updateUserStatistics(sessionResults) {
       await updateDoc(statsRef, updateData);
       console.log('✅ Estadísticas actualizadas');
     }
+
+    // ============================================
+    // TAMBIÉN GUARDAR EN LA SUBCOLLECCIÓN QUE USA EL DASHBOARD
+    // ============================================
+    // El dashboard espera: users/{userId}/stats/{productId}
+    console.log('💾 Guardando estadísticas del producto en subcollección...');
+    const productStatsRef = doc(db, 'users', userId, 'stats', sessionResults.productId);
+    const productStatsSnap = await getDoc(productStatsRef);
+
+    if (!productStatsSnap.exists()) {
+      // Crear estadísticas iniciales del producto
+      const initialProductStats = {
+        productId: sessionResults.productId,
+        totalSessions: 1,
+        totalQuestions: sessionResults.totalQuestions,
+        totalCorrect: sessionResults.correctAnswers,
+        totalIncorrect: sessionResults.incorrectAnswers,
+        averageScore: sessionResults.score,
+        totalTimeStudied: sessionResults.timeSpent,
+        averageTimePerSession: sessionResults.timeSpent,
+        bestScore: sessionResults.score,
+        worstScore: sessionResults.score,
+        currentStreak: 1,
+        longestStreak: 1,
+        practiceMode: {
+          sessions: sessionResults.mode === 'practice' ? 1 : 0,
+          questions: sessionResults.mode === 'practice' ? sessionResults.totalQuestions : 0,
+          correct: sessionResults.mode === 'practice' ? sessionResults.correctAnswers : 0,
+          incorrect: sessionResults.mode === 'practice' ? sessionResults.incorrectAnswers : 0,
+          averageScore: sessionResults.mode === 'practice' ? sessionResults.score : 0,
+          timeStudied: sessionResults.mode === 'practice' ? sessionResults.timeSpent : 0
+        },
+        examMode: {
+          sessions: sessionResults.mode === 'exam' ? 1 : 0,
+          questions: sessionResults.mode === 'exam' ? sessionResults.totalQuestions : 0,
+          correct: sessionResults.mode === 'exam' ? sessionResults.correctAnswers : 0,
+          incorrect: sessionResults.mode === 'exam' ? sessionResults.incorrectAnswers : 0,
+          averageScore: sessionResults.mode === 'exam' ? sessionResults.score : 0,
+          timeStudied: sessionResults.mode === 'exam' ? sessionResults.timeSpent : 0
+        },
+        topicPerformance: calculateTopicPerformance(sessionResults.answers),
+        lastSessionDate: Timestamp.now(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
+      };
+
+      console.log('📝 Creando estadísticas del producto:', {
+        path: `users/${userId}/stats/${sessionResults.productId}`,
+        data: initialProductStats
+      });
+      await setDoc(productStatsRef, initialProductStats);
+      console.log('✅ Estadísticas del producto creadas');
+    } else {
+      // Actualizar estadísticas existentes del producto
+      const currentProductStats = productStatsSnap.data();
+
+      const newTotalSessions = (currentProductStats.totalSessions || 0) + 1;
+      const newTotalQuestions = (currentProductStats.totalQuestions || 0) + sessionResults.totalQuestions;
+      const newTotalCorrect = (currentProductStats.totalCorrect || 0) + sessionResults.correctAnswers;
+      const newTotalIncorrect = (currentProductStats.totalIncorrect || 0) + sessionResults.incorrectAnswers;
+      const newAverageScore = Math.round((newTotalCorrect / newTotalQuestions) * 100);
+      const newTotalTime = (currentProductStats.totalTimeStudied || 0) + sessionResults.timeSpent;
+      const newAvgTime = Math.round(newTotalTime / newTotalSessions);
+
+      // Actualizar modo (practice/exam)
+      const practiceMode = currentProductStats.practiceMode || {};
+      const examMode = currentProductStats.examMode || {};
+
+      if (sessionResults.mode === 'practice') {
+        practiceMode.sessions = (practiceMode.sessions || 0) + 1;
+        practiceMode.questions = (practiceMode.questions || 0) + sessionResults.totalQuestions;
+        practiceMode.correct = (practiceMode.correct || 0) + sessionResults.correctAnswers;
+        practiceMode.incorrect = (practiceMode.incorrect || 0) + sessionResults.incorrectAnswers;
+        practiceMode.timeStudied = (practiceMode.timeStudied || 0) + sessionResults.timeSpent;
+        practiceMode.averageScore = practiceMode.questions > 0
+          ? Math.round((practiceMode.correct / practiceMode.questions) * 100)
+          : 0;
+      } else if (sessionResults.mode === 'exam') {
+        examMode.sessions = (examMode.sessions || 0) + 1;
+        examMode.questions = (examMode.questions || 0) + sessionResults.totalQuestions;
+        examMode.correct = (examMode.correct || 0) + sessionResults.correctAnswers;
+        examMode.incorrect = (examMode.incorrect || 0) + sessionResults.incorrectAnswers;
+        examMode.timeStudied = (examMode.timeStudied || 0) + sessionResults.timeSpent;
+        examMode.averageScore = examMode.questions > 0
+          ? Math.round((examMode.correct / examMode.questions) * 100)
+          : 0;
+      }
+
+      const updateProductData = {
+        totalSessions: newTotalSessions,
+        totalQuestions: newTotalQuestions,
+        totalCorrect: newTotalCorrect,
+        totalIncorrect: newTotalIncorrect,
+        averageScore: newAverageScore,
+        totalTimeStudied: newTotalTime,
+        averageTimePerSession: newAvgTime,
+        bestScore: Math.max(currentProductStats.bestScore || 0, sessionResults.score),
+        worstScore: Math.min(currentProductStats.worstScore || 100, sessionResults.score),
+        practiceMode,
+        examMode,
+        topicPerformance: mergeTopicPerformance(
+          currentProductStats.topicPerformance || {},
+          calculateTopicPerformance(sessionResults.answers)
+        ),
+        lastSessionDate: Timestamp.now(),
+        updatedAt: Timestamp.now()
+      };
+
+      console.log('📝 Actualizando estadísticas del producto:', {
+        path: `users/${userId}/stats/${sessionResults.productId}`,
+        newTotalSessions,
+        newAverageScore
+      });
+      await updateDoc(productStatsRef, updateProductData);
+      console.log('✅ Estadísticas del producto actualizadas');
+    }
   } catch (error) {
     console.error('❌ Error actualizando estadísticas:', error);
     throw error;
