@@ -1,4 +1,5 @@
 import { auth, db } from '../../js/firebase.js';
+import { waitForAuthReady } from '../../js/auth.js';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import {
   createSession,
@@ -9,11 +10,23 @@ import {
 
 export async function renderTrainingView(productId) {
   console.log('🎯 renderTrainingView llamado con productId:', productId);
+
+  // Remove loading overlay if present (from retry incorrect questions)
+  const loadingOverlay = document.getElementById('loading-overlay');
+  if (loadingOverlay) {
+    loadingOverlay.remove();
+    console.log('🔄 Loading overlay removed');
+  }
+
   const root = document.getElementById('spa-root');
   if (!root) {
     console.error('❌ No se encontró spa-root');
     return;
   }
+
+  // Esperar a que Firebase determine el estado de autenticación
+  // Esto previene redirecciones falsas durante la recarga de página
+  await waitForAuthReady();
 
   if (!auth?.currentUser) {
     console.log('❌ Usuario no autenticado, redirigiendo a login');
@@ -34,13 +47,43 @@ export async function renderTrainingView(productId) {
     return;
   }
 
-  const questions = await loadQuestions(productId);
+  let questions = await loadQuestions(productId);
   if (!questions || questions.length === 0) {
     root.innerHTML = renderError('No hay preguntas disponibles');
     return;
   }
 
   const params = getURLParams();
+
+  // Filter questions if retrying incorrect ones
+  if (params.retryIncorrect) {
+    // Get incorrect question IDs from sessionStorage
+    const storedIds = sessionStorage.getItem('retryIncorrectQuestionIds');
+    if (storedIds) {
+      try {
+        const incorrectIds = new Set(JSON.parse(storedIds));
+        console.log('🔄 IDs de preguntas incorrectas:', Array.from(incorrectIds));
+
+        const originalCount = questions.length;
+        questions = questions.filter(q => incorrectIds.has(q.id));
+        console.log(`🔄 Filtrando preguntas incorrectas: ${questions.length} de ${originalCount} (buscando ${incorrectIds.size} IDs)`);
+
+        // Clear sessionStorage after using it
+        sessionStorage.removeItem('retryIncorrectQuestionIds');
+
+        if (questions.length === 0) {
+          root.innerHTML = renderError('No se encontraron las preguntas incorrectas. Es posible que las preguntas hayan sido actualizadas.');
+          return;
+        }
+      } catch (e) {
+        console.error('Error parsing incorrect question IDs:', e);
+        sessionStorage.removeItem('retryIncorrectQuestionIds');
+      }
+    } else {
+      console.warn('⚠️ retryIncorrect=true pero no hay IDs en sessionStorage');
+    }
+  }
+
   root.innerHTML = renderTrainingApp(product, questions, params);
   initializeTrainingApp(product, questions, params);
   injectStyles();
@@ -117,9 +160,13 @@ function processQuestions(rawQuestions) {
       item => item.originalIndex === q.correctAnswer
     );
 
+    // Create mapping: currentIndex -> originalIndex (for persistence)
+    const optionMapping = shuffledOptions.map(item => item.originalIndex);
+
     return {
       ...q,
       options: shuffledOptions.map(item => item.option),
+      optionMapping: optionMapping, // Track original indices for persistence
       correctAnswer: newCorrectAnswerIndex,
       originalCorrectAnswer: q.correctAnswer // Keep original for reference
     };
@@ -156,8 +203,13 @@ async function loadQuestions(productId) {
 
     console.log(`✅ Cargadas ${rawQuestions.length} preguntas desde ${databaseId}`);
 
-    // Process questions: randomize options
-    const processedQuestions = processQuestions(rawQuestions);
+    // First shuffle the questions order
+    const shuffledQuestions = shuffleArray(rawQuestions);
+    console.log('🔀 Preguntas randomizadas');
+
+    // Then process questions: randomize options within each question
+    const processedQuestions = processQuestions(shuffledQuestions);
+    console.log('🔀 Opciones de respuestas randomizadas');
 
     return processedQuestions;
   } catch (error) {
@@ -215,11 +267,15 @@ function getURLParams() {
   const queryString = hash.includes('?') ? hash.split('?')[1] : '';
   const urlParams = new URLSearchParams(queryString);
 
-  return {
-    mode: urlParams.get('mode') || 'practice',
-    duration: parseInt(urlParams.get('duration')) || 3600,
-    sessionId: urlParams.get('sessionId') || null
-  };
+  const mode = urlParams.get('mode')?.toLowerCase() || 'practice';
+  const duration = parseInt(urlParams.get('duration')) || 3600;
+  const passingScore = parseInt(urlParams.get('passingScore')) || 70;
+  const sessionId = urlParams.get('sessionId') || null;
+  const retryIncorrect = urlParams.get('retryIncorrect') === 'true';
+
+  console.log('🎯 URL Params detectados:', { hash, mode, duration, passingScore, sessionId, retryIncorrect });
+
+  return { mode, duration, passingScore, sessionId, retryIncorrect };
 }
 
 function injectStyles() {
@@ -228,18 +284,24 @@ function injectStyles() {
   const styleTag = document.createElement('style');
   styleTag.id = 'training-app-styles';
   styleTag.textContent = `
+    /* ============================================
+       TRAINING APP - Frostware Design System
+       Clean, minimal, professional
+       ============================================ */
+
     #training-app-container {
       position: fixed;
       inset: 0;
       min-height: 100vh;
-      background-color: var(--color-bg-primary, #ffffff);
-      color: var(--color-text-primary, #111827);
+      background: var(--color-bg-primary, #ffffff);
+      color: var(--color-text-primary, #0f172a);
       z-index: 9999;
       overflow: hidden;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     html.dark #training-app-container {
-      background-color: #0a0e1a;
+      background: #0a0e1a;
       color: #e4e8ef;
     }
 
@@ -248,144 +310,198 @@ function injectStyles() {
       min-height: 100vh;
     }
 
-    /* Sidebar Izquierdo */
+    /* ============================================
+       SIDEBAR
+       ============================================ */
     .questions-sidebar {
-      width: 300px;
-      background: var(--color-bg-secondary, #f9fafb);
-      border-right: 1px solid var(--color-border-primary, #e5e7eb);
-      overflow-y: auto;
-      position: fixed;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      z-index: 30;
-      transform: translateX(0);
-      transition: transform 0.3s ease;
+      width: 320px;
+      min-width: 320px;
+      background: var(--color-bg-secondary, #f8fafc);
+      border-right: 1px solid var(--color-border-primary, #e2e8f0);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: width 0.3s ease, min-width 0.3s ease, opacity 0.3s ease;
     }
 
     .questions-sidebar.closed {
-      transform: translateX(-300px);
+      width: 0;
+      min-width: 0;
+      opacity: 0;
+      border-right: none;
     }
 
     html.dark .questions-sidebar {
-      background: #12172b;
+      background: #0f1419;
       border-right-color: #1e293b;
     }
 
     .sidebar-header {
       padding: 1.5rem;
-      border-bottom: 1px solid var(--color-border-primary, #e5e7eb);
-      position: sticky;
-      top: 0;
+      border-bottom: 1px solid var(--color-border-primary, #e2e8f0);
       background: inherit;
-      z-index: 10;
     }
 
     html.dark .sidebar-header {
       border-bottom-color: #1e293b;
     }
 
-    /* PIE Chart */
-    .pie-chart-container {
-      width: 160px;
-      height: 160px;
-      margin: 1rem auto;
-      position: relative;
+    .sidebar-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
     }
 
-    .pie-chart {
-      width: 100%;
-      height: 100%;
-      transform: rotate(-90deg);
-    }
-
-    .pie-chart-center {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-    }
-
-    .pie-chart-value {
-      font-size: 1.5rem;
+    .sidebar-title {
+      font-size: 0.875rem;
       font-weight: 700;
-      color: #22a7d0;
-      line-height: 1;
-    }
-
-    html.dark .pie-chart-value {
-      color: #22a7d0;
-    }
-
-    .pie-chart-label {
-      font-size: 0.75rem;
-      color: var(--color-text-secondary, #6b7280);
       text-transform: uppercase;
-      font-weight: 600;
       letter-spacing: 0.05em;
-      margin-top: 0.25rem;
+      color: var(--color-text-tertiary, #64748b);
     }
 
-    html.dark .pie-chart-label {
+    html.dark .sidebar-title {
       color: #9ca3af;
     }
 
-    .pie-segment {
-      transition: stroke-dasharray 0.5s ease;
+    /* Progress Stats Card */
+    .progress-stats-card {
+      background: linear-gradient(135deg, rgba(34, 167, 208, 0.08) 0%, rgba(34, 167, 208, 0.02) 100%);
+      border: 1px solid rgba(34, 167, 208, 0.15);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
     }
 
-    .stats-compact {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.5rem;
-      margin-top: 1rem;
+    html.dark .progress-stats-card {
+      background: linear-gradient(135deg, rgba(34, 167, 208, 0.12) 0%, rgba(34, 167, 208, 0.04) 100%);
+      border-color: rgba(34, 167, 208, 0.25);
     }
 
-    .stat-compact {
-      text-align: center;
-      padding: 0.5rem;
-      background: var(--color-bg-primary, #ffffff);
-      border: 1px solid var(--color-border-primary, #e5e7eb);
-      border-radius: 8px;
+    .progress-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
     }
 
-    html.dark .stat-compact {
-      background: #1a2038;
-      border-color: #2d3a52;
-    }
-
-    .stat-compact-value {
-      font-size: 1.25rem;
-      font-weight: 700;
+    .progress-percentage {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: #22a7d0;
       line-height: 1;
-      margin-bottom: 0.25rem;
     }
 
-    .stat-compact-label {
-      font-size: 0.65rem;
-      text-transform: uppercase;
+    .progress-label {
+      font-size: 0.6875rem;
       font-weight: 600;
-      color: var(--color-text-secondary, #6b7280);
-      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-text-tertiary, #64748b);
     }
 
-    html.dark .stat-compact-label {
+    html.dark .progress-label {
       color: #9ca3af;
     }
 
-    html.dark .stat-compact-value {
+    .progress-bar-sidebar {
+      height: 8px;
+      background: var(--color-bg-tertiary, #f1f5f9);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 0.75rem;
+    }
+
+    html.dark .progress-bar-sidebar {
+      background: #1a1f2e;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #22a7d0, #06b6d4);
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+
+    .progress-counts {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+    }
+
+    .progress-count {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      color: var(--color-text-secondary, #475569);
+    }
+
+    html.dark .progress-count {
+      color: #9ca3af;
+    }
+
+    .progress-count-value {
+      font-weight: 700;
+      color: var(--color-text-primary, #0f172a);
+    }
+
+    html.dark .progress-count-value {
       color: #e4e8ef;
     }
 
+    .progress-count.correct .progress-count-value { color: #10b981; }
+    .progress-count.incorrect .progress-count-value { color: #ef4444; }
+
+    /* Database Info */
+    .database-info {
+      padding: 0.75rem 1rem;
+      background: var(--color-bg-tertiary, #f1f5f9);
+      border-radius: 8px;
+      margin-top: 0.75rem;
+    }
+
+    html.dark .database-info {
+      background: #1a1f2e;
+    }
+
+    .database-info-label {
+      font-size: 0.625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-text-tertiary, #64748b);
+      margin-bottom: 0.25rem;
+    }
+
+    html.dark .database-info-label {
+      color: #6b7280;
+    }
+
+    .database-info-value {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--color-text-primary, #0f172a);
+    }
+
+    html.dark .database-info-value {
+      color: #e4e8ef;
+    }
+
+    /* Questions List */
+    .questions-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
     .question-item {
-      padding: 0.75rem 1.5rem;
-      border-bottom: 1px solid var(--color-border-primary, #e5e7eb);
-      cursor: pointer;
-      transition: all 0.2s ease;
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.875rem;
+      padding: 0.875rem 1.5rem;
+      border-bottom: 1px solid var(--color-border-primary, #e2e8f0);
+      cursor: pointer;
+      transition: all 0.15s ease;
     }
 
     html.dark .question-item {
@@ -393,106 +509,259 @@ function injectStyles() {
     }
 
     .question-item:hover {
-      background: rgba(34, 167, 208, 0.05);
+      background: rgba(34, 167, 208, 0.04);
     }
 
     .question-item.active {
-      background: rgba(34, 167, 208, 0.1);
+      background: rgba(34, 167, 208, 0.08);
       border-left: 3px solid #22a7d0;
-    }
-
-    .question-item.bookmarked::before {
-      content: '★';
-      color: #f59e0b;
-      font-size: 1rem;
+      padding-left: calc(1.5rem - 3px);
     }
 
     .question-number {
       width: 32px;
       height: 32px;
       border-radius: 8px;
-      background: var(--color-bg-primary, #ffffff);
-      border: 2px solid var(--color-border-primary, #e5e7eb);
+      background: var(--color-bg-tertiary, #f1f5f9);
+      border: 2px solid transparent;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 600;
-      font-size: 0.875rem;
+      font-weight: 700;
+      font-size: 0.8125rem;
       flex-shrink: 0;
+      transition: all 0.2s ease;
     }
 
     html.dark .question-number {
-      background: #1a2038;
-      border-color: #2d3a52;
+      background: #1a1f2e;
     }
 
     .question-item.active .question-number {
       background: #22a7d0;
-      border-color: #22a7d0;
       color: white;
     }
 
-    /* Colores según estado de respuesta */
     .question-item.answered-correct .question-number {
       background: #10b981;
-      border-color: #10b981;
       color: white;
     }
 
     .question-item.answered-incorrect .question-number {
       background: #ef4444;
-      border-color: #ef4444;
       color: white;
     }
 
     .question-item.answered-neutral .question-number {
-      background: #6b7280;
-      border-color: #6b7280;
+      background: #22a7d0;
       color: white;
     }
 
-    /* Main Content */
+    .question-item.bookmarked {
+      background: rgba(245, 158, 11, 0.04);
+    }
+
+    .question-item .bookmark-icon {
+      display: none;
+      color: #f59e0b;
+      flex-shrink: 0;
+    }
+
+    .question-item.bookmarked .bookmark-icon {
+      display: block;
+    }
+
+    .question-item-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .question-item-topic {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--color-text-tertiary, #64748b);
+      margin-bottom: 0.125rem;
+    }
+
+    html.dark .question-item-topic {
+      color: #6b7280;
+    }
+
+    .question-item-text {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--color-text-primary, #0f172a);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    html.dark .question-item-text {
+      color: #e4e8ef;
+    }
+
+    /* ============================================
+       MAIN CONTENT
+       ============================================ */
     .training-main {
-      margin-left: 300px;
       flex: 1;
       display: flex;
       flex-direction: column;
-      transition: margin-left 0.3s ease;
       height: 100vh;
-      overflow-y: auto;
+      overflow: hidden;
+      min-width: 0;
     }
 
-    .training-main.sidebar-closed {
-      margin-left: 0;
-    }
-
+    /* Header */
     .training-header {
-      background: var(--color-bg-secondary, #f9fafb);
-      border-bottom: 1px solid var(--color-border-primary, #e5e7eb);
-      padding: 1.5rem 2rem;
-      position: sticky;
-      top: 0;
-      z-index: 20;
+      background: var(--color-bg-secondary, #f8fafc);
+      border-bottom: 1px solid var(--color-border-primary, #e2e8f0);
+      padding: 1rem 1.5rem;
     }
 
     html.dark .training-header {
-      background: #12172b;
+      background: #0f1419;
       border-bottom-color: #1e293b;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .header-info h1 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--color-text-primary, #0f172a);
+      margin-bottom: 0.25rem;
+    }
+
+    html.dark .header-info h1 {
+      color: #e4e8ef;
+    }
+
+    .header-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+    }
+
+    .badge.practice {
+      background: rgba(16, 185, 129, 0.1);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .badge.exam {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .badge.review {
+      background: rgba(139, 92, 246, 0.1);
+      color: #8b5cf6;
+      border: 1px solid rgba(139, 92, 246, 0.2);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .timer-box {
+      text-align: right;
+    }
+
+    .timer-label {
+      font-size: 0.625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-text-tertiary, #64748b);
+    }
+
+    .timer-display {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #22a7d0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer-display.warning { color: #f59e0b; }
+    .timer-display.critical {
+      color: #ef4444;
+      animation: pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .score-box {
+      text-align: right;
+    }
+
+    .score-label {
+      font-size: 0.625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-text-tertiary, #64748b);
+    }
+
+    .score-display {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #22a7d0;
+    }
+
+    /* Header Stats Row */
+    .header-stats-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
     }
 
     .header-stats {
       display: flex;
       align-items: center;
       gap: 1.5rem;
-      flex-wrap: wrap;
     }
 
     .header-stat {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      font-size: 0.875rem;
-      color: var(--color-text-secondary, #6b7280);
+      gap: 0.375rem;
+      font-size: 0.8125rem;
+      color: var(--color-text-secondary, #475569);
     }
 
     html.dark .header-stat {
@@ -501,111 +770,152 @@ function injectStyles() {
 
     .header-stat-value {
       font-weight: 700;
-      color: var(--color-text-primary, #111827);
+      color: var(--color-text-primary, #0f172a);
     }
 
     html.dark .header-stat-value {
       color: #e4e8ef;
     }
 
-    .header-stat.correct .header-stat-value {
-      color: #10b981;
-    }
+    .header-stat.success .header-stat-value { color: #10b981; }
+    .header-stat.error .header-stat-value { color: #ef4444; }
+    .header-stat.warning .header-stat-value { color: #f59e0b; }
 
-    .header-stat.incorrect .header-stat-value {
-      color: #ef4444;
-    }
-
-    .header-stat.bookmarked .header-stat-value {
-      color: #f59e0b;
-    }
-
-    .action-buttons {
-      display: flex;
-      gap: 0.75rem;
+    /* Progress Bar */
+    .progress-container {
       margin-top: 1rem;
     }
 
-    /* Exit Modal */
-    .exit-modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(8px);
-      z-index: 1000;
+    .progress-bar {
+      height: 6px;
+      background: var(--color-bg-tertiary, #f1f5f9);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    html.dark .progress-bar {
+      background: #1a1f2e;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #22a7d0, #06b6d4);
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+
+    /* Navigation Controls */
+    .nav-controls {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      justify-content: center;
-      padding: 2rem;
-    }
-
-    .exit-modal-content {
-      background: var(--color-bg-primary, #ffffff);
-      border-radius: 12px;
-      max-width: 400px;
-      width: 100%;
-      padding: 2rem;
-    }
-
-    html.dark .exit-modal-content {
-      background: #12172b;
-      border: 1px solid #1e293b;
-    }
-
-    .exit-modal-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin-bottom: 1rem;
-      color: var(--color-text-primary, #111827);
-    }
-
-    html.dark .exit-modal-title {
-      color: #e4e8ef;
-    }
-
-    .exit-modal-text {
-      color: var(--color-text-secondary, #6b7280);
-      margin-bottom: 1.5rem;
-      line-height: 1.6;
-    }
-
-    html.dark .exit-modal-text {
-      color: #9ca3af;
-    }
-
-    .exit-modal-actions {
-      display: flex;
       gap: 1rem;
-      justify-content: flex-end;
+      margin-top: 1rem;
+      flex-wrap: wrap;
     }
 
+    .nav-left, .nav-right {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    /* ============================================
+       QUESTION CONTENT
+       ============================================ */
     .training-content {
       flex: 1;
+      overflow-y: auto;
       padding: 2rem;
-      max-width: 900px;
-      margin: 0 auto;
-      width: 100%;
     }
 
-    /* Question Card */
+    .question-wrapper {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
     .question-card {
-      background: var(--color-bg-secondary, #f9fafb);
-      border: 1px solid var(--color-border-primary, #e5e7eb);
-      border-radius: 12px;
+      background: var(--color-bg-secondary, #f8fafc);
+      border: 1px solid var(--color-border-primary, #e2e8f0);
+      border-radius: 16px;
       padding: 2rem;
     }
 
     html.dark .question-card {
-      background: #12172b;
+      background: #0f1419;
       border-color: #1e293b;
     }
 
+    .question-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .question-meta {
+      flex: 1;
+    }
+
+    .topic-badge {
+      display: inline-flex;
+      padding: 0.375rem 0.75rem;
+      background: rgba(34, 167, 208, 0.1);
+      color: #22a7d0;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+      margin-bottom: 0.5rem;
+    }
+
+    .question-counter {
+      font-size: 0.8125rem;
+      color: var(--color-text-tertiary, #64748b);
+    }
+
+    html.dark .question-counter {
+      color: #6b7280;
+    }
+
+    .bookmark-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: transparent;
+      border: 1px solid var(--color-border-secondary, #cbd5e1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--color-text-tertiary, #64748b);
+    }
+
+    html.dark .bookmark-btn {
+      border-color: #2d3748;
+      color: #6b7280;
+    }
+
+    .bookmark-btn:hover {
+      border-color: #f59e0b;
+      color: #f59e0b;
+      background: rgba(245, 158, 11, 0.08);
+    }
+
+    .bookmark-btn.bookmarked {
+      border-color: #f59e0b;
+      color: #f59e0b;
+      background: rgba(245, 158, 11, 0.12);
+    }
+
     .question-title {
-      font-size: 1.5rem;
+      font-size: 1.375rem;
       font-weight: 700;
-      line-height: 1.4;
+      line-height: 1.5;
+      color: var(--color-text-primary, #0f172a);
       margin-bottom: 2rem;
-      color: var(--color-text-primary, #111827);
     }
 
     html.dark .question-title {
@@ -620,20 +930,20 @@ function injectStyles() {
     }
 
     .answer-option {
-      background: var(--color-bg-primary, #ffffff);
-      border: 2px solid var(--color-border-primary, #e5e7eb);
-      border-radius: 10px;
-      padding: 1rem 1.25rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
       display: flex;
       align-items: center;
       gap: 1rem;
+      padding: 1rem 1.25rem;
+      background: var(--color-bg-primary, #ffffff);
+      border: 2px solid var(--color-border-primary, #e2e8f0);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
     }
 
     html.dark .answer-option {
-      background: #1a2038;
-      border-color: #2d3a52;
+      background: #151a24;
+      border-color: #1e293b;
     }
 
     .answer-option:hover {
@@ -643,25 +953,16 @@ function injectStyles() {
 
     .answer-option.selected {
       border-color: #22a7d0;
-      background: rgba(34, 167, 208, 0.05);
+      background: rgba(34, 167, 208, 0.06);
     }
 
     html.dark .answer-option.selected {
       background: rgba(34, 167, 208, 0.1);
     }
 
-    .exam-mode .answer-option.selected {
-      border-color: #3b82f6;
-      background: rgba(59, 130, 246, 0.05);
-    }
-
-    html.dark .exam-mode .answer-option.selected {
-      background: rgba(59, 130, 246, 0.1);
-    }
-
     .answer-option.correct {
       border-color: #10b981;
-      background: rgba(16, 185, 129, 0.05);
+      background: rgba(16, 185, 129, 0.06);
     }
 
     html.dark .answer-option.correct {
@@ -670,7 +971,7 @@ function injectStyles() {
 
     .answer-option.incorrect {
       border-color: #ef4444;
-      background: rgba(239, 68, 68, 0.05);
+      background: rgba(239, 68, 68, 0.06);
     }
 
     html.dark .answer-option.incorrect {
@@ -678,48 +979,59 @@ function injectStyles() {
     }
 
     .option-letter {
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
-      background: var(--color-bg-secondary, #f9fafb);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #22a7d0;
+      color: white;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      font-size: 1.125rem;
+      font-size: 0.875rem;
       flex-shrink: 0;
-    }
-
-    html.dark .option-letter {
-      background: #0a0e1a;
+      transition: all 0.2s ease;
     }
 
     .answer-option.selected .option-letter {
-      background: #22a7d0;
-      color: white;
+      box-shadow: 0 0 0 4px rgba(34, 167, 208, 0.2);
     }
 
     .answer-option.correct .option-letter {
       background: #10b981;
-      color: white;
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
     }
 
     .answer-option.incorrect .option-letter {
       background: #ef4444;
-      color: white;
+      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+    }
+
+    .option-text {
+      flex: 1;
+      font-size: 0.9375rem;
+      color: var(--color-text-primary, #0f172a);
+    }
+
+    html.dark .option-text {
+      color: #e4e8ef;
+    }
+
+    .option-icon {
+      flex-shrink: 0;
     }
 
     /* Explanation Box */
     .explanation-box {
       margin-top: 1.5rem;
       padding: 1.25rem;
-      border-radius: 10px;
-      border-left: 4px solid;
+      border-radius: 12px;
+      border: 1px solid;
     }
 
     .explanation-box.correct {
-      background: rgba(16, 185, 129, 0.05);
-      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.06);
+      border-color: rgba(16, 185, 129, 0.2);
     }
 
     html.dark .explanation-box.correct {
@@ -727,205 +1039,191 @@ function injectStyles() {
     }
 
     .explanation-box.incorrect {
-      background: rgba(239, 68, 68, 0.05);
-      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.06);
+      border-color: rgba(239, 68, 68, 0.2);
     }
 
     html.dark .explanation-box.incorrect {
       background: rgba(239, 68, 68, 0.1);
     }
 
-    /* Stats */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .stat-card {
-      text-align: center;
-      padding: 1rem;
-      background: var(--color-bg-primary, #ffffff);
-      border: 1px solid var(--color-border-primary, #e5e7eb);
-      border-radius: 10px;
-    }
-
-    html.dark .stat-card {
-      background: #1a2038;
-      border-color: #2d3a52;
-    }
-
-    .stat-value {
-      font-size: 2rem;
+    .explanation-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
       font-weight: 700;
-      color: #22a7d0;
-      line-height: 1;
-      margin-bottom: 0.25rem;
+      margin-bottom: 0.75rem;
     }
 
-    .stat-label {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      font-weight: 600;
-      color: var(--color-text-secondary, #6b7280);
-      letter-spacing: 0.05em;
-    }
+    .explanation-box.correct .explanation-header { color: #10b981; }
+    .explanation-box.incorrect .explanation-header { color: #ef4444; }
 
-    /* Progress Bar */
-    .progress-bar {
-      height: 8px;
-      background: var(--color-bg-primary, #ffffff);
-      border-radius: 4px;
-      overflow: hidden;
-      margin-top: 1rem;
-    }
-
-    html.dark .progress-bar {
-      background: #1a2038;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #22a7d0, #1e96bc);
-      transition: width 0.3s ease;
-    }
-
-    /* Buttons */
-    .btn {
-      padding: 0.75rem 1.5rem;
-      border-radius: 8px;
-      font-weight: 600;
+    .explanation-text {
+      color: var(--color-text-secondary, #475569);
       font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    html.dark .explanation-text {
+      color: #9ca3af;
+    }
+
+    /* ============================================
+       BUTTONS
+       ============================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1.25rem;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.875rem;
       border: none;
       cursor: pointer;
       transition: all 0.2s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #22a7d0, #1e96bc);
+      background: #22a7d0;
       color: white;
     }
 
-    .btn-primary:hover {
+    .btn-primary:hover:not(:disabled) {
+      background: #1e96bc;
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(34, 167, 208, 0.3);
     }
 
     .btn-secondary {
-      background: var(--color-bg-secondary, #f9fafb);
-      color: var(--color-text-primary, #111827);
-      border: 1px solid var(--color-border-primary, #e5e7eb);
+      background: var(--color-bg-tertiary, #f1f5f9);
+      color: var(--color-text-primary, #0f172a);
+      border: 1px solid var(--color-border-primary, #e2e8f0);
     }
 
     html.dark .btn-secondary {
-      background: #1a2038;
-      border-color: #2d3a52;
+      background: #1a1f2e;
+      border-color: #2d3748;
       color: #e4e8ef;
     }
 
-    .btn-secondary:hover {
+    .btn-secondary:hover:not(:disabled) {
       border-color: #22a7d0;
+      transform: translateY(-2px);
     }
 
     .btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
-      transform: none;
     }
 
     .btn-icon {
       width: 40px;
       height: 40px;
       padding: 0;
+    }
+
+    /* Stats Cards */
+    .header-stat-card {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
+      padding: 0.625rem 1rem;
+      background: var(--color-bg-tertiary, #f1f5f9);
+      border-radius: 10px;
+      min-width: 70px;
     }
 
-    /* Timer */
-    .timer-display {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #22a7d0;
-      font-variant-numeric: tabular-nums;
+    html.dark .header-stat-card {
+      background: #1a1f2e;
     }
 
-    .timer-display.warning {
-      color: #f59e0b;
+    .header-stat-card.success { background: rgba(16, 185, 129, 0.1); }
+    .header-stat-card.error { background: rgba(239, 68, 68, 0.1); }
+    .header-stat-card.warning { background: rgba(245, 158, 11, 0.1); }
+
+    .header-stat-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--color-text-tertiary, #64748b);
+      margin-bottom: 0.25rem;
     }
 
-    .timer-display.critical {
-      color: #ef4444;
-      animation: pulse 1s ease-in-out infinite;
+    html.dark .header-stat-label {
+      color: #9ca3af;
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.6; }
+    .header-stat-card .header-stat-value {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--color-text-primary, #0f172a);
     }
 
-    /* Badge */
-    .badge {
+    html.dark .header-stat-card .header-stat-value {
+      color: #e4e8ef;
+    }
+
+    .header-stat-card.success .header-stat-value { color: #10b981; }
+    .header-stat-card.error .header-stat-value { color: #ef4444; }
+    .header-stat-card.warning .header-stat-value { color: #f59e0b; }
+
+    /* Action Buttons Inline */
+    .action-buttons-inline {
+      display: flex;
+      gap: 0.5rem;
+      margin-left: auto;
+    }
+
+    .btn-action-sm {
       display: inline-flex;
       align-items: center;
       gap: 0.375rem;
-      padding: 0.375rem 0.75rem;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .badge.practice {
-      background: rgba(16, 185, 129, 0.1);
-      color: #10b981;
-      border: 1px solid rgba(16, 185, 129, 0.3);
-    }
-
-    .badge.exam {
-      background: rgba(239, 68, 68, 0.1);
-      color: #ef4444;
-      border: 1px solid rgba(239, 68, 68, 0.3);
-    }
-
-    /* Bookmark Button */
-    .bookmark-btn {
-      width: 40px;
-      height: 40px;
+      padding: 0.5rem 0.875rem;
       border-radius: 8px;
-      background: transparent;
-      border: 2px solid var(--color-border-primary, #e5e7eb);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
+      font-size: 0.8125rem;
+      font-weight: 600;
       transition: all 0.2s ease;
     }
 
-    html.dark .bookmark-btn {
-      border-color: #2d3a52;
+    .btn-save {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      color: #10b981;
     }
 
-    .bookmark-btn:hover {
-      border-color: #f59e0b;
+    .btn-save:hover:not(:disabled) {
+      background: #10b981;
+      color: white;
+      border-color: #10b981;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
     }
 
-    .bookmark-btn.bookmarked {
-      border-color: #f59e0b;
-      background: rgba(245, 158, 11, 0.1);
+    .btn-exit {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: #ef4444;
     }
 
-    /* Image Modal */
+    .btn-exit:hover:not(:disabled) {
+      background: #ef4444;
+      color: white;
+      border-color: #ef4444;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    }
+
+    /* ============================================
+       MODALS
+       ============================================ */
     .modal-overlay {
       position: fixed;
       inset: 0;
       background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(4px);
       z-index: 1000;
       display: flex;
       align-items: center;
@@ -935,15 +1233,17 @@ function injectStyles() {
 
     .modal-content {
       background: var(--color-bg-primary, #ffffff);
-      border-radius: 12px;
-      max-width: 900px;
+      border: 1px solid var(--color-border-primary, #e2e8f0);
+      border-radius: 16px;
+      max-width: 800px;
       max-height: 90vh;
       overflow: auto;
       position: relative;
     }
 
     html.dark .modal-content {
-      background: #12172b;
+      background: #0f1419;
+      border-color: #1e293b;
     }
 
     .modal-close {
@@ -954,7 +1254,8 @@ function injectStyles() {
       height: 36px;
       border-radius: 8px;
       background: rgba(239, 68, 68, 0.1);
-      border: 2px solid #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #ef4444;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -965,21 +1266,309 @@ function injectStyles() {
 
     .modal-close:hover {
       background: #ef4444;
+      color: white;
+    }
+
+    .exit-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .exit-modal-content {
+      background: var(--color-bg-primary, #ffffff);
+      border: 1px solid var(--color-border-primary, #e2e8f0);
+      border-radius: 16px;
+      max-width: 400px;
+      width: 100%;
+      padding: 2rem;
+    }
+
+    html.dark .exit-modal-content {
+      background: #0f1419;
+      border-color: #1e293b;
+    }
+
+    .exit-modal-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      color: var(--color-text-primary, #0f172a);
+    }
+
+    html.dark .exit-modal-title {
+      color: #e4e8ef;
+    }
+
+    .exit-modal-text {
+      color: var(--color-text-secondary, #475569);
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+      font-size: 0.9375rem;
+    }
+
+    html.dark .exit-modal-text {
+      color: #9ca3af;
+    }
+
+    .exit-modal-actions {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+    }
+
+    /* Results Modal */
+    .results-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .results-modal-content {
+      background: var(--color-bg-primary, #ffffff);
+      border-radius: 24px;
+      max-width: 480px;
+      width: 100%;
+      padding: 2.5rem;
+      text-align: center;
+      animation: resultsModalIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    html.dark .results-modal-content {
+      background: #0f1419;
+      border: 1px solid #1e293b;
+    }
+
+    @keyframes resultsModalIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .results-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      font-size: 2.5rem;
+    }
+
+    .results-icon.passed {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+      border: 2px solid #10b981;
+    }
+
+    .results-icon.failed {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
+      border: 2px solid #ef4444;
+    }
+
+    .results-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      color: var(--color-text-primary, #0f172a);
+    }
+
+    html.dark .results-title {
+      color: #e4e8ef;
+    }
+
+    .results-title.passed {
+      color: #10b981;
+    }
+
+    .results-title.failed {
+      color: #ef4444;
+    }
+
+    .results-subtitle {
+      color: var(--color-text-secondary, #475569);
+      margin-bottom: 2rem;
+      font-size: 1rem;
+    }
+
+    html.dark .results-subtitle {
+      color: #9ca3af;
+    }
+
+    .results-score {
+      font-size: 4rem;
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .results-score.passed {
+      color: #10b981;
+    }
+
+    .results-score.failed {
+      color: #ef4444;
+    }
+
+    .results-passing {
+      font-size: 0.875rem;
+      color: var(--color-text-tertiary, #64748b);
+      margin-bottom: 2rem;
+    }
+
+    html.dark .results-passing {
+      color: #6b7280;
+    }
+
+    .results-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+      padding: 1.5rem;
+      background: var(--color-bg-tertiary, #f1f5f9);
+      border-radius: 16px;
+    }
+
+    html.dark .results-stats {
+      background: #1a1f2e;
+    }
+
+    .results-stat {
+      text-align: center;
+    }
+
+    .results-stat-value {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--color-text-primary, #0f172a);
+    }
+
+    html.dark .results-stat-value {
+      color: #e4e8ef;
+    }
+
+    .results-stat-value.correct {
+      color: #10b981;
+    }
+
+    .results-stat-value.incorrect {
+      color: #ef4444;
+    }
+
+    .results-stat-value.time {
+      color: #22a7d0;
+    }
+
+    .results-stat-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--color-text-tertiary, #64748b);
+      margin-top: 0.25rem;
+    }
+
+    html.dark .results-stat-label {
+      color: #6b7280;
+    }
+
+    .results-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    .results-actions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .results-actions-grid .results-btn:last-child {
+      grid-column: 1 / -1;
+    }
+
+    .results-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .results-btn svg {
+      flex-shrink: 0;
+    }
+
+    .results-btn-primary {
+      background: linear-gradient(135deg, #22a7d0, #1a8db3);
+      color: white;
+      border: none;
+    }
+
+    .results-btn-primary:hover {
+      background: linear-gradient(135deg, #1a8db3, #157a99);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(34, 167, 208, 0.4);
+    }
+
+    .results-btn-secondary {
+      background: var(--color-bg-tertiary, #f1f5f9);
+      color: var(--color-text-primary, #0f172a);
+      border: 1px solid var(--color-border-primary, #e2e8f0);
+    }
+
+    html.dark .results-btn-secondary {
+      background: #1a1f2e;
+      color: #e4e8ef;
+      border-color: #1e293b;
+    }
+
+    .results-btn-secondary:hover {
+      background: var(--color-bg-secondary, #e2e8f0);
+      transform: translateY(-2px);
+    }
+
+    html.dark .results-btn-secondary:hover {
+      background: #262d3d;
     }
 
     /* Save Indicator */
     .save-indicator {
       position: fixed;
       bottom: 2rem;
-      right: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
       background: #10b981;
       color: white;
-      padding: 0.75rem 1.25rem;
-      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
       font-weight: 600;
       font-size: 0.875rem;
       box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-      transform: translateY(100px);
       transition: transform 0.3s ease;
       z-index: 1000;
       display: flex;
@@ -988,13 +1577,24 @@ function injectStyles() {
     }
 
     .save-indicator.show {
-      transform: translateY(0);
+      transform: translateX(-50%) translateY(0);
     }
 
-    /* Responsive */
-    @media (max-width: 768px) {
+    /* ============================================
+       RESPONSIVE
+       ============================================ */
+    @media (max-width: 1024px) {
+      .training-layout {
+        grid-template-columns: 1fr;
+      }
+
       .questions-sidebar {
-        width: 100%;
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 320px;
+        z-index: 100;
         transform: translateX(-100%);
       }
 
@@ -1002,8 +1602,25 @@ function injectStyles() {
         transform: translateX(0);
       }
 
-      .training-main.sidebar-open {
-        margin-left: 0;
+      .sidebar-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 99;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .sidebar-overlay.show {
+        opacity: 1;
+        visibility: visible;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .training-header {
+        padding: 0.75rem 1rem;
       }
 
       .training-content {
@@ -1011,8 +1628,50 @@ function injectStyles() {
       }
 
       .question-card {
-        padding: 1.5rem;
+        padding: 1.25rem;
       }
+
+      .question-title {
+        font-size: 1.125rem;
+      }
+
+      .header-stats {
+        display: none;
+      }
+
+      .nav-controls {
+        flex-direction: column;
+      }
+
+      .nav-left, .nav-right {
+        width: 100%;
+      }
+
+      .nav-left .btn, .nav-right .btn {
+        flex: 1;
+      }
+    }
+
+    /* Scrollbar */
+    .questions-list::-webkit-scrollbar,
+    .training-content::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .questions-list::-webkit-scrollbar-track,
+    .training-content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .questions-list::-webkit-scrollbar-thumb,
+    .training-content::-webkit-scrollbar-thumb {
+      background: var(--color-border-secondary, #cbd5e1);
+      border-radius: 3px;
+    }
+
+    html.dark .questions-list::-webkit-scrollbar-thumb,
+    html.dark .training-content::-webkit-scrollbar-thumb {
+      background: #2d3748;
     }
   `;
 
@@ -1067,51 +1726,60 @@ function renderTrainingApp(product, questions, params) {
   return `
     <div id="training-app-container" class="${isExamMode ? 'exam-mode' : ''}">
       <div class="training-layout">
-        <!-- Sidebar Izquierdo -->
+        <!-- Sidebar -->
         <aside class="questions-sidebar" id="questions-sidebar">
           <div class="sidebar-header">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-              <h3 style="font-weight: 700; font-size: 1.125rem;">Preguntas</h3>
-              <button onclick="toggleSidebar()" class="btn-secondary btn-icon">
-                <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="sidebar-title-row">
+              <span class="sidebar-title">Preguntas</span>
+              <button onclick="toggleSidebar()" class="btn btn-secondary btn-icon">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
               </button>
             </div>
 
-            <!-- PIE Chart -->
-            <div class="pie-chart-container">
-              <svg class="pie-chart" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="40" fill="var(--color-bg-primary, #ffffff)" stroke="var(--color-border-primary, #e5e7eb)" stroke-width="2"/>
-                ${!isExamMode ? `
-                  <circle id="pie-correct" class="pie-segment" cx="50" cy="50" r="35" fill="none" stroke="#10b981" stroke-width="12" stroke-dasharray="0 220" />
-                  <circle id="pie-incorrect" class="pie-segment" cx="50" cy="50" r="35" fill="none" stroke="#ef4444" stroke-width="12" stroke-dasharray="0 220" />
-                  <circle id="pie-unanswered" class="pie-segment" cx="50" cy="50" r="35" fill="none" stroke="#e5e7eb" stroke-width="12" stroke-dasharray="0 220" />
-                ` : `
-                  <circle id="pie-answered-exam" class="pie-segment" cx="50" cy="50" r="35" fill="none" stroke="#22a7d0" stroke-width="12" stroke-dasharray="0 220" />
-                  <circle id="pie-unanswered-exam" class="pie-segment" cx="50" cy="50" r="35" fill="none" stroke="#e5e7eb" stroke-width="12" stroke-dasharray="0 220" />
-                `}
-              </svg>
-              <div class="pie-chart-center">
-                <div class="pie-chart-value" id="pie-percentage">0</div>
-                <div class="pie-chart-label">Progreso</div>
+            <!-- Progress Stats Card -->
+            <div class="progress-stats-card">
+              <div class="progress-header">
+                <span class="progress-percentage" id="sidebar-progress-percentage">0%</span>
+                <span class="progress-label">Completado</span>
               </div>
+              <div class="progress-bar-sidebar">
+                <div class="progress-bar-fill" id="sidebar-progress-fill" style="width: 0%"></div>
+              </div>
+              <div class="progress-counts">
+                <div class="progress-count">
+                  <span>Contestadas:</span>
+                  <span class="progress-count-value" id="sidebar-answered">0</span>
+                </div>
+                <div class="progress-count correct" id="sidebar-correct-container" style="display: none;">
+                  <span>Correctas:</span>
+                  <span class="progress-count-value" id="sidebar-correct">0</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Database Info -->
+            <div class="database-info">
+              <div class="database-info-label">Última actualización</div>
+              <div class="database-info-value" id="database-last-updated">Cargando...</div>
             </div>
           </div>
 
-          <div id="questions-list">
+          <div class="questions-list" id="questions-list">
             ${questions.map((q, i) => {
-              // Get localized text for sidebar display
               const localizedTopic = typeof q.topic === 'string' ? q.topic : (q.topic?.es || q.topic?.en || '');
               const localizedQuestion = typeof q.question === 'string' ? q.question : (q.question?.es || q.question?.en || '');
-
               return `
                 <div class="question-item ${i === 0 ? 'active' : ''}" onclick="jumpToQuestion(${i})" data-index="${i}">
                   <div class="question-number">${i + 1}</div>
-                  <div style="flex: 1; min-width: 0;">
-                    <div style="font-size: 0.75rem; color: var(--color-text-secondary, #6b7280); margin-bottom: 0.25rem;">${localizedTopic}</div>
-                    <div style="font-size: 0.875rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${localizedQuestion}</div>
+                  <div class="question-item-content">
+                    <div class="question-item-topic">${localizedTopic}</div>
+                    <div class="question-item-text">${localizedQuestion}</div>
                   </div>
+                  <svg class="bookmark-icon" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                  </svg>
                 </div>
               `;
             }).join('')}
@@ -1122,123 +1790,117 @@ function renderTrainingApp(product, questions, params) {
         <div class="training-main" id="training-main">
           <!-- Header -->
           <header class="training-header">
-            <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
-              <div style="display: flex; align-items: center; gap: 1rem;">
-                <button onclick="toggleSidebar()" class="btn-secondary btn-icon" title="Mostrar/Ocultar menú">
-                  <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor" stroke-linecap="round" viewBox="0 0 24 24">
-                    <line x1="3" y1="6" x2="21" y2="6" stroke-width="2.5"/>
-                    <line x1="3" y1="12" x2="21" y2="12" stroke-width="2.5"/>
-                    <line x1="3" y1="18" x2="21" y2="18" stroke-width="2.5"/>
+            <div class="header-top">
+              <div class="header-left">
+                <button onclick="toggleSidebar()" class="btn btn-secondary btn-icon" title="Menú">
+                  <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                   </svg>
                 </button>
-                <div>
-                  <h1 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">${productName}</h1>
-                  <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.75rem;">
-                    <span class="badge ${mode}">
-                      ${isExamMode ? 'Modo Examen' : 'Modo Práctica'}
-                    </span>
-                    <span style="font-size: 0.875rem; color: var(--color-text-secondary, #6b7280);">
-                      ${questions.length} Preguntas
-                    </span>
-                    ${isExamMode ? `
-                      <span style="font-size: 0.875rem; color: var(--color-text-secondary, #6b7280); display: flex; align-items: center; gap: 0.5rem;">
-                        <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <span id="timer-display-compact">60:00</span>
-                      </span>
-                    ` : ''}
-                  </div>
-                  <div class="action-buttons">
-                    <button onclick="saveSession()" class="btn btn-secondary">
-                      <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
-                      </svg>
-                      Guardar Progreso
-                    </button>
-                    <button onclick="showExitModal()" class="btn btn-secondary">
-                      <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                      </svg>
-                      Salir
-                    </button>
+                <div class="header-info">
+                  <h1>${productName}</h1>
+                  <div class="header-meta">
+                    <span class="badge ${mode}">${isExamMode ? 'Examen' : 'Práctica'}</span>
+                    <span style="font-size: 0.8125rem; color: var(--color-text-tertiary, #64748b);">${questions.length} preguntas</span>
                   </div>
                 </div>
               </div>
 
-              ${!isExamMode ? `
-                <div style="display: flex; align-items: center; gap: 1.5rem;">
-                  <div>
-                    <div style="font-size: 0.75rem; color: var(--color-text-secondary, #6b7280); margin-bottom: 0.25rem; text-transform: uppercase; font-weight: 600;">Puntuación</div>
-                    <div class="timer-display" id="score-display">0%</div>
+              <div class="header-right">
+                ${isExamMode ? `
+                  <div class="timer-box">
+                    <div class="timer-label">Tiempo</div>
+                    <div class="timer-display" id="timer-display-compact">60:00</div>
                   </div>
-                </div>
-              ` : ''}
+                ` : `
+                  <div class="score-box">
+                    <div class="score-label">Puntuación</div>
+                    <div class="score-display" id="score-display">0%</div>
+                  </div>
+                `}
+              </div>
+            </div>
 
-              <!-- Estadísticas -->
+            <!-- Stats Row -->
+            <div class="header-stats-row">
               <div class="header-stats">
-                <div class="header-stat">
-                  <span>Contestadas:</span>
+                <div class="header-stat-card">
+                  <span class="header-stat-label">Contestadas</span>
                   <span class="header-stat-value" id="header-stat-answered">0</span>
                 </div>
-                <div class="header-stat">
-                  <span>Restantes:</span>
+                <div class="header-stat-card">
+                  <span class="header-stat-label">Restantes</span>
                   <span class="header-stat-value" id="header-stat-unanswered">${questions.length}</span>
                 </div>
                 ${!isExamMode ? `
-                  <div class="header-stat correct">
-                    <span>Correctas:</span>
+                  <div class="header-stat-card success">
+                    <span class="header-stat-label">Correctas</span>
                     <span class="header-stat-value" id="header-stat-correct">0</span>
                   </div>
-                  <div class="header-stat incorrect">
-                    <span>Incorrectas:</span>
+                  <div class="header-stat-card error">
+                    <span class="header-stat-label">Incorrectas</span>
                     <span class="header-stat-value" id="header-stat-incorrect">0</span>
                   </div>
                 ` : ''}
-                <div class="header-stat bookmarked">
-                  <svg style="width: 1rem; height: 1rem; color: #f59e0b;" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
-                  </svg>
+                <div class="header-stat-card warning">
+                  <span class="header-stat-label">Marcadas</span>
                   <span class="header-stat-value" id="header-stat-bookmarked">0</span>
                 </div>
               </div>
-            </div>
 
-            <div class="progress-bar">
-              <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
-            </div>
-
-            <!-- Controls -->
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
-              <button id="prev-btn" onclick="previousQuestion()" class="btn btn-secondary" disabled>
-                <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                </svg>
-                Anterior
-              </button>
-
-              <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                <button id="image-btn" onclick="openImageModal()" class="btn btn-secondary" style="display: none;">
-                  <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              <!-- Action Buttons - Right aligned -->
+              <div class="action-buttons-inline">
+                <button onclick="saveSession()" class="btn btn-action-sm btn-save" title="Guardar progreso">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
                   </svg>
-                  Ver Imagen
+                  <span>Guardar</span>
+                </button>
+                <button onclick="showExitModal()" class="btn btn-action-sm btn-exit" title="Salir">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                  </svg>
+                  <span>Salir</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="progress-container">
+              <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <!-- Navigation Controls -->
+            <div class="nav-controls">
+              <div class="nav-left">
+                <button id="prev-btn" onclick="previousQuestion()" class="btn btn-secondary" disabled>
+                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                  </svg>
+                  Anterior
                 </button>
               </div>
 
-              <div style="display: flex; gap: 1rem;">
+              <button id="image-btn" onclick="openImageModal()" class="btn btn-secondary" style="display: none;">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                Ver Imagen
+              </button>
+
+              <div class="nav-right">
                 <button id="next-btn" onclick="nextQuestion()" class="btn btn-primary">
                   Siguiente
-                  <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                   </svg>
                 </button>
-
                 <button id="finish-btn" onclick="finishTraining()" class="btn btn-primary" style="display: none;">
-                  <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                   </svg>
-                  Finalizar
+                  <span>Finalizar</span>
                 </button>
               </div>
             </div>
@@ -1246,8 +1908,10 @@ function renderTrainingApp(product, questions, params) {
 
           <!-- Content -->
           <div class="training-content">
-            <div id="question-container">
-              <!-- Question loads here -->
+            <div class="question-wrapper">
+              <div id="question-container">
+                <!-- Question loads here -->
+              </div>
             </div>
           </div>
         </div>
@@ -1255,7 +1919,7 @@ function renderTrainingApp(product, questions, params) {
 
       <!-- Save Indicator -->
       <div class="save-indicator" id="save-indicator">
-        <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
         </svg>
         Progreso guardado
@@ -1265,13 +1929,13 @@ function renderTrainingApp(product, questions, params) {
       <div id="image-modal" class="modal-overlay" style="display: none;" onclick="closeImageModal(event)">
         <div class="modal-content" onclick="event.stopPropagation()">
           <button class="modal-close" onclick="closeImageModal()">
-            <svg style="width: 1.25rem; height: 1.25rem; color: #ef4444;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
           </button>
           <img id="modal-image" src="" alt="Question Image" style="width: 100%; height: auto; border-radius: 12px;">
           <div style="padding: 1.5rem;">
-            <p id="modal-caption" style="text-align: center; color: var(--color-text-secondary, #6b7280);"></p>
+            <p id="modal-caption" style="text-align: center; color: var(--color-text-secondary);"></p>
           </div>
         </div>
       </div>
@@ -1279,19 +1943,43 @@ function renderTrainingApp(product, questions, params) {
       <!-- Exit Modal -->
       <div id="exit-modal" class="exit-modal-overlay" style="display: none;" onclick="closeExitModal(event)">
         <div class="exit-modal-content" onclick="event.stopPropagation()">
-          <h3 class="exit-modal-title">¿Salir del entrenamiento?</h3>
-          <p class="exit-modal-text">
-            Tu progreso ha sido guardado automáticamente. Puedes regresar al dashboard del producto o continuar entrenando más tarde.
+          <h3 class="exit-modal-title" id="exit-modal-title">¿Salir del entrenamiento?</h3>
+          <p class="exit-modal-text" id="exit-modal-text">
+            Tu progreso se guardará automáticamente. Puedes continuar más tarde desde donde lo dejaste.
           </p>
-          <div class="exit-modal-actions">
-            <button onclick="closeExitModal()" class="btn btn-secondary">
-              Continuar Entrenando
-            </button>
-            <button onclick="confirmExit()" class="btn btn-primary">
-              <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+          <div class="exit-modal-actions" id="exit-modal-actions">
+            <button onclick="closeExitModal()" class="btn btn-secondary">Continuar</button>
+            <button onclick="confirmExit()" class="btn btn-primary">Salir</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Continue Session Modal (for practice mode) -->
+      <div id="continue-modal" class="exit-modal-overlay" style="display: none;">
+        <div class="exit-modal-content">
+          <h3 class="exit-modal-title">Sesión anterior encontrada</h3>
+          <p class="exit-modal-text">
+            Tienes una sesión de práctica en progreso para este producto. ¿Deseas continuar donde lo dejaste o iniciar desde cero?
+          </p>
+          <div id="continue-modal-progress" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(34, 167, 208, 0.1); border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.875rem;">
+              <span style="color: var(--color-text-secondary);">Progreso:</span>
+              <span style="color: #22a7d0; font-weight: 600;" id="continue-modal-progress-text">0 de 0 preguntas</span>
+            </div>
+          </div>
+          <div class="exit-modal-actions" style="flex-direction: column; gap: 0.75rem;">
+            <button onclick="continueSavedSession()" class="btn btn-primary" style="width: 100%;">
+              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
-              Ir al Dashboard
+              Continuar sesión
+            </button>
+            <button onclick="startNewSession()" class="btn btn-secondary" style="width: 100%;">
+              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              Iniciar desde cero
             </button>
           </div>
         </div>
@@ -1300,7 +1988,7 @@ function renderTrainingApp(product, questions, params) {
   `;
 }
 
-function initializeTrainingApp(product, questions, params) {
+async function initializeTrainingApp(product, questions, params) {
   window.trainingApp = {
     product,
     questions,
@@ -1311,23 +1999,280 @@ function initializeTrainingApp(product, questions, params) {
     sessionMode: params.mode,
     examDuration: params.duration,
     examTimeRemaining: params.duration,
+    passingScore: params.passingScore || 70,
     timerInterval: null,
     sessionId: params.sessionId || null,
-    currentLanguage: 'es' // Default language
+    currentLanguage: 'es', // Default language
+    pendingExistingSession: null // For storing session to potentially continue
   };
 
-  createTrainingSession(product, params.mode);
-  loadQuestion(0);
+  // Try to load saved session if sessionId is provided
+  if (params.sessionId && auth.currentUser) {
+    await loadSavedSession(params.sessionId);
+    finalizeAppInitialization(params.mode);
+  } else if (params.mode === 'exam' || params.retryIncorrect) {
+    // EXAM MODE or RETRY INCORRECT: Always start fresh - never continue previous sessions
+    createTrainingSession(product, params.mode);
+    finalizeAppInitialization(params.mode);
+  } else {
+    // PRACTICE MODE: Check for existing session and ask user (only from dashboard)
+    const existingSession = await findExistingSession(product.id, params.mode);
+    if (existingSession && auth.currentUser) {
+      // Store the session and show the continue modal
+      window.trainingApp.pendingExistingSession = existingSession;
+      showContinueModal(existingSession);
+      // Don't finalize yet - wait for user choice
+    } else {
+      createTrainingSession(product, params.mode);
+      finalizeAppInitialization(params.mode);
+    }
+  }
+}
 
-  if (params.mode === 'exam') {
+function finalizeAppInitialization(mode) {
+  loadQuestion(window.trainingApp.currentQuestionIndex);
+
+  // Load database last updated date
+  loadDatabaseLastUpdated(window.trainingApp.product.databaseId);
+
+  if (mode === 'exam') {
     startExamTimer();
   }
 
-  setInterval(() => {
-    if (auth.currentUser) {
-      saveSessionToFirestore();
+  // Auto-save every 30 seconds (only in practice mode)
+  if (mode === 'practice') {
+    setInterval(() => {
+      if (auth.currentUser) {
+        saveSessionToFirestore();
+      }
+    }, 30000);
+  }
+}
+
+function showContinueModal(existingSession) {
+  const modal = document.getElementById('continue-modal');
+  const progressText = document.getElementById('continue-modal-progress-text');
+
+  if (modal) {
+    // Calculate progress from existing session
+    const answeredCount = existingSession.userAnswers?.filter(a => a !== undefined).length || 0;
+    const totalQuestions = existingSession.totalQuestions || window.trainingApp.questions.length;
+
+    if (progressText) {
+      progressText.textContent = `${answeredCount} de ${totalQuestions} preguntas`;
     }
-  }, 30000);
+
+    modal.style.display = 'flex';
+  }
+}
+
+window.continueSavedSession = async function() {
+  const modal = document.getElementById('continue-modal');
+  if (modal) modal.style.display = 'none';
+
+  const existingSession = window.trainingApp.pendingExistingSession;
+  if (existingSession) {
+    await loadSavedSession(existingSession.id);
+  }
+
+  finalizeAppInitialization(window.trainingApp.sessionMode);
+}
+
+window.startNewSession = function() {
+  const modal = document.getElementById('continue-modal');
+  if (modal) modal.style.display = 'none';
+
+  // Clear any pending session reference
+  window.trainingApp.pendingExistingSession = null;
+
+  // Create a fresh session
+  createTrainingSession(window.trainingApp.product, window.trainingApp.sessionMode);
+
+  finalizeAppInitialization(window.trainingApp.sessionMode);
+}
+
+// Load database last updated date from Firebase
+async function loadDatabaseLastUpdated(databaseId) {
+  if (!databaseId) {
+    const el = document.getElementById('database-last-updated');
+    if (el) el.textContent = 'No disponible';
+    return;
+  }
+
+  try {
+    // Get the most recent question's timestamp or try to get database metadata
+    const dbMetaRef = doc(db, 'databases', databaseId);
+    const dbMetaDoc = await getDoc(dbMetaRef);
+
+    if (dbMetaDoc.exists()) {
+      const data = dbMetaDoc.data();
+      if (data.lastUpdated) {
+        const date = data.lastUpdated.toDate ? data.lastUpdated.toDate() : new Date(data.lastUpdated);
+        const formatted = formatDate(date);
+        const el = document.getElementById('database-last-updated');
+        if (el) el.textContent = formatted;
+        return;
+      }
+    }
+
+    // Fallback: show current date
+    const el = document.getElementById('database-last-updated');
+    if (el) el.textContent = formatDate(new Date());
+  } catch (error) {
+    console.log('Error cargando fecha de actualización:', error.message);
+    const el = document.getElementById('database-last-updated');
+    if (el) el.textContent = 'No disponible';
+  }
+}
+
+// Format date helper
+function formatDate(date) {
+  const options = { year: 'numeric', month: 'short', day: 'numeric' };
+  return date.toLocaleDateString('es-ES', options);
+}
+
+// Find existing incomplete session for this product
+async function findExistingSession(productId, mode) {
+  if (!auth.currentUser) return null;
+
+  try {
+    const { collection, query, where, getDocs, orderBy, limit } = await import('firebase/firestore');
+    const sessionsRef = collection(db, 'users', auth.currentUser.uid, 'sessions');
+
+    // Try query with orderBy first (requires composite index)
+    try {
+      const q = query(
+        sessionsRef,
+        where('productId', '==', productId),
+        where('mode', '==', mode),
+        where('completed', '==', false),
+        orderBy('lastUpdated', 'desc'),
+        limit(1)
+      );
+
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+        const doc = snapshot.docs[0];
+        console.log('✅ Sesión existente encontrada:', doc.id);
+        return { id: doc.id, ...doc.data() };
+      }
+    } catch (indexError) {
+      // Index not available, try simpler query without orderBy
+      console.log('⚠️ Índice no disponible, usando consulta simple:', indexError.message);
+
+      const simpleQuery = query(
+        sessionsRef,
+        where('productId', '==', productId),
+        where('mode', '==', mode),
+        where('completed', '==', false)
+      );
+
+      const snapshot = await getDocs(simpleQuery);
+      if (!snapshot.empty) {
+        // Find the most recent session manually
+        let mostRecent = null;
+        let mostRecentTime = 0;
+
+        snapshot.docs.forEach(doc => {
+          const data = doc.data();
+          const lastUpdated = data.lastUpdated?.toMillis?.() || 0;
+          if (lastUpdated > mostRecentTime) {
+            mostRecentTime = lastUpdated;
+            mostRecent = { id: doc.id, ...data };
+          }
+        });
+
+        if (mostRecent) {
+          console.log('✅ Sesión existente encontrada (fallback):', mostRecent.id);
+          return mostRecent;
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error buscando sesión existente:', error);
+  }
+  return null;
+}
+
+// Load saved session from Firebase
+async function loadSavedSession(sessionId) {
+  if (!auth.currentUser) return;
+
+  try {
+    const sessionRef = doc(db, 'users', auth.currentUser.uid, 'sessions', sessionId);
+    const sessionDoc = await getDoc(sessionRef);
+
+    if (sessionDoc.exists()) {
+      const data = sessionDoc.data();
+      const app = window.trainingApp;
+
+      // Restore session state
+      app.sessionId = sessionId;
+
+      // Restore bookmarks using question IDs
+      if (data.bookmarkedQuestionIds && Array.isArray(data.bookmarkedQuestionIds)) {
+        // Convert question IDs back to indices
+        const bookmarkSet = new Set();
+        data.bookmarkedQuestionIds.forEach(qId => {
+          const index = app.questions.findIndex(q => q.id === qId);
+          if (index !== -1) {
+            bookmarkSet.add(index);
+          }
+        });
+        app.bookmarkedQuestions = bookmarkSet;
+        console.log('✅ Bookmarks restaurados:', bookmarkSet.size);
+      } else if (data.bookmarkedQuestions && Array.isArray(data.bookmarkedQuestions)) {
+        // Fallback for old format (indices)
+        app.bookmarkedQuestions = new Set(data.bookmarkedQuestions);
+      }
+
+      // Restore answers using question IDs mapping
+      if (data.answersMap && typeof data.answersMap === 'object') {
+        // Convert question ID -> ORIGINAL answer index back to CURRENT shuffled index
+        let restoredCount = 0;
+        app.questions.forEach((q, i) => {
+          if (data.answersMap[q.id] !== undefined) {
+            const originalAnswerIndex = data.answersMap[q.id];
+            // Find which current index maps to this original index
+            if (q.optionMapping) {
+              const currentIndex = q.optionMapping.indexOf(originalAnswerIndex);
+              if (currentIndex !== -1) {
+                app.userAnswers[i] = currentIndex;
+                restoredCount++;
+              }
+            } else {
+              // Fallback if no mapping (shouldn't happen)
+              app.userAnswers[i] = originalAnswerIndex;
+              restoredCount++;
+            }
+          }
+        });
+        console.log('✅ Respuestas restauradas desde answersMap:', restoredCount);
+      } else if (data.userAnswers && Array.isArray(data.userAnswers)) {
+        // Fallback for old format (but this won't work well with randomization)
+        app.userAnswers = data.userAnswers;
+      }
+
+      if (data.currentQuestionIndex !== undefined) {
+        app.currentQuestionIndex = Math.min(data.currentQuestionIndex, app.questions.length - 1);
+      }
+
+      if (data.timeRemaining && app.sessionMode === 'exam') {
+        app.examTimeRemaining = data.timeRemaining;
+      }
+
+      console.log('✅ Sesión restaurada:', {
+        sessionId: sessionId,
+        answers: app.userAnswers.filter(a => a !== undefined).length,
+        bookmarks: app.bookmarkedQuestions.size,
+        currentQuestion: app.currentQuestionIndex,
+        answersMapKeys: data.answersMap ? Object.keys(data.answersMap) : [],
+        bookmarkedIds: data.bookmarkedQuestionIds || []
+      });
+    }
+  } catch (error) {
+    console.error('Error cargando sesión guardada:', error);
+  }
 }
 
 async function createTrainingSession(product, mode) {
@@ -1403,6 +2348,8 @@ function loadQuestion(index) {
   const userAnswer = app.userAnswers[index];
   const isBookmarked = app.bookmarkedQuestions.has(index);
   const isPracticeMode = app.sessionMode === 'practice';
+  const isReviewMode = app.sessionMode === 'review' || app.reviewMode;
+  const showAnswers = isPracticeMode || isReviewMode;
 
   // Get localized texts
   const currentLang = app.currentLanguage || 'es';
@@ -1424,8 +2371,8 @@ function loadQuestion(index) {
     const localizedOption = getLocalizedText(option, currentLang);
     let className = 'answer-option';
 
-    // En modo práctica, mostrar colores si ya fue contestada
-    if (isPracticeMode && userAnswer !== undefined) {
+    // En modo práctica o revisión, mostrar colores si ya fue contestada
+    if (showAnswers && userAnswer !== undefined) {
       if (i === question.correctAnswer) {
         className += ' correct';
       } else if (i === userAnswer && i !== question.correctAnswer) {
@@ -1437,16 +2384,19 @@ function loadQuestion(index) {
       className += ' selected';
     }
 
+    // En modo revisión, deshabilitar clicks
+    const onClickAttr = isReviewMode ? '' : `onclick="selectAnswer(${i})"`;
+
     return `
-      <div class="${className}" onclick="selectAnswer(${i})">
+      <div class="${className}" ${onClickAttr} ${isReviewMode ? 'style="cursor: default;"' : ''}>
         <div class="option-letter">${String.fromCharCode(65 + i)}</div>
         <span style="flex: 1;">${localizedOption}</span>
-        ${isPracticeMode && userAnswer !== undefined && i === question.correctAnswer ? `
+        ${showAnswers && userAnswer !== undefined && i === question.correctAnswer ? `
           <svg style="width: 1.5rem; height: 1.5rem; color: #10b981; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
           </svg>
         ` : ''}
-        ${isPracticeMode && userAnswer !== undefined && i === userAnswer && i !== question.correctAnswer ? `
+        ${showAnswers && userAnswer !== undefined && i === userAnswer && i !== question.correctAnswer ? `
           <svg style="width: 1.5rem; height: 1.5rem; color: #ef4444; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
@@ -1479,7 +2429,7 @@ function loadQuestion(index) {
         ${optionsHTML}
       </div>
 
-      ${isPracticeMode && userAnswer !== undefined ? `
+      ${showAnswers && userAnswer !== undefined ? `
         <div class="explanation-box ${userAnswer === question.correctAnswer ? 'correct' : 'incorrect'}">
           <div style="font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
             ${userAnswer === question.correctAnswer ? `
@@ -1505,19 +2455,31 @@ function loadQuestion(index) {
   updateQuestionsList();
 }
 
-window.selectAnswer = function(optionIndex) {
+window.selectAnswer = async function(optionIndex) {
   window.trainingApp.userAnswers[window.trainingApp.currentQuestionIndex] = optionIndex;
   loadQuestion(window.trainingApp.currentQuestionIndex);
+
+  // Save immediately when answer changes
+  if (auth.currentUser) {
+    await saveSessionToFirestore();
+  }
 };
 
-window.toggleBookmark = function(index) {
+window.toggleBookmark = async function(index) {
   if (window.trainingApp.bookmarkedQuestions.has(index)) {
     window.trainingApp.bookmarkedQuestions.delete(index);
+    console.log('🔖 Bookmark eliminado para pregunta', index);
   } else {
     window.trainingApp.bookmarkedQuestions.add(index);
+    console.log('🔖 Bookmark agregado para pregunta', index);
   }
   loadQuestion(window.trainingApp.currentQuestionIndex);
   updateQuestionsList();
+
+  // Save immediately when bookmark changes
+  if (auth.currentUser) {
+    await saveSessionToFirestore();
+  }
 };
 
 window.toggleSidebar = function() {
@@ -1540,6 +2502,7 @@ function updateQuestionsList() {
   const app = window.trainingApp;
   const items = document.querySelectorAll('.question-item');
   const isPracticeMode = app.sessionMode === 'practice';
+  const isReviewMode = app.sessionMode === 'review' || app.reviewMode;
 
   items.forEach((item, i) => {
     const userAnswer = app.userAnswers[i];
@@ -1553,8 +2516,8 @@ function updateQuestionsList() {
 
     // Colores según resultado
     if (isAnswered) {
-      if (isPracticeMode) {
-        // En modo práctica: mostrar verde (correcto) o rojo (incorrecto)
+      if (isPracticeMode || isReviewMode) {
+        // En modo práctica o revisión: mostrar verde (correcto) o rojo (incorrecto)
         const isCorrect = userAnswer === app.questions[i].correctAnswer;
         if (isCorrect) {
           item.classList.add('answered-correct');
@@ -1594,8 +2557,18 @@ function updateProgress() {
   const progress = (answeredCount / app.questions.length) * 100;
   const bookmarkedCount = app.bookmarkedQuestions.size;
 
+  // Actualizar barra de progreso del header
   const progressFill = document.getElementById('progress-fill');
   if (progressFill) progressFill.style.width = `${progress}%`;
+
+  // Actualizar sidebar progress stats card
+  const sidebarProgressPercentage = document.getElementById('sidebar-progress-percentage');
+  const sidebarProgressFill = document.getElementById('sidebar-progress-fill');
+  const sidebarAnswered = document.getElementById('sidebar-answered');
+
+  if (sidebarProgressPercentage) sidebarProgressPercentage.textContent = `${Math.round(progress)}%`;
+  if (sidebarProgressFill) sidebarProgressFill.style.width = `${progress}%`;
+  if (sidebarAnswered) sidebarAnswered.textContent = answeredCount;
 
   // Actualizar estadísticas del header
   const headerStatAnswered = document.getElementById('header-stat-answered');
@@ -1606,20 +2579,11 @@ function updateProgress() {
   if (headerStatUnanswered) headerStatUnanswered.textContent = unansweredCount;
   if (headerStatBookmarked) headerStatBookmarked.textContent = bookmarkedCount;
 
-  // Animar porcentaje del PIE chart
-  const piePercentage = document.getElementById('pie-percentage');
-  if (piePercentage) {
-    const currentPercentage = parseInt(piePercentage.textContent) || 0;
-    const targetPercentage = Math.round(progress);
-    animatePercentage(piePercentage, currentPercentage, targetPercentage, 500);
-  }
-
   if (app.sessionMode === 'practice') {
     const correctCount = app.userAnswers.filter((answer, index) =>
       answer === app.questions[index].correctAnswer
     ).length;
     const incorrectCount = answeredCount - correctCount;
-    // Puntuación: correctas / total de preguntas (incluyendo no contestadas)
     const totalQuestions = app.questions.length;
     const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
 
@@ -1631,90 +2595,11 @@ function updateProgress() {
     if (headerStatIncorrect) headerStatIncorrect.textContent = incorrectCount;
     if (scoreDisplay) scoreDisplay.textContent = `${score}%`;
 
-    // Actualizar PIE chart para modo práctica
-    updatePieChart(correctCount, incorrectCount, unansweredCount);
-  } else {
-    // Actualizar PIE chart para modo examen (solo contestadas vs sin contestar)
-    updatePieChartExam(answeredCount, unansweredCount);
-  }
-}
-
-function animatePercentage(element, start, end, duration) {
-  const startTime = performance.now();
-
-  function update(currentTime) {
-    const elapsed = currentTime - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-
-    // Usar easing para suavizar la animación
-    const easeOutCubic = 1 - Math.pow(1 - progress, 3);
-    const current = Math.round(start + (end - start) * easeOutCubic);
-
-    element.textContent = current;
-
-    if (progress < 1) {
-      requestAnimationFrame(update);
-    } else {
-      element.textContent = end;
-    }
-  }
-
-  requestAnimationFrame(update);
-}
-
-function updatePieChart(correct, incorrect, unanswered) {
-  const total = correct + incorrect + unanswered;
-  const circumference = 2 * Math.PI * 35; // r=35
-
-  const correctPercent = correct / total;
-  const incorrectPercent = incorrect / total;
-  const unansweredPercent = unanswered / total;
-
-  const correctDash = circumference * correctPercent;
-  const incorrectDash = circumference * incorrectPercent;
-  const unansweredDash = circumference * unansweredPercent;
-
-  const pieCorrect = document.getElementById('pie-correct');
-  const pieIncorrect = document.getElementById('pie-incorrect');
-  const pieUnanswered = document.getElementById('pie-unanswered');
-
-  if (pieCorrect) {
-    pieCorrect.setAttribute('stroke-dasharray', `${correctDash} ${circumference}`);
-    pieCorrect.setAttribute('stroke-dashoffset', '0');
-  }
-
-  if (pieIncorrect) {
-    pieIncorrect.setAttribute('stroke-dasharray', `${incorrectDash} ${circumference}`);
-    pieIncorrect.setAttribute('stroke-dashoffset', `-${correctDash}`);
-  }
-
-  if (pieUnanswered) {
-    pieUnanswered.setAttribute('stroke-dasharray', `${unansweredDash} ${circumference}`);
-    pieUnanswered.setAttribute('stroke-dashoffset', `-${correctDash + incorrectDash}`);
-  }
-}
-
-function updatePieChartExam(answered, unanswered) {
-  const total = answered + unanswered;
-  const circumference = 2 * Math.PI * 35; // r=35
-
-  const answeredPercent = answered / total;
-  const unansweredPercent = unanswered / total;
-
-  const answeredDash = circumference * answeredPercent;
-  const unansweredDash = circumference * unansweredPercent;
-
-  const pieAnswered = document.getElementById('pie-answered-exam');
-  const pieUnanswered = document.getElementById('pie-unanswered-exam');
-
-  if (pieAnswered) {
-    pieAnswered.setAttribute('stroke-dasharray', `${answeredDash} ${circumference}`);
-    pieAnswered.setAttribute('stroke-dashoffset', '0');
-  }
-
-  if (pieUnanswered) {
-    pieUnanswered.setAttribute('stroke-dasharray', `${unansweredDash} ${circumference}`);
-    pieUnanswered.setAttribute('stroke-dashoffset', `-${answeredDash}`);
+    // Actualizar sidebar correct count (solo en modo práctica)
+    const sidebarCorrectContainer = document.getElementById('sidebar-correct-container');
+    const sidebarCorrect = document.getElementById('sidebar-correct');
+    if (sidebarCorrectContainer) sidebarCorrectContainer.style.display = 'flex';
+    if (sidebarCorrect) sidebarCorrect.textContent = correctCount;
   }
 }
 
@@ -1723,17 +2608,26 @@ function updateNavigationButtons() {
   const prevBtn = document.getElementById('prev-btn');
   const nextBtn = document.getElementById('next-btn');
   const finishBtn = document.getElementById('finish-btn');
+  const isExam = app.sessionMode === 'exam';
 
   if (prevBtn) prevBtn.disabled = app.currentQuestionIndex === 0;
 
-  const allAnswered = app.userAnswers.filter(a => a !== undefined).length === app.questions.length;
+  const isLastQuestion = app.currentQuestionIndex === app.questions.length - 1;
 
-  if (allAnswered) {
-    if (nextBtn) nextBtn.style.display = 'none';
-    if (finishBtn) finishBtn.style.display = 'inline-flex';
-  } else {
-    if (nextBtn) nextBtn.style.display = 'inline-flex';
-    if (finishBtn) finishBtn.style.display = 'none';
+  // Update finish button text based on mode
+  if (finishBtn) {
+    const btnText = finishBtn.querySelector('span');
+    if (btnText) {
+      btnText.textContent = isExam ? 'Finalizar Examen' : 'Finalizar';
+    }
+  }
+
+  // Both modes: Always show Finish button, hide Next on last question
+  if (nextBtn) {
+    nextBtn.style.display = isLastQuestion ? 'none' : 'inline-flex';
+  }
+  if (finishBtn) {
+    finishBtn.style.display = 'inline-flex'; // Always visible
   }
 }
 
@@ -1763,21 +2657,43 @@ window.closeImageModal = function(event) {
 };
 
 window.saveSession = async function() {
-  await saveSessionToFirestore();
+  await saveSessionToFirestore(true); // Show indicator for manual save
 };
 
-async function saveSessionToFirestore() {
+async function saveSessionToFirestore(showIndicator = false) {
   if (!auth.currentUser || !window.trainingApp) return;
 
   try {
     const app = window.trainingApp;
+
+    // Convert bookmarked indices to question IDs for persistence
+    const bookmarkedQuestionIds = Array.from(app.bookmarkedQuestions).map(index => {
+      return app.questions[index]?.id;
+    }).filter(Boolean);
+
+    // Create answers map: question ID -> ORIGINAL answer index (for persistence across randomizations)
+    const answersMap = {};
+    app.userAnswers.forEach((answer, index) => {
+      if (answer !== undefined && app.questions[index]) {
+        const q = app.questions[index];
+        // Convert current shuffled index to original index using optionMapping
+        const originalAnswerIndex = q.optionMapping ? q.optionMapping[answer] : answer;
+        answersMap[q.id] = originalAnswerIndex;
+      }
+    });
+
+    // Clean userAnswers - replace undefined with null (Firebase doesn't accept undefined)
+    const cleanedUserAnswers = app.userAnswers.map(a => a === undefined ? null : a);
+
     const sessionData = {
       productId: app.product.id,
       mode: app.sessionMode,
       currentQuestionIndex: app.currentQuestionIndex,
-      userAnswers: app.userAnswers,
-      bookmarkedQuestions: Array.from(app.bookmarkedQuestions),
-      timeRemaining: app.sessionMode === 'exam' ? app.examTimeRemaining : null,
+      userAnswers: cleanedUserAnswers, // Keep for backwards compatibility
+      answersMap: answersMap, // New: question ID -> answer mapping
+      bookmarkedQuestions: Array.from(app.bookmarkedQuestions), // Keep for backwards compatibility
+      bookmarkedQuestionIds: bookmarkedQuestionIds, // New: array of question IDs
+      timeRemaining: app.sessionMode === 'exam' ? (app.examTimeRemaining || 0) : null,
       totalQuestions: app.questions.length,
       lastUpdated: serverTimestamp(),
       completed: false
@@ -1790,8 +2706,15 @@ async function saveSessionToFirestore() {
     }
 
     await setDoc(sessionRef, sessionData, { merge: true });
-    showSaveIndicator();
-    console.log('✅ Sesión guardada');
+    if (showIndicator) {
+      showSaveIndicator();
+    }
+    console.log('✅ Sesión guardada:', {
+      sessionId: app.sessionId,
+      bookmarks: bookmarkedQuestionIds,
+      answersCount: Object.keys(answersMap).length,
+      answersMap: answersMap
+    });
   } catch (error) {
     console.error('Error guardando sesión:', error);
   }
@@ -1809,59 +2732,532 @@ function showSaveIndicator() {
 
 window.finishTraining = async function() {
   const app = window.trainingApp;
-
-  if (app.timerInterval) {
-    clearInterval(app.timerInterval);
-  }
-
-  const timeSpent = Math.floor((Date.now() - app.sessionStartTime) / 1000);
-  const correctCount = app.userAnswers.filter((answer, index) =>
-    answer === app.questions[index].correctAnswer
-  ).length;
-
-  const results = {
-    productId: app.product.id,
-    mode: app.sessionMode,
-    totalQuestions: app.questions.length,
-    correctAnswers: correctCount,
-    incorrectAnswers: app.questions.length - correctCount,
-    score: Math.round((correctCount / app.questions.length) * 100),
-    timeSpent: timeSpent,
-    completed: true,
-    completedAt: serverTimestamp(),
-    answers: app.questions.map((q, i) => ({
-      questionId: q.id,
-      topic: q.topic,
-      userAnswer: app.userAnswers[i],
-      correctAnswer: q.correctAnswer,
-      isCorrect: app.userAnswers[i] === q.correctAnswer
-    }))
-  };
+  let results = null;
+  let timeSpent = 0;
 
   try {
-    if (app.sessionId) {
-      await completeSession(app.sessionId, results);
-      console.log('✅ Sesión completada');
+    if (app.timerInterval) {
+      clearInterval(app.timerInterval);
     }
 
-    const message = app.sessionMode === 'exam'
-      ? `¡EXAMEN COMPLETADO!\n\nTiempo: ${formatTime(timeSpent)}\nRespuestas correctas: ${correctCount}/${app.questions.length}\nPuntuación: ${results.score}%`
-      : `¡SESIÓN COMPLETADA!\n\nTiempo: ${formatTime(timeSpent)}\nCorrectas: ${correctCount}/${app.questions.length}\nIncorrectas: ${results.incorrectAnswers}\nPuntuación: ${results.score}%`;
+    timeSpent = Math.floor((Date.now() - app.sessionStartTime) / 1000);
 
-    alert(message);
-    window.location.hash = `#/dashboard/${app.product.id}`;
+    // Calcular correctas de forma segura
+    let correctCount = 0;
+    for (let i = 0; i < app.questions.length; i++) {
+      const userAnswer = app.userAnswers[i];
+      const question = app.questions[i];
+      if (userAnswer !== undefined && question && userAnswer === question.correctAnswer) {
+        correctCount++;
+      }
+    }
+
+    const totalQuestions = app.questions.length || 1; // Evitar división por cero
+
+    results = {
+      productId: app.product.id,
+      mode: app.sessionMode,
+      totalQuestions: app.questions.length,
+      correctAnswers: correctCount,
+      incorrectAnswers: app.questions.length - correctCount,
+      score: Math.round((correctCount / totalQuestions) * 100),
+      timeSpent: timeSpent,
+      completed: true,
+      completedAt: serverTimestamp(),
+      answers: app.questions.map((q, i) => ({
+        questionId: q.id,
+        topic: q.topic || 'General',
+        userAnswer: app.userAnswers[i] !== undefined ? app.userAnswers[i] : null, // Firebase doesn't accept undefined
+        correctAnswer: q.correctAnswer,
+        isCorrect: app.userAnswers[i] === q.correctAnswer
+      }))
+    };
+
+    console.log('📊 Resultados calculados:', results);
+
+    // Intentar completar sesión (no crítico si falla)
+    try {
+      if (app.sessionId) {
+        await completeSession(app.sessionId, results);
+        console.log('✅ Sesión completada en Firebase');
+      }
+    } catch (sessionError) {
+      console.error('⚠️ Error guardando sesión (no crítico):', sessionError);
+    }
+
+    // Mostrar modal de resultados
+    showResultsModal(results, timeSpent, app);
   } catch (error) {
-    console.error('Error completando sesión:', error);
-    alert('Error al guardar los resultados');
+    console.error('❌ Error en finishTraining:', error);
+    // Crear resultados de emergencia si algo falló
+    if (!results) {
+      results = {
+        productId: app?.product?.id || 'unknown',
+        mode: app?.sessionMode || 'practice',
+        totalQuestions: app?.questions?.length || 0,
+        correctAnswers: 0,
+        incorrectAnswers: app?.questions?.length || 0,
+        score: 0,
+        timeSpent: timeSpent,
+        completed: true,
+        answers: []
+      };
+    }
+    showResultsModal(results, timeSpent, app, true);
   }
 };
 
+function showResultsModal(results, timeSpent, app, hasError = false) {
+  const passed = results.score >= (app.passingScore || 70);
+  const isExam = app.sessionMode === 'exam';
+  const hasIncorrect = results.incorrectAnswers > 0;
+
+  console.log('📊 Mostrando modal de resultados:', { passed, isExam, score: results.score, passingScore: app.passingScore });
+
+  // Remove any existing results modal
+  const existingModal = document.getElementById('results-modal');
+  if (existingModal) existingModal.remove();
+
+  // Store results for retry functionality
+  window.lastTrainingResults = {
+    results,
+    productId: app.product.id,
+    mode: app.sessionMode,
+    incorrectQuestionIds: results.answers
+      .filter(a => !a.isCorrect)
+      .map(a => a.questionId)
+  };
+
+  const isDark = document.documentElement.classList.contains('dark');
+  const bgColor = isDark ? '#0f1419' : '#ffffff';
+  const textColor = isDark ? '#e4e8ef' : '#0f172a';
+  const textSecondary = isDark ? '#9ca3af' : '#475569';
+  const borderColor = isDark ? '#1e293b' : 'transparent';
+
+  const modalHTML = `
+    <style id="results-modal-styles">
+      @keyframes resultsModalIn {
+        from { opacity: 0; transform: scale(0.9) translateY(20px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
+      }
+    </style>
+    <div id="results-modal" style="
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    ">
+      <div style="
+        background: ${bgColor};
+        border: 1px solid ${borderColor};
+        border-radius: 24px;
+        max-width: 480px;
+        width: 100%;
+        padding: 2.5rem;
+        text-align: center;
+        animation: resultsModalIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      ">
+        <div style="
+          width: 80px;
+          height: 80px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto 1.5rem;
+          font-size: 2.5rem;
+          background: ${passed ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1))' : 'linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1))'};
+          border: 2px solid ${passed ? '#10b981' : '#ef4444'};
+        ">
+          ${passed ? '🎉' : '📚'}
+        </div>
+
+        <h2 style="
+          font-size: 1.75rem;
+          font-weight: 800;
+          margin-bottom: 0.5rem;
+          color: ${passed ? '#10b981' : '#ef4444'};
+        ">
+          ${isExam
+            ? (passed ? '¡Examen Aprobado!' : 'Examen No Aprobado')
+            : '¡Sesión Completada!'}
+        </h2>
+
+        <p style="color: ${textSecondary}; margin-bottom: 2rem; font-size: 1rem;">
+          ${isExam
+            ? (passed
+              ? 'Felicidades, has alcanzado el mínimo aprobatorio.'
+              : 'No te preocupes, sigue practicando y lo lograrás.')
+            : 'Buen trabajo en tu sesión de práctica.'}
+        </p>
+
+        <div style="
+          font-size: 4rem;
+          font-weight: 900;
+          line-height: 1;
+          margin-bottom: 0.5rem;
+          color: ${passed ? '#10b981' : '#ef4444'};
+        ">
+          ${results.score}%
+        </div>
+
+        ${isExam ? `
+          <p style="color: ${textSecondary}; font-size: 0.875rem; margin-bottom: 1.5rem;">
+            Mínimo aprobatorio: ${app.passingScore || 70}%
+          </p>
+        ` : ''}
+
+        <div style="
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 1rem;
+          margin-bottom: 2rem;
+          padding: 1.25rem;
+          background: ${isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'};
+          border-radius: 12px;
+        ">
+          <div style="text-align: center;">
+            <div style="font-size: 1.5rem; font-weight: 800; color: #10b981;">${results.correctAnswers}</div>
+            <div style="font-size: 0.75rem; color: ${textSecondary}; text-transform: uppercase; letter-spacing: 0.05em;">Correctas</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-size: 1.5rem; font-weight: 800; color: #ef4444;">${results.incorrectAnswers}</div>
+            <div style="font-size: 0.75rem; color: ${textSecondary}; text-transform: uppercase; letter-spacing: 0.05em;">Incorrectas</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-size: 1.5rem; font-weight: 800; color: #22a7d0;">${formatTime(timeSpent)}</div>
+            <div style="font-size: 0.75rem; color: ${textSecondary}; text-transform: uppercase; letter-spacing: 0.05em;">Tiempo</div>
+          </div>
+        </div>
+
+        ${hasError ? `
+          <p style="color: #ef4444; font-size: 0.875rem; margin-bottom: 1rem;">
+            Hubo un error al guardar los resultados, pero puedes continuar.
+          </p>
+        ` : ''}
+
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
+          ${isExam ? `
+            <button onclick="reviewExamAnswers()" style="
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 0.5rem;
+              padding: 0.875rem 1rem;
+              border-radius: 10px;
+              font-weight: 600;
+              font-size: 0.875rem;
+              cursor: pointer;
+              transition: all 0.2s;
+              background: ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'};
+              border: 1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
+              color: ${textColor};
+            ">
+              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+              </svg>
+              Revisar
+            </button>
+          ` : ''}
+          ${hasIncorrect ? `
+            <button onclick="retryIncorrectQuestions()" style="
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 0.5rem;
+              padding: 0.875rem 1rem;
+              border-radius: 10px;
+              font-weight: 600;
+              font-size: 0.875rem;
+              cursor: pointer;
+              transition: all 0.2s;
+              background: ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'};
+              border: 1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
+              color: ${textColor};
+            ">
+              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              Incorrectas (${results.incorrectAnswers})
+            </button>
+          ` : ''}
+          <button onclick="retryFullSession()" style="
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'};
+            border: 1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
+            color: ${textColor};
+          ">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            Nueva Sesión
+          </button>
+          <button onclick="closeResultsAndExit()" style="
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: linear-gradient(135deg, #22a7d0, #06b6d4);
+            border: none;
+            color: white;
+          ">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+            Dashboard
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+  console.log('✅ Modal de resultados insertado en el DOM');
+}
+
+window.closeResultsAndExit = function() {
+  const app = window.trainingApp;
+  const productId = app?.product?.id;
+
+  // Remove modal and its styles
+  const modal = document.getElementById('results-modal');
+  if (modal) modal.remove();
+  const modalStyles = document.getElementById('results-modal-styles');
+  if (modalStyles) modalStyles.remove();
+
+  // Clean up
+  const trainingContainer = document.getElementById('training-app-container');
+  if (trainingContainer) trainingContainer.remove();
+
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.width = '';
+  document.body.style.height = '';
+
+  const styleTag = document.getElementById('training-app-styles');
+  if (styleTag) styleTag.remove();
+
+  window.trainingApp = null;
+  window.lastTrainingResults = null;
+
+  // Redirect
+  window.location.hash = productId ? `#/dashboard/${productId}` : '#/products';
+}
+
+// Retry full session - start a new session with same settings
+window.retryFullSession = function() {
+  const lastResults = window.lastTrainingResults;
+  if (!lastResults) return;
+
+  // Remove results modal and its styles
+  const modal = document.getElementById('results-modal');
+  if (modal) modal.remove();
+  const modalStyles = document.getElementById('results-modal-styles');
+  if (modalStyles) modalStyles.remove();
+
+  // Clean up current app
+  const trainingContainer = document.getElementById('training-app-container');
+  if (trainingContainer) trainingContainer.remove();
+
+  const styleTag = document.getElementById('training-app-styles');
+  if (styleTag) styleTag.remove();
+
+  document.body.style.overflow = '';
+  window.trainingApp = null;
+
+  // Redirect to training with same mode
+  const mode = lastResults.mode || 'practice';
+  window.location.hash = `#/training/${lastResults.productId}?mode=${mode}`;
+}
+
+// Show loading overlay to prevent flash of unrendered content
+function showLoadingOverlay(message = 'Cargando...') {
+  const isDark = document.documentElement.classList.contains('dark');
+  const overlay = document.createElement('div');
+  overlay.id = 'loading-overlay';
+  overlay.innerHTML = `
+    <div style="position: fixed; inset: 0; background: ${isDark ? '#0a0e14' : '#ffffff'}; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem;">
+      <div style="width: 48px; height: 48px; border: 3px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}; border-top-color: #22a7d0; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+      <p style="color: ${isDark ? '#9ca3af' : '#6b7280'}; font-size: 1rem; font-weight: 500;">${message}</p>
+    </div>
+    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+  `;
+  document.body.appendChild(overlay);
+}
+
+// Retry only incorrect questions
+window.retryIncorrectQuestions = async function() {
+  const lastResults = window.lastTrainingResults;
+  if (!lastResults || !lastResults.incorrectQuestionIds?.length) {
+    console.error('❌ No hay preguntas incorrectas para repetir');
+    return;
+  }
+
+  console.log('🔄 Repetir incorrectas:', lastResults.incorrectQuestionIds);
+  const productId = lastResults.productId;
+
+  // Show loading overlay FIRST to cover the screen immediately
+  showLoadingOverlay('Preparando preguntas incorrectas...');
+
+  // Remove results modal and its styles
+  const modal = document.getElementById('results-modal');
+  if (modal) modal.remove();
+  const modalStyles = document.getElementById('results-modal-styles');
+  if (modalStyles) modalStyles.remove();
+
+  // Clean up current app completely
+  const trainingContainer = document.getElementById('training-app-container');
+  if (trainingContainer) trainingContainer.remove();
+
+  const styleTag = document.getElementById('training-app-styles');
+  if (styleTag) styleTag.remove();
+
+  document.body.style.overflow = '';
+  window.trainingApp = null;
+  window.lastTrainingResults = null;
+
+  // Store incorrect IDs in sessionStorage and force navigation
+  sessionStorage.setItem('retryIncorrectQuestionIds', JSON.stringify(lastResults.incorrectQuestionIds));
+
+  // Force a full page reload to ensure clean state
+  window.location.href = `${window.location.pathname}#/training/${productId}?mode=practice&retryIncorrect=true`;
+  window.location.reload();
+}
+
+// Review exam answers - show all answers with correct/incorrect marking
+window.reviewExamAnswers = function() {
+  const app = window.trainingApp;
+  if (!app) return;
+
+  // Remove results modal and its styles
+  const modal = document.getElementById('results-modal');
+  if (modal) modal.remove();
+  const modalStyles = document.getElementById('results-modal-styles');
+  if (modalStyles) modalStyles.remove();
+
+  // Enable review mode
+  app.reviewMode = true;
+  app.sessionMode = 'review'; // Switch to review mode to show answers
+
+  // Go to first question
+  app.currentQuestionIndex = 0;
+  loadQuestion(0);
+  updateQuestionsList();
+
+  // Update header to show review mode
+  const badge = document.querySelector('.badge');
+  if (badge) {
+    badge.textContent = 'Revisión';
+    badge.className = 'badge review';
+  }
+
+  // Update header buttons for review mode
+  const headerStatsRow = document.querySelector('.header-stats-row');
+  if (headerStatsRow) {
+    const actionsDiv = headerStatsRow.querySelector('.action-buttons-inline');
+    if (actionsDiv) {
+      actionsDiv.innerHTML = `
+        <button onclick="exitReviewMode()" class="btn btn-action-sm btn-exit" title="Terminar revisión">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          <span>Terminar Revisión</span>
+        </button>
+      `;
+    }
+  }
+}
+
+window.exitReviewMode = function() {
+  const app = window.trainingApp;
+  const productId = app?.product?.id;
+
+  // Clean up
+  const trainingContainer = document.getElementById('training-app-container');
+  if (trainingContainer) trainingContainer.remove();
+
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.width = '';
+  document.body.style.height = '';
+
+  const styleTag = document.getElementById('training-app-styles');
+  if (styleTag) styleTag.remove();
+
+  window.trainingApp = null;
+  window.lastTrainingResults = null;
+
+  // Redirect
+  window.location.hash = productId ? `#/dashboard/${productId}` : '#/products';
+}
+
 window.showExitModal = function() {
   const modal = document.getElementById('exit-modal');
+  const app = window.trainingApp;
+  const isExam = app?.sessionMode === 'exam';
+
   if (modal) {
+    const title = document.getElementById('exit-modal-title');
+    const text = document.getElementById('exit-modal-text');
+    const actions = document.getElementById('exit-modal-actions');
+
+    if (isExam) {
+      // Exam mode: offer to finish exam and see results
+      if (title) title.textContent = '¿Finalizar el examen?';
+      if (text) text.textContent = 'Si finalizas ahora, se calcularán tus resultados con las preguntas que hayas respondido. Las preguntas sin responder se contarán como incorrectas.';
+      if (actions) {
+        actions.innerHTML = `
+          <button onclick="closeExitModal()" class="btn btn-secondary">Seguir con el examen</button>
+          <button onclick="finishExamFromModal()" class="btn btn-primary">Finalizar y ver resultados</button>
+        `;
+      }
+    } else {
+      // Practice mode: normal exit
+      if (title) title.textContent = '¿Salir del entrenamiento?';
+      if (text) text.textContent = 'Tu progreso se guardará automáticamente. Puedes continuar más tarde desde donde lo dejaste.';
+      if (actions) {
+        actions.innerHTML = `
+          <button onclick="closeExitModal()" class="btn btn-secondary">Continuar</button>
+          <button onclick="confirmExit()" class="btn btn-primary">Salir</button>
+        `;
+      }
+    }
+
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
   }
+};
+
+window.finishExamFromModal = function() {
+  // Close the exit modal
+  const modal = document.getElementById('exit-modal');
+  if (modal) {
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+  }
+
+  // Call finishTraining to show results
+  finishTraining();
 };
 
 window.closeExitModal = function(event) {
@@ -1886,6 +3282,27 @@ window.confirmExit = async function() {
   if (hasProgress) {
     await saveSessionToFirestore();
   }
+
+  // Limpiar el contenedor de training y restaurar body overflow
+  const trainingContainer = document.getElementById('training-app-container');
+  if (trainingContainer) {
+    trainingContainer.remove();
+  }
+
+  // Restaurar estilos del body
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.width = '';
+  document.body.style.height = '';
+
+  // Eliminar estilos inyectados
+  const styleTag = document.getElementById('training-app-styles');
+  if (styleTag) {
+    styleTag.remove();
+  }
+
+  // Limpiar el estado de la app
+  window.trainingApp = null;
 
   // Redirigir al dashboard del producto
   window.location.hash = `#/dashboard/${app.product.id}`;

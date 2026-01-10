@@ -11,25 +11,25 @@ service cloud.firestore {
     }
 
     // Products collection - read for all, write for admins only
-    match /products/{productId} {
-      allow read: if true;  // Anyone can read products
+    match /products/{document=**} {
+      allow read: if true;  // Anyone can read products (get, list)
       allow write: if isAdmin();  // Only admins can create/update/delete
     }
 
     // Categories collection
-    match /categories/{categoryId} {
+    match /categories/{document=**} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
     // Badges collection
-    match /badges/{badgeId} {
+    match /badges/{document=**} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
     // Offers collection
-    match /offers/{offerId} {
+    match /offers/{document=**} {
       allow read: if true;
       allow write: if isAdmin();
     }
@@ -47,6 +47,18 @@ service cloud.firestore {
       // Legacy subcollection: products (kept for backwards compatibility)
       match /products/{productId} {
         allow read, write: if request.auth != null;
+      }
+
+      // Subcollection: stats (user statistics per product)
+      match /stats/{productId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isAdmin();
+      }
+
+      // Subcollection: sessions (training/exam sessions)
+      match /sessions/{sessionId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isAdmin();
       }
     }
 
@@ -94,8 +106,8 @@ service cloud.firestore {
     //
     // RECOMENDACIÓN: Para mejor seguridad, considera mover las preguntas a
     // products/{productId}/questions/{questionId} en el futuro
-    match /{questionDB}/{questionId} {
-      // Permitir lectura a usuarios autenticados
+    match /{questionDB}/{document=**} {
+      // Permitir lectura (get, list) a usuarios autenticados
       allow read: if request.auth != null;
 
       // Solo admins pueden escribir/modificar

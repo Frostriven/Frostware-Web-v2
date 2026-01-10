@@ -13,6 +13,65 @@ import {
   EmailAuthProvider
 } from 'firebase/auth';
 
+// ============================================
+// Sistema de espera para estado de autenticación inicial
+// Resuelve el problema de race condition donde las vistas
+// redirigen al login antes de que Firebase verifique la sesión
+// ============================================
+let authReadyResolve = null;
+let authReadyPromise = new Promise(resolve => {
+  authReadyResolve = resolve;
+});
+let isAuthInitialized = false;
+
+/**
+ * Espera a que Firebase haya determinado el estado inicial de autenticación.
+ * Usar esto ANTES de verificar auth.currentUser en vistas protegidas.
+ * @returns {Promise<firebase.User|null>} El usuario actual o null
+ */
+export async function waitForAuthReady() {
+  return authReadyPromise;
+}
+
+/**
+ * Verifica si el auth ya fue inicializado
+ * @returns {boolean}
+ */
+export function isAuthReady() {
+  return isAuthInitialized;
+}
+
+// Inicializar el listener que resuelve authReady una sola vez
+(async function initAuthReadyListener() {
+  try {
+    let currentAuth = auth;
+
+    if (!currentAuth) {
+      const { initializeFirebase } = await import('./firebase.js');
+      await initializeFirebase();
+      const firebase = await import('./firebase.js');
+      currentAuth = firebase.auth;
+    }
+
+    if (currentAuth) {
+      onAuthStateChanged(currentAuth, (user) => {
+        if (!isAuthInitialized) {
+          isAuthInitialized = true;
+          authReadyResolve(user);
+          console.log('[auth] Estado inicial determinado:', user ? user.email : 'sin usuario');
+        }
+      });
+    } else {
+      isAuthInitialized = true;
+      authReadyResolve(null);
+    }
+  } catch (error) {
+    console.error('[auth] Error inicializando auth listener:', error);
+    isAuthInitialized = true;
+    authReadyResolve(null);
+  }
+})();
+
 export async function registerWithEmail(name, email, password) {
   if (!auth) throw new Error('Firebase no inicializado');
   const cred = await createUserWithEmailAndPassword(auth, email, password);

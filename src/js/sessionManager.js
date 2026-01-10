@@ -50,10 +50,12 @@ export async function createSession(sessionData) {
       selectedTopics: sessionData.selectedTopics || [],
       questionCount: sessionData.questionCount,
       startedAt: Timestamp.now(),
+      completed: false,
       status: 'in_progress' // 'in_progress', 'completed', 'abandoned'
     };
 
-    const docRef = await addDoc(collection(db, 'sessions'), session);
+    // Save to user's sessions subcollection (consistent with saveSessionToFirestore)
+    const docRef = await addDoc(collection(db, 'users', userId, 'sessions'), session);
     console.log('✅ Sesión creada:', docRef.id);
     return docRef.id;
   } catch (error) {
@@ -70,15 +72,29 @@ export async function createSession(sessionData) {
 export async function completeSession(sessionId, results) {
   try {
     await ensureFirebaseReady();
-    const sessionRef = doc(db, 'sessions', sessionId);
+    const userId = auth.currentUser?.uid;
+    if (!userId) throw new Error('Usuario no autenticado');
+
+    // Use user's session subcollection (where sessions are actually stored)
+    const sessionRef = doc(db, 'users', userId, 'sessions', sessionId);
+
+    // Clean answers - replace undefined values with null
+    const cleanedAnswers = (results.answers || []).map(answer => ({
+      questionId: answer.questionId || '',
+      topic: answer.topic || 'General',
+      userAnswer: answer.userAnswer !== undefined ? answer.userAnswer : null,
+      correctAnswer: answer.correctAnswer !== undefined ? answer.correctAnswer : null,
+      isCorrect: answer.isCorrect || false
+    }));
 
     const completionData = {
-      correctAnswers: results.correctAnswers,
-      incorrectAnswers: results.incorrectAnswers,
-      score: Math.round((results.correctAnswers / results.totalQuestions) * 100),
-      timeSpent: results.timeSpent, // en segundos
-      answers: results.answers || [],
+      correctAnswers: results.correctAnswers || 0,
+      incorrectAnswers: results.incorrectAnswers || 0,
+      score: Math.round((results.correctAnswers / (results.totalQuestions || 1)) * 100),
+      timeSpent: results.timeSpent || 0, // en segundos
+      answers: cleanedAnswers,
       completedAt: Timestamp.now(),
+      completed: true,
       status: 'completed'
     };
 
@@ -523,7 +539,10 @@ export function formatTime(seconds) {
 export async function abandonSession(sessionId) {
   try {
     await ensureFirebaseReady();
-    const sessionRef = doc(db, 'sessions', sessionId);
+    const userId = auth.currentUser?.uid;
+    if (!userId) throw new Error('Usuario no autenticado');
+
+    const sessionRef = doc(db, 'users', userId, 'sessions', sessionId);
     await updateDoc(sessionRef, {
       status: 'abandoned',
       abandonedAt: Timestamp.now()

@@ -1,0 +1,178 @@
+{
+  "questions": [
+    {
+      "id": "q1",
+      "topic": {
+        "en": "Communications",
+        "es": "Comunicaciones"
+      },
+      "question": {
+        "en": "What is the primary HF frequency for NAT communications?",
+        "es": "¿Cuál es la frecuencia principal de HF para comunicaciones NAT?"
+      },
+      "image": null,
+      "options": [
+        {
+          "en": "123.45 MHz",
+          "es": "123.45 MHz"
+        },
+        {
+          "en": "8.891 MHz",
+          "es": "8.891 MHz"
+        },
+        {
+          "en": "121.5 MHz",
+          "es": "121.5 MHz"
+        },
+        {
+          "en": "5.680 MHz",
+          "es": "5.680 MHz"
+        }
+      ],
+      "correctAnswer": 1,
+      "explanation": {
+        "en": "The frequency 8.891 MHz is one of the primary HF frequencies used for North Atlantic communications.",
+        "es": "La frecuencia 8.891 MHz es una de las principales frecuencias HF utilizadas para comunicaciones en el Atlántico Norte."
+      }
+    },
+    {
+      "id": "q2",
+      "topic": {
+        "en": "Navigation",
+        "es": "Navegación"
+      },
+      "question": {
+        "en": "What does the term 'SLOP' mean in NAT navigation?",
+        "es": "¿Qué significa el término 'SLOP' en navegación NAT?"
+      },
+      "image": null,
+      "options": [
+        {
+          "en": "Strategic Lateral Offset Procedure",
+          "es": "Strategic Lateral Offset Procedure"
+        },
+        {
+          "en": "Standard Landing Operation Protocol",
+          "es": "Standard Landing Operation Protocol"
+        },
+        {
+          "en": "Secondary Line Of Position",
+          "es": "Secondary Line Of Position"
+        },
+        {
+          "en": "Safe Level Of Performance",
+          "es": "Safe Level Of Performance"
+        }
+      ],
+      "correctAnswer": 0,
+      "explanation": {
+        "en": "SLOP (Strategic Lateral Offset Procedure) is a procedure that allows lateral deviations of up to 2 NM to avoid wake turbulence.",
+        "es": "SLOP (Strategic Lateral Offset Procedure) es un procedimiento que permite desviaciones laterales de hasta 2 NM para evitar turbulencia de estela."
+      }
+    },
+    {
+      "id": "q3",
+      "topic": {
+        "en": "Weather",
+        "es": "Meteorología"
+      },
+      "question": {
+        "en": "What is the maximum wind speed for a tropical storm?",
+        "es": "¿Cuál es la velocidad máxima del viento para una tormenta tropical?"
+      },
+      "image": null,
+      "options": [
+        {
+          "en": "50 knots",
+          "es": "50 nudos"
+        },
+        {
+          "en": "63 knots",
+          "es": "63 nudos"
+        },
+        {
+          "en": "73 knots",
+          "es": "73 nudos"
+        },
+        {
+          "en": "100 knots",
+          "es": "100 nudos"
+        }
+      ],
+      "correctAnswer": 1,
+      "explanation": {
+        "en": "A tropical storm has maximum sustained winds of 34-63 knots. Above 63 knots it becomes a hurricane.",
+        "es": "Una tormenta tropical tiene vientos máximos sostenidos de 34-63 nudos. Por encima de 63 nudos se convierte en huracán."
+      }
+    }
+  ],
+  "metadata": {
+    "productId": "north-atlantic-ops",
+    "version": "1.0",
+    "lastUpdated": "2026-01-09",
+    "totalQuestions": 3,
+    "languages": ["en", "es"]
+  },
+  "notes": {
+    "randomization": "Options will be automatically randomized when loaded using Fisher-Yates shuffle algorithm",
+    "correctAnswer": "Index is based on the original order before randomization",
+    "image": "Optional field - can be null or a URL to an image",
+    "multiLanguage": "All text fields (topic, question, options, explanation) support both 'en' and 'es' keys"
+  },
+  "statisticsStructure": {
+    "description": "User statistics are stored in Firestore at: users/{userId}/stats/{productId}",
+    "fields": {
+      "userId": "string - User ID reference",
+      "productId": "string - Product ID reference",
+      "totalSessions": "number - Total practice + exam sessions completed",
+      "totalQuestions": "number - Total questions answered",
+      "totalCorrect": "number - Total correct answers",
+      "totalIncorrect": "number - Total incorrect answers",
+      "averageScore": "number - Overall average score percentage",
+      "totalTimeStudied": "number - Total time in seconds",
+      "averageTimePerSession": "number - Average session duration in seconds",
+      "bestScore": "number - Highest score achieved (percentage)",
+      "worstScore": "number - Lowest score achieved (percentage)",
+      "lastSessionDate": "timestamp - Last session completion date",
+      "currentStreak": "number - Current consecutive days studied",
+      "longestStreak": "number - Longest consecutive days studied",
+      "practiceMode": {
+        "sessions": "number - Practice sessions completed",
+        "questions": "number - Questions answered in practice",
+        "correct": "number - Correct answers in practice",
+        "incorrect": "number - Incorrect answers in practice",
+        "averageScore": "number - Practice mode average score",
+        "timeStudied": "number - Time spent in practice mode (seconds)"
+      },
+      "examMode": {
+        "sessions": "number - Exam sessions completed",
+        "questions": "number - Questions answered in exams",
+        "correct": "number - Correct answers in exams",
+        "incorrect": "number - Incorrect answers in exams",
+        "averageScore": "number - Exam mode average score",
+        "timeStudied": "number - Time spent in exam mode (seconds)",
+        "passed": "number - Number of exams passed",
+        "failed": "number - Number of exams failed"
+      },
+      "topicStats": {
+        "description": "Object with topic names as keys",
+        "example": {
+          "Communications": {
+            "correct": "number",
+            "incorrect": "number",
+            "accuracy": "number - percentage"
+          },
+          "Navigation": {
+            "correct": "number",
+            "incorrect": "number",
+            "accuracy": "number - percentage"
+          }
+        }
+      },
+      "bookmarkedQuestions": "array - IDs of bookmarked questions",
+      "difficultQuestions": "array - IDs of frequently missed questions (3+ times incorrect)",
+      "createdAt": "timestamp - Statistics document creation date",
+      "updatedAt": "timestamp - Last statistics update"
+    }
+  }
+}

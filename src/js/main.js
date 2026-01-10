@@ -566,7 +566,7 @@ const initializeApp = async () => {
     console.log('🎮 Ruta de entrenamiento detectada');
     const hash = window.location.hash;
     console.log('📍 Hash actual:', hash);
-    const trainingMatch = hash.match(/^#\/training\/(.+)$/);
+    const trainingMatch = hash.match(/^#\/training\/([^?]+)/);
     if (trainingMatch) {
       const productId = trainingMatch[1];
       console.log('✅ ProductId extraído:', productId);

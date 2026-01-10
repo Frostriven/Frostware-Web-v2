@@ -1,4 +1,5 @@
 import { auth } from '../../js/firebase.js';
+import { waitForAuthReady } from '../../js/auth.js';
 import { verifyUserAppAccess, getProductsFromFirebase, getUserProducts } from '../../js/userProfile.js';
 import {
   createSession,
@@ -12,6 +13,10 @@ import {
 export async function renderDashboardView(productId) {
   const spaRoot = document.getElementById('spa-root');
   if (!spaRoot) return;
+
+  // Esperar a que Firebase determine el estado de autenticación
+  // Esto previene redirecciones falsas durante la recarga de página
+  await waitForAuthReady();
 
   // Verify authentication
   if (!auth?.currentUser) {
@@ -775,6 +780,19 @@ export async function renderDashboardView(productId) {
                   </div>
                 </div>
 
+                <!-- Passing Score (hidden by default) -->
+                <div id="passing-score-section" class="mb-6 hidden">
+                  <div class="flex justify-between items-center mb-3">
+                    <label class="font-semibold" style="color: var(--color-text-primary);">Mínimo Aprobatorio</label>
+                    <span class="text-xl font-bold text-green-600 dark:text-green-400"><span id="passing-score-value">70</span>%</span>
+                  </div>
+                  <input type="range" id="passing-score-slider" min="50" max="100" value="70" step="5" class="w-full h-2 rounded-lg appearance-none cursor-pointer slider" oninput="updatePassingScore(this.value)">
+                  <div class="flex justify-between text-xs mt-1" style="color: var(--color-text-secondary);">
+                    <span>50%</span>
+                    <span>100%</span>
+                  </div>
+                </div>
+
                 <!-- Summary -->
                 <div class="border-2 rounded-xl p-5 bg-white dark:bg-gray-900/50 border-gray-200 dark:border-cyan-600">
                   <div class="flex items-center gap-2 font-bold text-lg mb-4 text-gray-800 dark:text-white">
@@ -950,8 +968,28 @@ export async function renderDashboardView(productId) {
   if (startTrainingButton) {
     startTrainingButton.addEventListener('click', () => {
       console.log('🚀 Iniciando entrenamiento para producto:', productId);
-      // Redirigir a la aplicación de entrenamiento dentro del SPA
-      window.location.hash = `#/training/${productId}`;
+
+      // Detectar el modo seleccionado
+      const selectedModeCard = document.querySelector('.mode-card.selected');
+      const isExamMode = selectedModeCard?.textContent.includes('Examen');
+      const mode = isExamMode ? 'exam' : 'practice';
+
+      // Obtener duración y mínimo aprobatorio para modo examen
+      const timerValue = document.getElementById('timer-value')?.textContent || '60';
+      const passingScore = document.getElementById('passing-score-value')?.textContent || '70';
+      const duration = parseInt(timerValue) * 60; // Convertir minutos a segundos
+
+      console.log('📋 Modo seleccionado:', mode);
+      console.log('⏱️ Duración:', timerValue, 'min (', duration, 's)');
+      console.log('✅ Mínimo aprobatorio:', passingScore, '%');
+
+      // Construir URL con parámetros
+      let url = `#/training/${productId}?mode=${mode}`;
+      if (isExamMode) {
+        url += `&duration=${duration}&passingScore=${passingScore}`;
+      }
+
+      window.location.hash = url;
       console.log('✅ Hash actualizado a:', window.location.hash);
     });
   }
@@ -979,10 +1017,13 @@ export async function renderDashboardView(productId) {
     element.classList.add('selected');
 
     const timerSection = document.getElementById('timer-section');
+    const passingScoreSection = document.getElementById('passing-score-section');
     if (mode === 'exam') {
       timerSection.classList.remove('hidden');
+      passingScoreSection.classList.remove('hidden');
     } else {
       timerSection.classList.add('hidden');
+      passingScoreSection.classList.add('hidden');
     }
     updateSessionSummary();
   };
@@ -996,6 +1037,18 @@ export async function renderDashboardView(productId) {
     if (slider) {
       const percentage = ((value - 15) / (180 - 15)) * 100;
       slider.style.background = `linear-gradient(to right, #22a7d0 0%, #22a7d0 ${percentage}%, var(--color-border-primary) ${percentage}%, var(--color-border-primary) 100%)`;
+    }
+  };
+
+  window.updatePassingScore = function (value) {
+    const passingScoreValue = document.getElementById('passing-score-value');
+    if (passingScoreValue) {
+      passingScoreValue.textContent = value;
+    }
+    const slider = document.getElementById('passing-score-slider');
+    if (slider) {
+      const percentage = ((value - 50) / (100 - 50)) * 100;
+      slider.style.background = `linear-gradient(to right, #10b981 0%, #10b981 ${percentage}%, var(--color-border-primary) ${percentage}%, var(--color-border-primary) 100%)`;
     }
   };
 

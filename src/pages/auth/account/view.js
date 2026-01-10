@@ -1,4 +1,4 @@
-import { logout, watchAuthState, changePassword, updateUserDisplayName } from '../../../js/auth.js';
+import { logout, watchAuthState, changePassword, updateUserDisplayName, waitForAuthReady } from '../../../js/auth.js';
 import { getUserProfile, updateUserProfile, getUserProducts, addUserProduct, removeUserProduct, sampleProducts } from '../../../js/userProfile.js';
 import { initializeCountrySelect, setGlobalCountry } from '../../../js/countries.js';
 import { t, i18n } from '../../../i18n/index.js';
@@ -620,22 +620,26 @@ function initializeAccountPage(initialTab = 'profile') {
     }
   });
 
-  // Watch del estado de autenticación
-  watchAuthState((user) => {
-    if (!user) {
-      window.location.hash = '#/auth/login';
-      return;
-    }
+  // Esperar a que Firebase determine el estado de autenticación inicial
+  // Esto previene redirecciones falsas durante la recarga de página
+  waitForAuthReady().then(() => {
+    // Watch del estado de autenticación
+    watchAuthState((user) => {
+      if (!user) {
+        window.location.hash = '#/auth/login';
+        return;
+      }
 
-    currentUser = user;
-    userEmail.textContent = user.email;
+      currentUser = user;
+      userEmail.textContent = user.email;
 
-    // Cargar datos del usuario
-    loadUserProfile(user);
-    loadUserProducts(user);
+      // Cargar datos del usuario
+      loadUserProfile(user);
+      loadUserProducts(user);
 
-    // Mostrar la pestaña inicial
-    showTab(initialTab);
+      // Mostrar la pestaña inicial
+      showTab(initialTab);
+    });
   });
 }
 
