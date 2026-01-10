@@ -2002,7 +2002,7 @@ async function initializeTrainingApp(product, questions, params) {
     passingScore: params.passingScore || 70,
     timerInterval: null,
     sessionId: params.sessionId || null,
-    currentLanguage: 'es', // Default language
+    currentLanguage: localStorage.getItem('selectedLanguage') || 'es', // Get language from settings
     pendingExistingSession: null // For storing session to potentially continue
   };
 

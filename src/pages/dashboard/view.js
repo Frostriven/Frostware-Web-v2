@@ -9,10 +9,14 @@ import {
   getProductStatistics,
   formatTime
 } from '../../js/sessionManager.js';
+import { t, i18n } from '../../i18n/index.js';
 
 export async function renderDashboardView(productId) {
   const spaRoot = document.getElementById('spa-root');
   if (!spaRoot) return;
+
+  // Esperar a que las traducciones estén listas
+  await i18n.ready();
 
   // Esperar a que Firebase determine el estado de autenticación
   // Esto previene redirecciones falsas durante la recarga de página
@@ -35,10 +39,10 @@ export async function renderDashboardView(productId) {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
             </svg>
           </div>
-          <h2 class="text-2xl font-bold text-gray-800 mb-4">Acceso Denegado</h2>
+          <h2 class="text-2xl font-bold text-gray-800 mb-4">${t('common.error')}</h2>
           <p class="text-gray-600 mb-6">${accessCheck.message}</p>
           <button onclick="window.location.hash='#/products'" class="bg-[#22a7d0] text-white px-6 py-3 rounded-lg hover:bg-[#1e96bc] transition-colors">
-            Ver Productos
+            ${t('account.products.viewProducts')}
           </button>
         </div>
       </div>
@@ -174,7 +178,7 @@ export async function renderDashboardView(productId) {
       if (!field) return '';
       if (typeof field === 'string') return field;
       if (typeof field === 'object') {
-        const lang = localStorage.getItem('language') || 'es';
+        const lang = i18n.getCurrentLanguage();
         return field[lang] || field.es || field.en || '';
       }
       return '';
@@ -237,10 +241,10 @@ export async function renderDashboardView(productId) {
     spaRoot.innerHTML = `
       <div class="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 flex items-center justify-center">
         <div class="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full mx-4 text-center">
-          <h2 class="text-2xl font-bold text-gray-800 mb-4">Error</h2>
-          <p class="text-gray-600 mb-6">No se pudo cargar la información del producto.</p>
+          <h2 class="text-2xl font-bold text-gray-800 mb-4">${t('common.error')}</h2>
+          <p class="text-gray-600 mb-6">${t('productDetail.errorLoading')}</p>
           <button onclick="window.location.hash='#/products'" class="bg-[#22a7d0] text-white px-6 py-3 rounded-lg hover:bg-[#1e96bc] transition-colors">
-            Volver a Productos
+            ${t('productDetail.backToProducts')}
           </button>
         </div>
       </div>
@@ -567,10 +571,10 @@ export async function renderDashboardView(productId) {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M15 19l-7-7 7-7"/>
               </svg>
-              Mis Productos
+              ${t('dashboard.header.backToProducts')}
             </a>
             <span>/</span>
-            <span class="text-white">Configuración de Entrenamiento</span>
+            <span class="text-white">${t('dashboard.header.configureGuide')}</span>
           </div>
           <div class="flex items-center gap-6">
             <div class="w-20 h-20 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-4xl shadow-xl">
@@ -598,7 +602,7 @@ export async function renderDashboardView(productId) {
                   <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
                     <span class="text-2xl">📚</span>
                   </div>
-                  <h2 class="text-2xl font-bold" style="color: var(--color-text-primary);">Bases de Datos de Conocimiento</h2>
+                  <h2 class="text-2xl font-bold" style="color: var(--color-text-primary);">${t('dashboard.databases.title')}</h2>
                 </div>
 
                 <!-- Info Banner -->
@@ -606,11 +610,11 @@ export async function renderDashboardView(productId) {
                   <div class="flex gap-3">
                     <span class="text-2xl">💡</span>
                     <div class="flex-1">
-                      <h3 class="font-extrabold text-blue-800 dark:text-blue-300 mb-2">Selección Inteligente de Contenido</h3>
+                      <h3 class="font-extrabold text-blue-800 dark:text-blue-300 mb-2">${t('dashboard.databases.infoTitle')}</h3>
                       <ul class="text-sm font-semibold text-gray-800 dark:text-blue-300 space-y-1">
-                        <li>• Combina múltiples bases de datos para sesiones personalizadas</li>
-                        <li>• Selecciona temas específicos de cada producto</li>
-                        <li>• Los productos no comprados están disponibles para agregar al carrito</li>
+                        <li>• ${t('dashboard.databases.infoBullet1')}</li>
+                        <li>• ${t('dashboard.databases.infoBullet2')}</li>
+                        <li>• ${t('dashboard.databases.infoBullet3')}</li>
                       </ul>
                     </div>
                   </div>
@@ -644,12 +648,12 @@ export async function renderDashboardView(productId) {
                           ${isPurchased
         ? `<div class="px-4 py-2 bg-green-100 dark:bg-green-900/50 rounded-full text-sm font-semibold border border-green-400 dark:border-green-500/50 shadow-[0_0_10px_rgba(74,222,128,0.2)]">
                               <span class="inline-block w-2 h-2 bg-green-600 dark:bg-green-400 rounded-full mr-2 animate-pulse shadow-[0_0_8px_currentColor]"></span>
-                              <span class="text-green-800 dark:text-green-200 font-bold tracking-wide">Activo</span>
+                              <span class="text-green-800 dark:text-green-200 font-bold tracking-wide">${t('dashboard.databases.activeLabel')}</span>
                             </div>`
         : `<div class="text-right">
                               <div class="text-2xl font-bold" style="color: var(--color-text-secondary);">$${prod.price || '0.00'}</div>
                               <button onclick="addToCartFromDashboard(event, '${prod.id}')" class="mt-2 px-4 py-2 bg-orange-500 text-white text-sm font-semibold rounded-lg hover:bg-orange-600 transition shadow-md">
-                                Agregar
+                                ${t('dashboard.databases.addButton')}
                               </button>
                             </div>`
       }
@@ -674,7 +678,7 @@ export async function renderDashboardView(productId) {
                                     </div>
                                     <div class="flex-1">
                                       <div class="font-semibold text-sm" style="color: var(--color-text-primary);">${topic.name}</div>
-                                      <div class="text-xs" style="color: var(--color-text-secondary);">${topic.questions} preguntas</div>
+                                      <div class="text-xs" style="color: var(--color-text-secondary);">${topic.questions} ${t('dashboard.databases.questions')}</div>
                                     </div>
                                   </div>
                                 </div>
@@ -695,12 +699,12 @@ export async function renderDashboardView(productId) {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                       </svg>
                       <div>
-                        <h4 class="font-extrabold text-blue-800 dark:text-blue-300 mb-1">Cómo funciona la selección de bases de datos</h4>
+                        <h4 class="font-extrabold text-blue-800 dark:text-blue-300 mb-1">${t('dashboard.databases.howItWorksTitle')}</h4>
                         <ul class="text-sm font-semibold text-gray-800 dark:text-blue-300 space-y-1">
-                          <li>• <strong class="text-blue-900 dark:text-blue-300">Productos comprados:</strong> Puedes seleccionar los temas específicos de cada producto</li>
-                          <li>• <strong class="text-blue-900 dark:text-blue-300">Productos no comprados:</strong> Aparecen en gris con el precio, necesitas comprarlos primero</li>
-                          <li>• <strong class="text-blue-900 dark:text-blue-300">Combinación de bases:</strong> Selecciona múltiples productos para combinar sus preguntas en una sola sesión</li>
-                          <li>• <strong class="text-blue-900 dark:text-blue-300">Temas personalizados:</strong> Elige los temas específicos que quieres estudiar de cada producto</li>
+                          <li>• <strong class="text-blue-900 dark:text-blue-300">${t('dashboard.databases.howItWorksBullet1')}</strong> ${t('dashboard.databases.howItWorksBullet1Desc')}</li>
+                          <li>• <strong class="text-blue-900 dark:text-blue-300">${t('dashboard.databases.howItWorksBullet2')}</strong> ${t('dashboard.databases.howItWorksBullet2Desc')}</li>
+                          <li>• <strong class="text-blue-900 dark:text-blue-300">${t('dashboard.databases.howItWorksBullet3')}</strong> ${t('dashboard.databases.howItWorksBullet3Desc')}</li>
+                          <li>• <strong class="text-blue-900 dark:text-blue-300">${t('dashboard.databases.howItWorksBullet4')}</strong> ${t('dashboard.databases.howItWorksBullet4Desc')}</li>
                         </ul>
                       </div>
                     </div>
@@ -710,19 +714,19 @@ export async function renderDashboardView(productId) {
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                       <div>
                         <div class="text-lg font-bold text-cyan-700 dark:text-cyan-400" id="active-databases-count">${userPurchasedProducts.length}</div>
-                        <div class="text-xs font-bold text-gray-800 dark:text-slate-300">Bases Activas</div>
+                        <div class="text-xs font-bold text-gray-800 dark:text-slate-300">${t('dashboard.summary.activeDatabases')}</div>
                       </div>
                       <div>
                         <div class="text-lg font-bold text-cyan-700 dark:text-cyan-400" id="total-questions">0</div>
-                        <div class="text-xs font-bold text-gray-800 dark:text-slate-300">Preguntas Totales</div>
+                        <div class="text-xs font-bold text-gray-800 dark:text-slate-300">${t('dashboard.summary.totalQuestions')}</div>
                       </div>
                       <div>
                         <div class="text-lg font-bold text-cyan-700 dark:text-cyan-400" id="selected-topics">0</div>
-                        <div class="text-xs font-bold text-gray-800 dark:text-slate-300">Temas Seleccionados</div>
+                        <div class="text-xs font-bold text-gray-800 dark:text-slate-300">${t('dashboard.summary.selectedTopics')}</div>
                       </div>
                       <div>
                         <div class="text-lg font-bold text-cyan-700 dark:text-cyan-400" id="estimated-time">~60min</div>
-                        <div class="text-xs font-bold text-gray-800 dark:text-slate-300">Tiempo Estimado</div>
+                        <div class="text-xs font-bold text-gray-800 dark:text-slate-300">${t('dashboard.summary.estimatedTime')}</div>
                       </div>
                     </div>
                   </div>
@@ -735,43 +739,43 @@ export async function renderDashboardView(productId) {
                   <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
                     <span class="text-2xl">⚙️</span>
                   </div>
-                  <h2 class="text-2xl font-bold" style="color: var(--color-text-primary);">Configuración de Sesión</h2>
+                  <h2 class="text-2xl font-bold" style="color: var(--color-text-primary);">${t('dashboard.configuration.title')}</h2>
                 </div>
 
                 <!-- Mode Selection -->
                 <div class="mb-6">
-                  <label class="block font-semibold mb-3" style="color: var(--color-text-primary);">Modo de Entrenamiento</label>
+                  <label class="block font-semibold mb-3" style="color: var(--color-text-primary);">${t('dashboard.configuration.modeLabel')}</label>
                   <div class="grid grid-cols-2 gap-4">
                     <div class="mode-card selected" onclick="selectMode(this, 'practice')">
                       <div class="text-3xl mb-2">🎯</div>
-                      <h3 class="font-bold text-lg mb-1" style="color: var(--color-text-primary);">Modo Práctica</h3>
-                      <p class="text-sm" style="color: var(--color-text-secondary);">Aprende a tu ritmo sin límite de tiempo</p>
+                      <h3 class="font-bold text-lg mb-1" style="color: var(--color-text-primary);">${t('dashboard.configuration.practiceMode')}</h3>
+                      <p class="text-sm" style="color: var(--color-text-secondary);">${t('dashboard.configuration.practiceModeDesc')}</p>
                     </div>
                     <div class="mode-card" onclick="selectMode(this, 'exam')">
                       <div class="text-3xl mb-2">📝</div>
-                      <h3 class="font-bold text-lg mb-1" style="color: var(--color-text-primary);">Modo Examen</h3>
-                      <p class="text-sm" style="color: var(--color-text-secondary);">Condiciones reales con tiempo limitado</p>
+                      <h3 class="font-bold text-lg mb-1" style="color: var(--color-text-primary);">${t('dashboard.configuration.examMode')}</h3>
+                      <p class="text-sm" style="color: var(--color-text-secondary);">${t('dashboard.configuration.examModeDesc')}</p>
                     </div>
                   </div>
                 </div>
 
                 <!-- Question Count -->
                 <div class="mb-6">
-                  <label class="block font-semibold mb-3" style="color: var(--color-text-primary);">Número de Preguntas</label>
+                  <label class="block font-semibold mb-3" style="color: var(--color-text-primary);">${t('dashboard.configuration.questionCount')}</label>
                   <select id="question-count" class="w-full p-3 border-2 rounded-xl font-medium focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/20 outline-none transition" style="border-color: var(--color-border-primary); background: var(--color-bg-primary); color: var(--color-text-primary);">
-                    <option value="10">10 preguntas - Sesión rápida</option>
-                    <option value="25">25 preguntas - Sesión corta</option>
-                    <option value="50" selected>50 preguntas - Sesión estándar</option>
-                    <option value="100">100 preguntas - Sesión extendida</option>
-                    <option value="all">Todas las preguntas disponibles</option>
+                    <option value="10">10 ${t('dashboard.configuration.questionCountQuick')}</option>
+                    <option value="25">25 ${t('dashboard.configuration.questionCountShort')}</option>
+                    <option value="50" selected>50 ${t('dashboard.configuration.questionCountStandard')}</option>
+                    <option value="100">100 ${t('dashboard.configuration.questionCountExtended')}</option>
+                    <option value="all">${t('dashboard.configuration.questionCountAll')}</option>
                   </select>
                 </div>
 
                 <!-- Timer (hidden by default) -->
                 <div id="timer-section" class="mb-6 hidden">
                   <div class="flex justify-between items-center mb-3">
-                    <label class="font-semibold" style="color: var(--color-text-primary);">Tiempo del Examen</label>
-                    <span class="text-xl font-bold text-cyan-600 dark:text-cyan-400"><span id="timer-value">60</span> min</span>
+                    <label class="font-semibold" style="color: var(--color-text-primary);">${t('dashboard.configuration.timerLabel')}</label>
+                    <span class="text-xl font-bold text-cyan-600 dark:text-cyan-400"><span id="timer-value">60</span> ${t('dashboard.configuration.timerMinutes')}</span>
                   </div>
                   <input type="range" id="timer-slider" min="15" max="180" value="60" step="15" class="w-full h-2 rounded-lg appearance-none cursor-pointer slider" oninput="updateTimer(this.value)">
                   <div class="flex justify-between text-xs mt-1" style="color: var(--color-text-secondary);">
@@ -797,23 +801,23 @@ export async function renderDashboardView(productId) {
                 <div class="border-2 rounded-xl p-5 bg-white dark:bg-gray-900/50 border-gray-200 dark:border-cyan-600">
                   <div class="flex items-center gap-2 font-bold text-lg mb-4 text-gray-800 dark:text-white">
                     <span>📊</span>
-                    Resumen de la Sesión
+                    ${t('dashboard.configuration.summaryTitle')}
                   </div>
                   <div class="grid grid-cols-2 gap-4">
                     <div class="p-3 rounded-lg shadow-sm border bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700">
-                      <div class="text-xs mb-1 font-semibold text-gray-700 dark:text-gray-400">Modo</div>
-                      <div class="font-bold text-lg text-gray-800 dark:text-white" id="session-mode">Práctica</div>
+                      <div class="text-xs mb-1 font-semibold text-gray-700 dark:text-gray-400">${t('dashboard.configuration.summaryMode')}</div>
+                      <div class="font-bold text-lg text-gray-800 dark:text-white" id="session-mode">${t('dashboard.configuration.practiceMode')}</div>
                     </div>
                     <div class="p-3 rounded-lg shadow-sm border bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700">
-                      <div class="text-xs mb-1 font-semibold text-gray-700 dark:text-gray-400">Preguntas</div>
+                      <div class="text-xs mb-1 font-semibold text-gray-700 dark:text-gray-400">${t('dashboard.configuration.summaryQuestions')}</div>
                       <div class="font-bold text-lg text-gray-800 dark:text-white" id="session-questions">50</div>
                     </div>
                     <div class="p-3 rounded-lg shadow-sm border bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700">
-                      <div class="text-xs mb-1 font-semibold text-gray-700 dark:text-gray-400">Temas Activos</div>
+                      <div class="text-xs mb-1 font-semibold text-gray-700 dark:text-gray-400">${t('dashboard.configuration.summaryActiveTopics')}</div>
                       <div class="font-bold text-lg text-gray-800 dark:text-white" id="selected-topics">0</div>
                     </div>
                     <div class="p-3 rounded-lg shadow-sm border bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700">
-                      <div class="text-xs mb-1 font-semibold text-gray-700 dark:text-gray-400">Tiempo Est.</div>
+                      <div class="text-xs mb-1 font-semibold text-gray-700 dark:text-gray-400">${t('dashboard.configuration.summaryEstimatedTime')}</div>
                       <div class="font-bold text-lg text-gray-800 dark:text-white" id="session-time">~60 min</div>
                     </div>
                   </div>
@@ -825,7 +829,7 @@ export async function renderDashboardView(productId) {
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M8 5v14l11-7z"/>
                     </svg>
-                    <span>Iniciar Entrenamiento</span>
+                    <span>${t('dashboard.configuration.startButton')}</span>
                   </div>
                 </button>
               </div>
@@ -836,42 +840,42 @@ export async function renderDashboardView(productId) {
 
               <!-- General Statistics -->
               <div class="card-glass rounded-xl p-6 bg-white dark:bg-transparent border border-gray-200 dark:border-transparent">
-                <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Estadísticas del Producto</h3>
+                <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">${t('dashboard.stats.productStatsTitle')}</h3>
                 <div class="space-y-4">
                   <div class="flex justify-between items-center">
-                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">Total Sesiones</span>
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">${t('dashboard.stats.totalSessions')}</span>
                     <span class="font-bold text-cyan-700 dark:text-cyan-400">${productStats?.totalSessions || 0}</span>
                   </div>
                   <div class="flex justify-between items-center">
-                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">Preguntas Respondidas</span>
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">${t('dashboard.stats.questionsAnswered')}</span>
                     <span class="font-bold text-cyan-700 dark:text-cyan-400">${productStats?.totalQuestions || 0}</span>
                   </div>
                   <div class="flex justify-between items-center">
-                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">Promedio General</span>
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">${t('dashboard.stats.generalAverage')}</span>
                     <span class="font-bold text-cyan-700 dark:text-cyan-400">${productStats?.averageScore || 0}%</span>
                   </div>
                   <div class="flex justify-between items-center">
-                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">Mejor Puntuación</span>
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">${t('dashboard.stats.bestScore')}</span>
                     <span class="font-bold text-green-700 dark:text-green-400">${productStats?.bestScore || 0}%</span>
                   </div>
                   <div class="flex justify-between items-center">
-                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">Tiempo Total Estudiado</span>
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">${t('dashboard.stats.totalTimeStudied')}</span>
                     <span class="font-bold text-cyan-700 dark:text-cyan-400">${formatTime(productStats?.totalTimeStudied || 0)}</span>
                   </div>
                   <div class="flex justify-between items-center">
-                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">Racha Actual</span>
-                    <span class="font-bold text-orange-700 dark:text-orange-400">${productStats?.currentStreak || 0} días</span>
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">${t('dashboard.stats.currentStreak')}</span>
+                    <span class="font-bold text-orange-700 dark:text-orange-400">${productStats?.currentStreak || 0} ${t('dashboard.stats.days')}</span>
                   </div>
                   <div class="flex justify-between items-center">
-                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">Mejor Racha</span>
-                    <span class="font-bold text-orange-700 dark:text-orange-400">${productStats?.longestStreak || 0} días</span>
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-400">${t('dashboard.stats.bestStreak')}</span>
+                    <span class="font-bold text-orange-700 dark:text-orange-400">${productStats?.longestStreak || 0} ${t('dashboard.stats.days')}</span>
                   </div>
                 </div>
               </div>
 
               <!-- Practice vs Exam Statistics -->
               <div class="card-glass rounded-xl p-6 bg-white dark:bg-transparent border border-gray-200 dark:border-transparent">
-                <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Modo Práctica vs Examen</h3>
+                <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">${t('dashboard.stats.practiceVsExam')}</h3>
                 <div class="space-y-6">
                   <!-- Practice Mode -->
                   <div>
@@ -879,13 +883,13 @@ export async function renderDashboardView(productId) {
                       <svg class="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                       </svg>
-                      Modo Práctica
+                      ${t('dashboard.configuration.practiceMode')}
                     </h4>
                     <div class="grid grid-cols-2 gap-2 text-xs font-medium text-gray-700 dark:text-gray-400">
-                      <div>Sesiones: <span class="font-semibold">${productStats?.practiceMode?.sessions || 0}</span></div>
-                      <div>Promedio: <span class="font-semibold">${productStats?.practiceMode?.averageScore || 0}%</span></div>
-                      <div>Preguntas: <span class="font-semibold">${productStats?.practiceMode?.questions || 0}</span></div>
-                      <div>Correctas: <span class="font-semibold">${productStats?.practiceMode?.correct || 0}</span></div>
+                      <div>${t('dashboard.stats.sessions')}: <span class="font-semibold">${productStats?.practiceMode?.sessions || 0}</span></div>
+                      <div>${t('dashboard.stats.average')}: <span class="font-semibold">${productStats?.practiceMode?.averageScore || 0}%</span></div>
+                      <div>${t('dashboard.configuration.summaryQuestions')}: <span class="font-semibold">${productStats?.practiceMode?.questions || 0}</span></div>
+                      <div>${t('dashboard.stats.correct')}: <span class="font-semibold">${productStats?.practiceMode?.correct || 0}</span></div>
                     </div>
                   </div>
 
@@ -895,13 +899,13 @@ export async function renderDashboardView(productId) {
                       <svg class="w-4 h-4 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                       </svg>
-                      Modo Examen
+                      ${t('dashboard.configuration.examMode')}
                     </h4>
                     <div class="grid grid-cols-2 gap-2 text-xs font-medium text-gray-700 dark:text-gray-400">
-                      <div>Sesiones: <span class="font-semibold">${productStats?.examMode?.sessions || 0}</span></div>
-                      <div>Promedio: <span class="font-semibold">${productStats?.examMode?.averageScore || 0}%</span></div>
-                      <div>Aprobados: <span class="font-semibold text-green-600">${productStats?.examMode?.passed || 0}</span></div>
-                      <div>Reprobados: <span class="font-semibold text-red-600">${productStats?.examMode?.failed || 0}</span></div>
+                      <div>${t('dashboard.stats.sessions')}: <span class="font-semibold">${productStats?.examMode?.sessions || 0}</span></div>
+                      <div>${t('dashboard.stats.average')}: <span class="font-semibold">${productStats?.examMode?.averageScore || 0}%</span></div>
+                      <div>${t('dashboard.stats.passed')}: <span class="font-semibold text-green-600">${productStats?.examMode?.passed || 0}</span></div>
+                      <div>${t('dashboard.stats.failed')}: <span class="font-semibold text-red-600">${productStats?.examMode?.failed || 0}</span></div>
                     </div>
                   </div>
                 </div>
@@ -910,15 +914,15 @@ export async function renderDashboardView(productId) {
               <!-- Topic Statistics -->
               ${Object.keys(productStats?.topicStats || {}).length > 0 ? `
               <div class="card-glass rounded-xl p-6 bg-white dark:bg-transparent border border-gray-200 dark:border-transparent">
-                <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Estadísticas por Tema</h3>
+                <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">${t('dashboard.stats.topicStatsTitle')}</h3>
                 <div class="space-y-3">
                   ${Object.entries(productStats.topicStats).map(([topic, stats]) => `
                     <div class="border-l-4 ${stats.accuracy >= 70 ? 'border-green-600' : 'border-yellow-600'} dark:${stats.accuracy >= 70 ? 'border-green-500' : 'border-yellow-500'} pl-4">
                       <h4 class="font-bold text-gray-800 dark:text-white text-sm">${topic}</h4>
                       <div class="grid grid-cols-3 gap-2 text-xs font-medium text-gray-700 dark:text-gray-400 mt-2">
-                        <div>Precisión: <span class="font-semibold ${stats.accuracy >= 70 ? 'text-green-600' : 'text-yellow-600'}">${stats.accuracy}%</span></div>
-                        <div>Correctas: <span class="font-semibold">${stats.correct}</span></div>
-                        <div>Incorrectas: <span class="font-semibold">${stats.incorrect}</span></div>
+                        <div>${t('dashboard.stats.accuracy')}: <span class="font-semibold ${stats.accuracy >= 70 ? 'text-green-600' : 'text-yellow-600'}">${stats.accuracy}%</span></div>
+                        <div>${t('dashboard.stats.correct')}: <span class="font-semibold">${stats.correct}</span></div>
+                        <div>${t('dashboard.stats.incorrect')}: <span class="font-semibold">${stats.incorrect}</span></div>
                       </div>
                     </div>
                   `).join('')}
@@ -928,14 +932,14 @@ export async function renderDashboardView(productId) {
 
               <!-- Quick Access -->
               <div class="card-glass rounded-xl p-6 bg-white dark:bg-transparent border border-gray-200 dark:border-transparent">
-                <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Acceso Rápido</h3>
+                <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">${t('dashboard.quickActions.title')}</h3>
                 <div class="space-y-3">
                   <button class="w-full text-left p-3 rounded-lg bg-cyan-50 dark:bg-gray-800 hover:bg-cyan-100 dark:hover:bg-gray-700 transition-colors border border-cyan-200 dark:border-gray-700 shadow-sm">
                     <div class="flex items-center">
                       <svg class="w-5 h-5 mr-3 text-cyan-700 dark:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                       </svg>
-                      <span class="text-sm font-bold text-gray-800 dark:text-gray-200">Historial de Sesiones</span>
+                      <span class="text-sm font-bold text-gray-800 dark:text-gray-200">${t('dashboard.quickActions.history')}</span>
                     </div>
                   </button>
                   <button class="w-full text-left p-3 rounded-lg bg-cyan-50 dark:bg-gray-800 hover:bg-cyan-100 dark:hover:bg-gray-700 transition-colors border border-cyan-200 dark:border-gray-700 shadow-sm">
@@ -943,7 +947,7 @@ export async function renderDashboardView(productId) {
                       <svg class="w-5 h-5 mr-3 text-cyan-700 dark:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                       </svg>
-                      <span class="text-sm font-bold text-gray-800 dark:text-gray-200">Documentación</span>
+                      <span class="text-sm font-bold text-gray-800 dark:text-gray-200">${t('dashboard.quickActions.documentation')}</span>
                     </div>
                   </button>
                   <button class="w-full text-left p-3 rounded-lg bg-cyan-50 dark:bg-gray-800 hover:bg-cyan-100 dark:hover:bg-gray-700 transition-colors border border-cyan-200 dark:border-gray-700 shadow-sm">
@@ -951,7 +955,7 @@ export async function renderDashboardView(productId) {
                       <svg class="w-5 h-5 mr-3 text-cyan-700 dark:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                       </svg>
-                      <span class="text-sm font-bold text-gray-800 dark:text-gray-200">Ayuda y Soporte</span>
+                      <span class="text-sm font-bold text-gray-800 dark:text-gray-200">${t('dashboard.quickActions.support')}</span>
                     </div>
                   </button>
                 </div>
@@ -969,9 +973,9 @@ export async function renderDashboardView(productId) {
     startTrainingButton.addEventListener('click', () => {
       console.log('🚀 Iniciando entrenamiento para producto:', productId);
 
-      // Detectar el modo seleccionado
+      // Detectar el modo seleccionado (check onclick attribute for language-independent detection)
       const selectedModeCard = document.querySelector('.mode-card.selected');
-      const isExamMode = selectedModeCard?.textContent.includes('Examen');
+      const isExamMode = selectedModeCard?.getAttribute('onclick')?.includes("'exam'");
       const mode = isExamMode ? 'exam' : 'practice';
 
       // Obtener duración y mínimo aprobatorio para modo examen
@@ -1148,30 +1152,31 @@ export async function renderDashboardView(productId) {
   function updateSessionSummary() {
     const { totalTopics } = getSelectedTopics();
     const selectedModeCard = document.querySelector('.mode-card.selected');
-    const isExamMode = selectedModeCard?.textContent.includes('Examen');
+    // Check by looking at the onclick attribute which contains the mode
+    const isExamMode = selectedModeCard?.getAttribute('onclick')?.includes("'exam'");
     const questionCount = document.getElementById('question-count')?.value || '50';
     const timerValue = document.getElementById('timer-value')?.textContent || '60';
 
     // Update session mode
     const modeElement = document.getElementById('session-mode');
     if (modeElement) {
-      modeElement.textContent = isExamMode ? 'Examen' : 'Práctica';
+      modeElement.textContent = isExamMode ? t('dashboard.configuration.examMode') : t('dashboard.configuration.practiceMode');
     }
 
     // Update session questions
     const questionsElement = document.getElementById('session-questions');
     if (questionsElement) {
-      questionsElement.textContent = questionCount === 'all' ? 'Todas' : questionCount;
+      questionsElement.textContent = questionCount === 'all' ? t('dashboard.configuration.questionCountAll') : questionCount;
     }
 
     // Update session time
     const timeElement = document.getElementById('session-time');
     if (timeElement) {
       if (isExamMode) {
-        timeElement.textContent = `~${timerValue} min`;
+        timeElement.textContent = `~${timerValue} ${t('dashboard.configuration.timerMinutes')}`;
       } else {
         const estimatedMinutes = Math.ceil(parseInt(questionCount || 50) * 1.2);
-        timeElement.textContent = `~${estimatedMinutes} min`;
+        timeElement.textContent = `~${estimatedMinutes} ${t('dashboard.configuration.timerMinutes')}`;
       }
     }
 

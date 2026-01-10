@@ -565,7 +565,7 @@ export const es = {
   dashboard: {
     header: {
       backToProducts: "Mis Productos",
-      configureGuide: "Configuración de Guía"
+      configureGuide: "Configuración de Entrenamiento"
     },
     databases: {
       title: "Bases de Datos de Conocimiento",
@@ -602,6 +602,7 @@ export const es = {
       questionCountAll: "Todas las preguntas disponibles",
       timerLabel: "Tiempo del Examen",
       timerMinutes: "min",
+      passingScoreLabel: "Mínimo Aprobatorio",
       summaryTitle: "Resumen de la Sesión",
       summaryMode: "Modo",
       summaryQuestions: "Preguntas",
@@ -610,6 +611,16 @@ export const es = {
       startButton: "Iniciar Entrenamiento"
     },
     stats: {
+      productStatsTitle: "Estadísticas del Producto",
+      totalSessions: "Total Sesiones",
+      questionsAnswered: "Preguntas Respondidas",
+      generalAverage: "Promedio General",
+      bestScore: "Mejor Puntuación",
+      totalTimeStudied: "Tiempo Total Estudiado",
+      currentStreak: "Racha Actual",
+      bestStreak: "Mejor Racha",
+      days: "días",
+      practiceVsExam: "Modo Práctica vs Examen",
       progressTitle: "Tu Progreso",
       products: "Productos",
       sessions: "Sesiones",
@@ -619,11 +630,15 @@ export const es = {
       correct: "Correctas",
       incorrect: "Incorrectas",
       streak: "Racha",
-      achievements: "Logros"
+      achievements: "Logros",
+      passed: "Aprobados",
+      failed: "Reprobados",
+      accuracy: "Precisión",
+      topicStatsTitle: "Estadísticas por Tema"
     },
     quickActions: {
       title: "Acceso Rápido",
-      history: "Historial",
+      history: "Historial de Sesiones",
       historyDesc: "Sesiones anteriores",
       documentation: "Documentación",
       documentationDesc: "Guías y recursos",

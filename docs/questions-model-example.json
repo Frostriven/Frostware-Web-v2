@@ -114,10 +114,12 @@
     "languages": ["en", "es"]
   },
   "notes": {
-    "randomization": "Options will be automatically randomized when loaded using Fisher-Yates shuffle algorithm",
+    "id": "Custom ID for the question (e.g., '4.9', 'q1'). If provided, this ID will be used as the Firestore document ID. If not provided, an auto-generated ID will be used.",
+    "randomization": "Options will be automatically randomized when loaded using Fisher-Yates shuffle algorithm. Question order is also randomized.",
     "correctAnswer": "Index is based on the original order before randomization",
     "image": "Optional field - can be null or a URL to an image",
-    "multiLanguage": "All text fields (topic, question, options, explanation) support both 'en' and 'es' keys"
+    "multiLanguage": "All text fields (topic, question, options, explanation) support both 'en' and 'es' keys",
+    "searchable": "Questions can be searched by text content, topic, or ID in the database management interface"
   },
   "statisticsStructure": {
     "description": "User statistics are stored in Firestore at: users/{userId}/stats/{productId}",

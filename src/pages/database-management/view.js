@@ -8,6 +8,8 @@ let selectedDatabase = null;
 let allQuestions = [];
 let filteredQuestions = [];
 let currentPage = 1;
+let currentSearchTerm = '';
+let currentTopicFilter = '';
 const questionsPerPage = 20;
 
 // Helper function to wait for auth to be ready
@@ -1398,6 +1400,10 @@ async function selectDatabase(dbId) {
   selectedDatabase = allDatabases.find(db => db.id === dbId);
   if (!selectedDatabase) return;
 
+  // Reset filters when changing database
+  currentSearchTerm = '';
+  currentTopicFilter = '';
+
   renderDatabaseList(document.getElementById('search-databases').value);
   await loadQuestions(dbId);
 }
@@ -1436,7 +1442,7 @@ async function loadQuestions(dbId) {
 function renderQuestions() {
   const contentEl = document.getElementById('db-content');
 
-  const topics = [...new Set(allQuestions.map(q => q.topic))].filter(Boolean);
+  const topics = [...new Set(allQuestions.map(q => getLocalizedText(q.topic)))].filter(Boolean);
 
   const startIdx = (currentPage - 1) * questionsPerPage;
   const endIdx = startIdx + questionsPerPage;
@@ -1492,11 +1498,12 @@ function renderQuestions() {
           type="text"
           class="control-input"
           id="search-questions"
-          placeholder="Buscar preguntas..."
+          placeholder="Buscar preguntas por texto o ID..."
+          value="${currentSearchTerm}"
         />
         <select class="control-select" id="filter-topic">
           <option value="">Todos los temas</option>
-          ${topics.map(topic => `<option value="${topic}">${topic}</option>`).join('')}
+          ${topics.map(topic => `<option value="${topic}" ${currentTopicFilter === topic ? 'selected' : ''}>${topic}</option>`).join('')}
         </select>
       </div>
     </div>
@@ -1585,13 +1592,18 @@ function renderQuestions() {
 }
 
 function filterQuestions() {
-  const searchTerm = document.getElementById('search-questions')?.value.toLowerCase() || '';
-  const topicFilter = document.getElementById('filter-topic')?.value || '';
+  currentSearchTerm = document.getElementById('search-questions')?.value.toLowerCase() || '';
+  currentTopicFilter = document.getElementById('filter-topic')?.value || '';
 
   filteredQuestions = allQuestions.filter(q => {
-    const matchesSearch = q.question?.toLowerCase().includes(searchTerm) ||
-                         q.topic?.toLowerCase().includes(searchTerm);
-    const matchesTopic = !topicFilter || q.topic === topicFilter;
+    const questionText = getLocalizedText(q.question).toLowerCase();
+    const topicText = getLocalizedText(q.topic).toLowerCase();
+    const questionId = (q.id || '').toLowerCase();
+    const matchesSearch = !currentSearchTerm ||
+                          questionText.includes(currentSearchTerm) ||
+                          topicText.includes(currentSearchTerm) ||
+                          questionId.includes(currentSearchTerm);
+    const matchesTopic = !currentTopicFilter || getLocalizedText(q.topic) === currentTopicFilter;
     return matchesSearch && matchesTopic;
   });
 
@@ -2124,7 +2136,12 @@ async function insertQuestionsFromJSON() {
 
     for (const question of analyzedQuestions) {
       try {
-        await setDoc(doc(collection(db, selectedDatabase.id)), {
+        // Use custom ID if provided, otherwise generate one
+        const docRef = question.id
+          ? doc(db, selectedDatabase.id, question.id)
+          : doc(collection(db, selectedDatabase.id));
+
+        await setDoc(docRef, {
           question: question.question,
           options: question.options,
           correctAnswer: question.correctAnswer,

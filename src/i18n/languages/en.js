@@ -522,7 +522,7 @@ export const en = {
   dashboard: {
     header: {
       backToProducts: "My Products",
-      configureGuide: "Guide Configuration"
+      configureGuide: "Training Configuration"
     },
     databases: {
       title: "Knowledge Databases",
@@ -559,6 +559,7 @@ export const en = {
       questionCountAll: "All available questions",
       timerLabel: "Exam Time",
       timerMinutes: "min",
+      passingScoreLabel: "Passing Score",
       summaryTitle: "Session Summary",
       summaryMode: "Mode",
       summaryQuestions: "Questions",
@@ -567,6 +568,16 @@ export const en = {
       startButton: "Start Training"
     },
     stats: {
+      productStatsTitle: "Product Statistics",
+      totalSessions: "Total Sessions",
+      questionsAnswered: "Questions Answered",
+      generalAverage: "General Average",
+      bestScore: "Best Score",
+      totalTimeStudied: "Total Time Studied",
+      currentStreak: "Current Streak",
+      bestStreak: "Best Streak",
+      days: "days",
+      practiceVsExam: "Practice vs Exam Mode",
       progressTitle: "Your Progress",
       products: "Products",
       sessions: "Sessions",
@@ -576,11 +587,15 @@ export const en = {
       correct: "Correct",
       incorrect: "Incorrect",
       streak: "Streak",
-      achievements: "Achievements"
+      achievements: "Achievements",
+      passed: "Passed",
+      failed: "Failed",
+      accuracy: "Accuracy",
+      topicStatsTitle: "Statistics by Topic"
     },
     quickActions: {
       title: "Quick Access",
-      history: "History",
+      history: "Session History",
       historyDesc: "Previous sessions",
       documentation: "Documentation",
       documentationDesc: "Guides and resources",
