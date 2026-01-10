@@ -20,8 +20,9 @@ Usuario → Router → View Components → Firebase Services → Firestore
 ### Variables de Entorno Requeridas
 
 ```env
+
 # Firebase Configuration
-VITE_FIREBASE_API_KEY=AIzaSy...
+VITE_FIREBASE_API_KEY=tu-api-key-aqui
 VITE_FIREBASE_AUTH_DOMAIN=proyecto.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=proyecto-id
 VITE_FIREBASE_STORAGE_BUCKET=proyecto.firebasestorage.app

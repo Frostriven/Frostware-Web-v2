@@ -1,7 +1,7 @@
 // Global toast notification system
 export function showToast(message, type = 'success', duration = 3000) {
   const toast = document.createElement('div');
-  toast.className = 'fixed top-4 right-4 z-50 transform transition-all duration-500 translate-x-full';
+  toast.className = 'fixed top-4 right-4 z-[9999] transform transition-all duration-500 translate-x-full';
 
   const bgColor = getToastColor(type);
   const icon = getToastIcon(type);

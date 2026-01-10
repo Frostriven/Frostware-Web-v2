@@ -316,6 +316,7 @@ function injectStyles() {
     .questions-sidebar {
       width: 320px;
       min-width: 320px;
+      max-height: 100vh;
       background: var(--color-bg-secondary, #f8fafc);
       border-right: 1px solid var(--color-border-primary, #e2e8f0);
       overflow: hidden;
@@ -491,7 +492,11 @@ function injectStyles() {
     /* Questions List */
     .questions-list {
       flex: 1;
+      min-height: 0; /* Critical for flex scroll */
       overflow-y: auto;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+      padding-bottom: 1rem;
     }
 
     .question-item {
@@ -501,8 +506,31 @@ function injectStyles() {
       padding: 0.875rem 1.5rem;
       border-bottom: 1px solid var(--color-border-primary, #e2e8f0);
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: slideInFromLeft 0.3s ease-out forwards;
+      opacity: 0;
+      transform: translateX(-10px);
     }
+
+    @keyframes slideInFromLeft {
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* Stagger animation for question items */
+    .question-item:nth-child(1) { animation-delay: 0.02s; }
+    .question-item:nth-child(2) { animation-delay: 0.04s; }
+    .question-item:nth-child(3) { animation-delay: 0.06s; }
+    .question-item:nth-child(4) { animation-delay: 0.08s; }
+    .question-item:nth-child(5) { animation-delay: 0.1s; }
+    .question-item:nth-child(6) { animation-delay: 0.12s; }
+    .question-item:nth-child(7) { animation-delay: 0.14s; }
+    .question-item:nth-child(8) { animation-delay: 0.16s; }
+    .question-item:nth-child(9) { animation-delay: 0.18s; }
+    .question-item:nth-child(10) { animation-delay: 0.2s; }
+    .question-item:nth-child(n+11) { animation-delay: 0.22s; }
 
     html.dark .question-item {
       border-bottom-color: #1e293b;
@@ -569,6 +597,120 @@ function injectStyles() {
 
     .question-item.bookmarked .bookmark-icon {
       display: block;
+    }
+
+    /* Image icon for questions with images */
+    .question-item .image-icon {
+      display: none;
+      color: #22a7d0;
+      flex-shrink: 0;
+      cursor: pointer;
+      padding: 5px;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      background: rgba(34, 167, 208, 0.08);
+      position: relative;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .question-item.has-image .image-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-color: rgba(34, 167, 208, 0.4);
+      animation: imagePulse 2s ease-in-out infinite;
+    }
+
+    /* Animated pulsing border */
+    @keyframes imagePulse {
+      0%, 100% {
+        border-color: rgba(34, 167, 208, 0.4);
+        box-shadow: 0 0 0 0 rgba(34, 167, 208, 0.4);
+      }
+      50% {
+        border-color: rgba(34, 167, 208, 0.8);
+        box-shadow: 0 0 8px 2px rgba(34, 167, 208, 0.3);
+      }
+    }
+
+    /* Glow ring effect */
+    .question-item.has-image .image-icon::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 12px;
+      border: 2px solid transparent;
+      background: linear-gradient(135deg, rgba(34, 167, 208, 0.3), rgba(6, 182, 212, 0.3)) border-box;
+      -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0;
+      animation: glowRing 2s ease-in-out infinite;
+    }
+
+    @keyframes glowRing {
+      0%, 100% {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .question-item .image-icon:hover {
+      background: rgba(34, 167, 208, 0.2);
+      color: #1a8db3;
+      transform: scale(1.15);
+      border-color: #22a7d0;
+      animation: none;
+      box-shadow: 0 0 12px 3px rgba(34, 167, 208, 0.4);
+    }
+
+    .question-item .image-icon:hover::before {
+      animation: none;
+      opacity: 0;
+    }
+
+    .question-item .image-icon:active {
+      transform: scale(0.95);
+    }
+
+    html.dark .question-item .image-icon {
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.1);
+    }
+
+    html.dark .question-item.has-image .image-icon {
+      border-color: rgba(56, 189, 248, 0.4);
+      animation: imagePulseDark 2s ease-in-out infinite;
+    }
+
+    @keyframes imagePulseDark {
+      0%, 100% {
+        border-color: rgba(56, 189, 248, 0.4);
+        box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.4);
+      }
+      50% {
+        border-color: rgba(56, 189, 248, 0.8);
+        box-shadow: 0 0 8px 2px rgba(56, 189, 248, 0.3);
+      }
+    }
+
+    html.dark .question-item .image-icon:hover {
+      background: rgba(56, 189, 248, 0.2);
+      color: #7dd3fc;
+      border-color: #38bdf8;
+      box-shadow: 0 0 12px 3px rgba(56, 189, 248, 0.4);
+    }
+
+    /* Icons container for question item */
+    .question-item-icons {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      flex-shrink: 0;
     }
 
     .question-item-content {
@@ -1124,6 +1266,94 @@ function injectStyles() {
       padding: 0;
     }
 
+    /* Image Button - Animated border */
+    #image-btn {
+      position: relative;
+      border: 2px solid rgba(34, 167, 208, 0.5);
+      background: rgba(34, 167, 208, 0.08);
+      color: #22a7d0;
+      font-weight: 600;
+      animation: imageBtnPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes imageBtnPulse {
+      0%, 100% {
+        border-color: rgba(34, 167, 208, 0.5);
+        box-shadow: 0 0 0 0 rgba(34, 167, 208, 0.3);
+      }
+      50% {
+        border-color: rgba(34, 167, 208, 1);
+        box-shadow: 0 0 15px 3px rgba(34, 167, 208, 0.4);
+      }
+    }
+
+    #image-btn::before {
+      content: '';
+      position: absolute;
+      inset: -5px;
+      border-radius: 14px;
+      border: 2px solid transparent;
+      background: linear-gradient(135deg, rgba(34, 167, 208, 0.4), rgba(6, 182, 212, 0.4)) border-box;
+      -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0;
+      animation: imageBtnRing 2s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes imageBtnRing {
+      0%, 100% {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    #image-btn:hover {
+      animation: none;
+      border-color: #22a7d0;
+      background: rgba(34, 167, 208, 0.15);
+      box-shadow: 0 0 20px 5px rgba(34, 167, 208, 0.4);
+      transform: translateY(-2px) scale(1.02);
+    }
+
+    #image-btn:hover::before {
+      animation: none;
+      opacity: 0;
+    }
+
+    #image-btn:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    html.dark #image-btn {
+      border-color: rgba(56, 189, 248, 0.5);
+      background: rgba(56, 189, 248, 0.1);
+      color: #38bdf8;
+      animation: imageBtnPulseDark 2s ease-in-out infinite;
+    }
+
+    @keyframes imageBtnPulseDark {
+      0%, 100% {
+        border-color: rgba(56, 189, 248, 0.5);
+        box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.3);
+      }
+      50% {
+        border-color: rgba(56, 189, 248, 1);
+        box-shadow: 0 0 15px 3px rgba(56, 189, 248, 0.4);
+      }
+    }
+
+    html.dark #image-btn:hover {
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.2);
+      box-shadow: 0 0 20px 5px rgba(56, 189, 248, 0.4);
+    }
+
     /* Stats Cards */
     .header-stat-card {
       display: flex;
@@ -1222,51 +1452,187 @@ function injectStyles() {
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(4px);
+      background: rgba(0, 0, 0, 0);
+      backdrop-filter: blur(0px);
       z-index: 1000;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 2rem;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .modal-overlay.active {
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      opacity: 1;
     }
 
     .modal-content {
       background: var(--color-bg-primary, #ffffff);
       border: 1px solid var(--color-border-primary, #e2e8f0);
       border-radius: 16px;
-      max-width: 800px;
+      max-width: 900px;
       max-height: 90vh;
       overflow: auto;
       position: relative;
+      transform: scale(0.9) translateY(20px);
+      opacity: 0;
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-overlay.active .modal-content {
+      transform: scale(1) translateY(0);
+      opacity: 1;
     }
 
     html.dark .modal-content {
       background: #0f1419;
       border-color: #1e293b;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     }
 
     .modal-close {
       position: absolute;
       top: 1rem;
       right: 1rem;
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: #ef4444;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.9);
+      border: none;
+      color: #64748b;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 10;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    html.dark .modal-close {
+      background: rgba(30, 41, 59, 0.9);
+      color: #94a3b8;
     }
 
     .modal-close:hover {
       background: #ef4444;
       color: white;
+      transform: scale(1.1) rotate(90deg);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    }
+
+    .modal-close:active {
+      transform: scale(0.95) rotate(90deg);
+    }
+
+    /* Image Modal Specific Styles */
+    .modal-image-container {
+      position: relative;
+      padding: 1rem;
+    }
+
+    .modal-image {
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+
+    .modal-image-placeholder {
+      width: 100%;
+      min-height: 300px;
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      color: #94a3b8;
+    }
+
+    html.dark .modal-image-placeholder {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      color: #475569;
+    }
+
+    .modal-image-placeholder svg {
+      width: 64px;
+      height: 64px;
+      opacity: 0.5;
+    }
+
+    .modal-image-placeholder span {
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .modal-caption {
+      padding: 1rem 1.5rem 1.5rem;
+      text-align: center;
+      color: var(--color-text-secondary, #64748b);
+      font-size: 0.9375rem;
+      line-height: 1.5;
+    }
+
+    html.dark .modal-caption {
+      color: #9ca3af;
+    }
+
+    /* Zoom controls for image */
+    .modal-zoom-controls {
+      position: absolute;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0.5rem;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 0.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    html.dark .modal-zoom-controls {
+      background: rgba(30, 41, 59, 0.95);
+    }
+
+    .modal-image-container:hover .modal-zoom-controls {
+      opacity: 1;
+    }
+
+    .modal-zoom-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: #64748b;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .modal-zoom-btn:hover {
+      background: rgba(34, 167, 208, 0.1);
+      color: #22a7d0;
+    }
+
+    html.dark .modal-zoom-btn {
+      color: #94a3b8;
+    }
+
+    html.dark .modal-zoom-btn:hover {
+      color: #38bdf8;
     }
 
     .exit-modal-overlay {
@@ -1652,26 +2018,52 @@ function injectStyles() {
       }
     }
 
-    /* Scrollbar */
+    /* Scrollbar - Custom styled */
     .questions-list::-webkit-scrollbar,
     .training-content::-webkit-scrollbar {
-      width: 6px;
+      width: 8px;
     }
 
     .questions-list::-webkit-scrollbar-track,
     .training-content::-webkit-scrollbar-track {
-      background: transparent;
+      background: linear-gradient(180deg, transparent 0%, rgba(34, 167, 208, 0.03) 50%, transparent 100%);
+      border-radius: 4px;
     }
 
     .questions-list::-webkit-scrollbar-thumb,
     .training-content::-webkit-scrollbar-thumb {
-      background: var(--color-border-secondary, #cbd5e1);
-      border-radius: 3px;
+      background: linear-gradient(180deg, rgba(34, 167, 208, 0.3) 0%, rgba(34, 167, 208, 0.5) 50%, rgba(34, 167, 208, 0.3) 100%);
+      border-radius: 4px;
+      border: 2px solid transparent;
+      background-clip: padding-box;
+      transition: background 0.2s ease;
+    }
+
+    .questions-list::-webkit-scrollbar-thumb:hover,
+    .training-content::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, rgba(34, 167, 208, 0.5) 0%, rgba(34, 167, 208, 0.7) 50%, rgba(34, 167, 208, 0.5) 100%);
     }
 
     html.dark .questions-list::-webkit-scrollbar-thumb,
     html.dark .training-content::-webkit-scrollbar-thumb {
-      background: #2d3748;
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.25) 0%, rgba(56, 189, 248, 0.4) 50%, rgba(56, 189, 248, 0.25) 100%);
+    }
+
+    html.dark .questions-list::-webkit-scrollbar-thumb:hover,
+    html.dark .training-content::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.4) 0%, rgba(56, 189, 248, 0.6) 50%, rgba(56, 189, 248, 0.4) 100%);
+    }
+
+    /* Firefox scrollbar */
+    .questions-list,
+    .training-content {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(34, 167, 208, 0.4) transparent;
+    }
+
+    html.dark .questions-list,
+    html.dark .training-content {
+      scrollbar-color: rgba(56, 189, 248, 0.3) transparent;
     }
   `;
 
@@ -1770,16 +2162,24 @@ function renderTrainingApp(product, questions, params) {
             ${questions.map((q, i) => {
               const localizedTopic = typeof q.topic === 'string' ? q.topic : (q.topic?.es || q.topic?.en || '');
               const localizedQuestion = typeof q.question === 'string' ? q.question : (q.question?.es || q.question?.en || '');
+              const hasImage = q.image && q.image.trim() !== '';
               return `
-                <div class="question-item ${i === 0 ? 'active' : ''}" onclick="jumpToQuestion(${i})" data-index="${i}">
+                <div class="question-item ${i === 0 ? 'active' : ''} ${hasImage ? 'has-image' : ''}" onclick="jumpToQuestion(${i})" data-index="${i}" data-has-image="${hasImage}">
                   <div class="question-number">${i + 1}</div>
                   <div class="question-item-content">
                     <div class="question-item-topic">${localizedTopic}</div>
                     <div class="question-item-text">${localizedQuestion}</div>
                   </div>
-                  <svg class="bookmark-icon" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
-                  </svg>
+                  <div class="question-item-icons">
+                    <button class="image-icon" onclick="event.stopPropagation(); openImageFromSidebar(${i})" title="Ver imagen">
+                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                      </svg>
+                    </button>
+                    <svg class="bookmark-icon" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                    </svg>
+                  </div>
                 </div>
               `;
             }).join('')}
@@ -1926,17 +2326,40 @@ function renderTrainingApp(product, questions, params) {
       </div>
 
       <!-- Image Modal -->
-      <div id="image-modal" class="modal-overlay" style="display: none;" onclick="closeImageModal(event)">
+      <div id="image-modal" class="modal-overlay" onclick="closeImageModal(event)">
         <div class="modal-content" onclick="event.stopPropagation()">
-          <button class="modal-close" onclick="closeImageModal()">
-            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button class="modal-close" onclick="closeImageModal()" title="Cerrar">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
           </button>
-          <img id="modal-image" src="" alt="Question Image" style="width: 100%; height: auto; border-radius: 12px;">
-          <div style="padding: 1.5rem;">
-            <p id="modal-caption" style="text-align: center; color: var(--color-text-secondary);"></p>
+          <div class="modal-image-container" id="modal-image-container">
+            <img id="modal-image" class="modal-image" src="" alt="Question Image">
+            <div id="modal-image-placeholder" class="modal-image-placeholder" style="display: none;">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+              <span>No hay imagen disponible</span>
+            </div>
+            <div class="modal-zoom-controls">
+              <button class="modal-zoom-btn" onclick="zoomImage(-0.25)" title="Alejar">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"/>
+                </svg>
+              </button>
+              <button class="modal-zoom-btn" onclick="resetImageZoom()" title="Restablecer">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                </svg>
+              </button>
+              <button class="modal-zoom-btn" onclick="zoomImage(0.25)" title="Acercar">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/>
+                </svg>
+              </button>
+            </div>
           </div>
+          <div class="modal-caption" id="modal-caption"></div>
         </div>
       </div>
 
@@ -2496,7 +2919,32 @@ window.jumpToQuestion = function(index) {
   window.trainingApp.currentQuestionIndex = index;
   loadQuestion(index);
   window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Scroll to active item in sidebar
+  scrollToActiveQuestion(index);
 };
+
+// Scroll sidebar to show the active question
+function scrollToActiveQuestion(index) {
+  const questionsList = document.getElementById('questions-list');
+  const activeItem = document.querySelector(`.question-item[data-index="${index}"]`);
+
+  if (questionsList && activeItem) {
+    const listRect = questionsList.getBoundingClientRect();
+    const itemRect = activeItem.getBoundingClientRect();
+
+    // Check if item is not fully visible
+    const isAboveView = itemRect.top < listRect.top;
+    const isBelowView = itemRect.bottom > listRect.bottom;
+
+    if (isAboveView || isBelowView) {
+      activeItem.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }
+  }
+}
 
 function updateQuestionsList() {
   const app = window.trainingApp;
@@ -2509,10 +2957,12 @@ function updateQuestionsList() {
     const isAnswered = userAnswer !== undefined;
     const isBookmarked = app.bookmarkedQuestions.has(i);
     const isCurrent = i === app.currentQuestionIndex;
+    const hasImage = item.dataset.hasImage === 'true';
 
     item.className = 'question-item';
     if (isCurrent) item.classList.add('active');
     if (isBookmarked) item.classList.add('bookmarked');
+    if (hasImage) item.classList.add('has-image');
 
     // Colores según resultado
     if (isAnswered) {
@@ -2538,6 +2988,7 @@ window.nextQuestion = function() {
     app.currentQuestionIndex++;
     loadQuestion(app.currentQuestionIndex);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollToActiveQuestion(app.currentQuestionIndex);
   }
 };
 
@@ -2547,6 +2998,7 @@ window.previousQuestion = function() {
     app.currentQuestionIndex--;
     loadQuestion(app.currentQuestionIndex);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollToActiveQuestion(app.currentQuestionIndex);
   }
 };
 
@@ -2631,28 +3083,105 @@ function updateNavigationButtons() {
   }
 }
 
-window.openImageModal = function() {
-  if (!window.currentQuestionImage) return;
+// Image zoom state
+window.imageZoomLevel = 1;
+
+window.openImageModal = function(imageSrc, caption) {
+  const imageToShow = imageSrc || window.currentQuestionImage;
+  const captionToShow = caption || window.currentQuestionCaption || '';
 
   const modal = document.getElementById('image-modal');
   const modalImage = document.getElementById('modal-image');
   const modalCaption = document.getElementById('modal-caption');
+  const placeholder = document.getElementById('modal-image-placeholder');
 
-  if (modal && modalImage && modalCaption) {
-    modalImage.src = window.currentQuestionImage;
-    modalCaption.textContent = window.currentQuestionCaption;
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
+  if (!modal) return;
+
+  // Reset zoom
+  window.imageZoomLevel = 1;
+  if (modalImage) {
+    modalImage.style.transform = 'scale(1)';
   }
+
+  // Show modal with animation
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+
+  // Check if we have an image
+  const hasValidImage = imageToShow && imageToShow.trim() !== '';
+
+  if (hasValidImage && modalImage) {
+    modalImage.src = imageToShow;
+    modalImage.style.display = 'block';
+    if (placeholder) placeholder.style.display = 'none';
+  } else {
+    if (modalImage) modalImage.style.display = 'none';
+    if (placeholder) placeholder.style.display = 'flex';
+  }
+
+  if (modalCaption) {
+    modalCaption.textContent = captionToShow;
+  }
+
+  // Trigger animation after a small delay
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      modal.classList.add('active');
+    });
+  });
 };
 
 window.closeImageModal = function(event) {
   if (!event || event.target.id === 'image-modal') {
     const modal = document.getElementById('image-modal');
     if (modal) {
-      modal.style.display = 'none';
-      document.body.style.overflow = 'auto';
+      modal.classList.remove('active');
+
+      // Wait for animation to complete before hiding
+      setTimeout(() => {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+
+        // Reset zoom
+        window.imageZoomLevel = 1;
+        const modalImage = document.getElementById('modal-image');
+        if (modalImage) {
+          modalImage.style.transform = 'scale(1)';
+        }
+      }, 300);
     }
+  }
+};
+
+// Function to open image from sidebar
+window.openImageFromSidebar = function(questionIndex) {
+  const app = window.trainingApp;
+  if (!app || !app.questions[questionIndex]) return;
+
+  const question = app.questions[questionIndex];
+  const localizedQuestion = typeof question.question === 'string'
+    ? question.question
+    : (question.question?.es || question.question?.en || '');
+
+  window.openImageModal(question.image, localizedQuestion);
+};
+
+// Zoom functions for image modal
+window.zoomImage = function(delta) {
+  window.imageZoomLevel = Math.max(0.5, Math.min(3, window.imageZoomLevel + delta));
+  const modalImage = document.getElementById('modal-image');
+  if (modalImage) {
+    modalImage.style.transform = `scale(${window.imageZoomLevel})`;
+    modalImage.style.transition = 'transform 0.2s ease';
+  }
+};
+
+window.resetImageZoom = function() {
+  window.imageZoomLevel = 1;
+  const modalImage = document.getElementById('modal-image');
+  if (modalImage) {
+    modalImage.style.transform = 'scale(1)';
+    modalImage.style.transition = 'transform 0.2s ease';
   }
 };
 
